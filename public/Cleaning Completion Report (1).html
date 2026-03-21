@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HuronWest — Cleaning Completion Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1A3C34;
+    --forest-mid: #224A40;
+    --forest-light: #2D5E51;
+    --sage: #5B8C7E;
+    --mint: #A8D5BA;
+    --mint-pale: #E8F5EC;
+    --leaf: #3A7D44;
+    --leaf-light: #4CAF50;
+    --cream: #F7FAF8;
+    --white: #FFFFFF;
+    --bark: #3E4A47;
+    --bark-light: #7A8B85;
+    --gold: #C9A84C;
+    --gold-pale: #FBF5E6;
+    --border: #D5E5DC;
+    --input-bg: #F0F7F2;
+    --green-check: #2E7D32;
+    --green-bg: #E8F5E9;
+    --yellow-bg: #FFF9C4;
+    --red-bg: #FFEBEE;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #DEE8E2;
+    font-family: 'Outfit', sans-serif;
+    color: var(--forest);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    input, textarea, select { border-color: #CCC !important; }
+    .add-row-btn, .remove-row-btn { display: none !important; }
+    @page { margin: 0.4in; size: letter; }
+  }
+
+  /* ====== TOOLBAR ====== */
+  .toolbar {
+    max-width: 850px;
+    margin: 30px auto 16px;
+    padding: 14px 24px;
+    background: var(--forest);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .toolbar-label {
+    font-size: 13px;
+    color: var(--mint);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .toolbar-hint {
+    font-size: 12px;
+    color: var(--bark-light);
+  }
+  .toolbar-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .tool-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tool-btn:hover {
+    background: var(--leaf);
+    border-color: var(--leaf);
+  }
+
+  /* ====== PAGE ====== */
+  .page {
+    max-width: 850px;
+    margin: 0 auto 40px;
+    background: var(--white);
+    box-shadow: 0 20px 60px rgba(26,60,52,0.14);
+  }
+
+  /* ====== HEADER ====== */
+  .doc-header {
+    background: var(--forest);
+    padding: 32px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .doc-header::before {
+    content: '';
+    position: absolute;
+    top: -60%;
+    right: -15%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(168,213,186,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .doc-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--leaf), var(--mint), var(--leaf));
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .header-icon {
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid var(--mint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .header-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--mint);
+  }
+  .header-brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--white);
+    line-height: 1.15;
+  }
+  .header-brand span { color: var(--mint); }
+  .header-right {
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+  .doc-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+  .doc-subtitle {
+    font-size: 11px;
+    color: var(--bark-light);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 500;
+  }
+
+  /* ====== ECO RIBBON ====== */
+  .eco-ribbon {
+    background: var(--mint-pale);
+    padding: 10px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .eco-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--forest);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .eco-badge svg {
+    width: 14px;
+    height: 14px;
+    fill: var(--leaf);
+  }
+  .eco-dot {
+    width: 3px;
+    height: 3px;
+    background: var(--sage);
+    border-radius: 50%;
+  }
+
+  /* ====== BODY ====== */
+  .doc-body {
+    padding: 36px 48px;
+  }
+
+  /* ====== INFO GRID ====== */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .info-cell {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .info-cell:nth-child(odd) {
+    border-right: 1px solid var(--border);
+  }
+  .info-cell:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+  .info-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--leaf);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .info-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    color: var(--forest);
+    border: none;
+    border-bottom: 1px dashed var(--border);
+    padding: 4px 0;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .info-input:focus {
+    border-bottom-color: var(--leaf);
+  }
+  .info-input::placeholder {
+    color: #B8C8C0;
+    font-style: italic;
+  }
+
+  /* ====== SECTION DIVIDER ====== */
+  .section-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 32px 0 18px;
+  }
+  .section-bar-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--forest);
+    background: var(--mint-pale);
+    padding: 4px 10px;
+    letter-spacing: 2px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+  .section-bar-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--forest);
+  }
+  .section-bar-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ====== SCOPE TABLE ====== */
+  .scope-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .scope-table thead th {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: var(--forest-mid);
+    padding: 12px 14px;
+    text-align: left;
+  }
+  .scope-table thead th:nth-child(1) { width: 38%; }
+  .scope-table thead th:nth-child(2) { width: 14%; text-align: center; }
+  .scope-table thead th:nth-child(3) { width: 14%; text-align: center; }
+  .scope-table thead th:nth-child(4) { width: 34%; }
+
+  .scope-table tbody tr {
+    border-bottom: 1px solid #EDF3EF;
+    transition: background 0.15s;
+  }
+  .scope-table tbody tr:nth-child(even) {
+    background: #F7FAF8;
+  }
+  .scope-table tbody tr:hover {
+    background: var(--mint-pale);
+  }
+  .scope-table td {
+    padding: 10px 14px;
+    vertical-align: middle;
+  }
+  .scope-table td:nth-child(2),
+  .scope-table td:nth-child(3) {
+    text-align: center;
+  }
+
+  .task-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--forest);
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    padding: 2px 0;
+  }
+  .task-input::placeholder {
+    color: #BCC8C2;
+    font-style: italic;
+  }
+
+  .check-box {
+    width: 22px;
+    height: 22px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .check-box:checked {
+    background: var(--leaf);
+    border-color: var(--leaf);
+  }
+  .check-box:checked::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .check-na {
+    width: 22px;
+    height: 22px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .check-na:checked {
+    background: var(--bark-light);
+    border-color: var(--bark-light);
+  }
+  .check-na:checked::after {
+    content: '—';
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .note-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: var(--bark);
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    padding: 2px 0;
+  }
+  .note-input::placeholder {
+    color: #C5D0CA;
+    font-style: italic;
+  }
+
+  .add-row-btn {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--leaf);
+    background: var(--mint-pale);
+    border: 1px dashed var(--mint);
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+  }
+  .add-row-btn:hover {
+    background: var(--leaf);
+    color: var(--white);
+    border-style: solid;
+    border-color: var(--leaf);
+  }
+  .remove-row-btn {
+    font-size: 14px;
+    color: #C5D0CA;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .remove-row-btn:hover { color: #E53935; }
+
+  /* ====== NOTES ====== */
+  .notes-box {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .notes-header {
+    background: var(--mint-pale);
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--forest);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .notes-area {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--forest);
+    border: none;
+    outline: none;
+    width: 100%;
+    min-height: 100px;
+    padding: 14px 16px;
+    resize: vertical;
+    line-height: 1.8;
+  }
+  .notes-area::placeholder {
+    color: #B8C8C0;
+    font-style: italic;
+  }
+
+  /* ====== ISSUES ====== */
+  .issues-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .issue-box {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .issue-header {
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .issue-header.maint {
+    background: var(--yellow-bg);
+    color: #F57F17;
+  }
+  .issue-header.damage {
+    background: var(--red-bg);
+    color: #C62828;
+  }
+  .issue-area {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--forest);
+    border: none;
+    outline: none;
+    width: 100%;
+    min-height: 72px;
+    padding: 12px 16px;
+    resize: vertical;
+    line-height: 1.7;
+  }
+  .issue-area::placeholder {
+    color: #C5CBCA;
+    font-style: italic;
+  }
+
+  /* ====== SIGN-OFF ====== */
+  .signoff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 2px solid var(--forest);
+  }
+  .signoff-block {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .signoff-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--leaf);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+  }
+  .sig-line {
+    border-bottom: 1px solid var(--forest);
+    padding-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    min-height: 36px;
+  }
+  .sig-label {
+    font-size: 10px;
+    color: var(--bark-light);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    flex-shrink: 0;
+  }
+  .sig-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    border: none;
+    outline: none;
+    flex: 1;
+    text-align: left;
+    padding: 0 8px;
+    background: transparent;
+    color: var(--forest);
+  }
+
+  /* ====== FOOTER ====== */
+  .doc-footer {
+    background: var(--cream);
+    padding: 14px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .footer-text {
+    font-size: 10px;
+    color: var(--bark-light);
+    letter-spacing: 0.5px;
+  }
+  .footer-text a {
+    color: var(--leaf);
+    text-decoration: none;
+  }
+  .eco-footer-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--leaf);
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .eco-footer-badge svg {
+    width: 13px;
+    height: 13px;
+    fill: var(--leaf);
+  }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 700px) {
+    .doc-body { padding: 24px 20px; }
+    .doc-header { padding: 24px 20px; flex-direction: column; gap: 14px; text-align: center; }
+    .header-right { text-align: center; }
+    .info-grid { grid-template-columns: 1fr; }
+    .info-cell:nth-child(odd) { border-right: none; }
+    .info-cell { border-bottom: 1px solid var(--border) !important; }
+    .info-cell:last-child { border-bottom: none !important; }
+    .issues-grid { grid-template-columns: 1fr; }
+    .signoff-grid { grid-template-columns: 1fr; }
+    .toolbar { margin: 16px 10px; }
+    .page { margin: 0 10px 30px; }
+    .doc-footer { padding: 12px 20px; flex-direction: column; gap: 6px; }
+    .eco-ribbon { padding: 10px 20px; gap: 14px; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div class="toolbar no-print">
+  <div class="toolbar-left">
+    <span class="toolbar-label">🌿 Live Form</span>
+    <span class="toolbar-hint">Fill fields, check boxes, add/remove rows. Ctrl+P to print or save PDF.</span>
+  </div>
+  <div class="toolbar-actions">
+    <button class="tool-btn" onclick="resetForm()">Clear All</button>
+    <button class="tool-btn" onclick="window.print()">Print / PDF</button>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page" id="report">
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7h1a1 1 0 0 0 .7-1.7l-9-9a1 1 0 0 0-1.4 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.6l7 7H5l7-7z"/></svg>
+      </div>
+      <div class="header-brand">Huron<span>West</span><br>Facilities Services</div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">Cleaning Completion Report</div>
+      <div class="doc-subtitle">Service Verification & Handoff</div>
+    </div>
+  </div>
+
+  <!-- ECO RIBBON -->
+  <div class="eco-ribbon">
+    <div class="eco-badge">
+      <svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.71c.95.3 1.96.46 3 .46 5.52 0 10-4.48 10-10h-2c0 4.42-3.58 8-8 8-.87 0-1.73-.14-2.53-.42C9.72 12.68 13 8 17 8z"/></svg>
+      EPA Safer Choice Products
+    </div>
+    <div class="eco-dot"></div>
+    <div class="eco-badge">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      Non-Toxic & HEPA Grade
+    </div>
+    <div class="eco-dot"></div>
+    <div class="eco-badge">
+      <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      Environmentally Responsible
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="doc-body">
+
+    <!-- JOB INFO -->
+    <div class="info-grid">
+      <div class="info-cell">
+        <div class="info-label">Property Name</div>
+        <input class="info-input" type="text" placeholder="e.g. 309 N. Ashley" data-erp="property-address">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Date of Service</div>
+        <input class="info-input" type="text" placeholder="MM / DD / YYYY" data-erp="service-date">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Service Type</div>
+        <input class="info-input" type="text" placeholder="e.g. Weekly Clean, Biannual Carpet, Emergency" data-erp="service-type">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Crew Lead</div>
+        <input class="info-input" type="text" placeholder="Name of person on-site" data-erp="crew-lead">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Arrival Time</div>
+        <input class="info-input" type="text" placeholder="e.g. 8:00 AM">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Departure Time</div>
+        <input class="info-input" type="text" placeholder="e.g. 11:30 AM">
+      </div>
+    </div>
+
+    <!-- SCOPE OF WORK -->
+    <div class="section-bar">
+      <div class="section-bar-number">01</div>
+      <div class="section-bar-title">Scope of Work Completed</div>
+      <div class="section-bar-line"></div>
+    </div>
+
+    <table class="scope-table" id="scopeTable">
+      <thead>
+        <tr>
+          <th>Task / Area</th>
+          <th>Done</th>
+          <th>N/A</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="scopeBody"></tbody>
+    </table>
+    <button class="add-row-btn no-print" onclick="addRow()">+ Add Task Row</button>
+
+    <!-- NOTES -->
+    <div class="section-bar">
+      <div class="section-bar-number">02</div>
+      <div class="section-bar-title">General Notes</div>
+      <div class="section-bar-line"></div>
+    </div>
+
+    <div class="notes-box">
+      <div class="notes-header">Crew Notes & Observations</div>
+      <textarea class="notes-area" placeholder="Any additional observations, areas that needed extra attention, product usage notes, or follow-up items..."></textarea>
+    </div>
+
+    <!-- ISSUES -->
+    <div class="section-bar">
+      <div class="section-bar-number">03</div>
+      <div class="section-bar-title">Issues Flagged</div>
+      <div class="section-bar-line"></div>
+    </div>
+
+    <div class="issues-grid">
+      <div class="issue-box">
+        <div class="issue-header maint">⚠ Maintenance Needed</div>
+        <textarea class="issue-area" placeholder="e.g. Light out in 3rd floor hallway, carpet stain at unit 204 won't lift, wall scuff near elevator needs repaint..."></textarea>
+      </div>
+      <div class="issue-box">
+        <div class="issue-header damage">⊘ Damage / Concern Noted</div>
+        <textarea class="issue-area" placeholder="e.g. Pre-existing water stain on ceiling tile, cracked lobby glass, damaged baseboard near stairwell B..."></textarea>
+      </div>
+    </div>
+
+    <!-- PRODUCTS USED (optional) -->
+    <div class="section-bar">
+      <div class="section-bar-number">04</div>
+      <div class="section-bar-title">Products Used</div>
+      <div class="section-bar-line"></div>
+    </div>
+
+    <div class="notes-box">
+      <div class="notes-header">🌿 All Products EPA Safer Choice Certified — Non-Toxic, No VOCs, Environmentally Safe</div>
+      <textarea class="notes-area" style="min-height:64px;" placeholder="e.g. Betco Green Earth Peroxide Cleaner (floors, general), ECOS Pro Glass Cleaner (mirrors, glass doors), ECOS Pro Stainless Steel Polish (elevator cab)..."></textarea>
+    </div>
+
+    <!-- SIGN-OFF -->
+    <div class="signoff-grid">
+      <div class="signoff-block">
+        <div class="signoff-title">HuronWest Representative</div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Signature</span>
+        </div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Printed Name</span>
+        </div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Date</span>
+        </div>
+      </div>
+      <div class="signoff-block">
+        <div class="signoff-title">Property Manager / Client</div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Signature</span>
+        </div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Printed Name</span>
+        </div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Date</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <div class="footer-text">© 2026 HuronWest Facilities Services LLC &nbsp;·&nbsp; <a href="#">huronwest.com</a> &nbsp;·&nbsp; (734) 555-0192</div>
+    <div class="eco-footer-badge">
+      <svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.71c.95.3 1.96.46 3 .46 5.52 0 10-4.48 10-10h-2c0 4.42-3.58 8-8 8-.87 0-1.73-.14-2.53-.42C9.72 12.68 13 8 17 8z"/></svg>
+      Green Clean Certified
+    </div>
+    <div class="footer-text">Form HW-CR-001 &nbsp;·&nbsp; Retain copy for 12 months</div>
+  </div>
+
+</div>
+
+<script>
+  const defaultTasks = [
+    { task: '', placeholder: 'e.g. Vacuum hallway carpet — all floors' },
+    { task: '', placeholder: 'e.g. Dust mop hard floors' },
+    { task: '', placeholder: 'e.g. Wet mop hard floors' },
+    { task: '', placeholder: 'e.g. Clean elevator cab, mirrors, stainless' },
+    { task: '', placeholder: 'e.g. Clean glass doors & windows' },
+    { task: '', placeholder: 'e.g. Dust windowsills, ledges, fixtures' },
+    { task: '', placeholder: 'e.g. Spot clean walls, switches, outlets' },
+    { task: '', placeholder: 'e.g. Wipe doors, knobs, kick plates' },
+    { task: '', placeholder: 'e.g. Sweep stairwells' },
+    { task: '', placeholder: 'e.g. Remove exterior entry debris' },
+    { task: '', placeholder: 'e.g. Empty trash & replace liners' },
+    { task: '', placeholder: 'e.g. Garage sweeping' },
+  ];
+
+  function createRow(task = '', placeholder = 'Describe task or area...') {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input class="task-input" type="text" value="${task}" placeholder="${placeholder}">
+          <button class="remove-row-btn no-print" onclick="removeRow(this)" title="Remove row">×</button>
+        </div>
+      </td>
+      <td><input type="checkbox" class="check-box"></td>
+      <td><input type="checkbox" class="check-na"></td>
+      <td><input class="note-input" type="text" placeholder="Optional note..."></td>
+    `;
+    return tr;
+  }
+
+  function initTable() {
+    const body = document.getElementById('scopeBody');
+    body.innerHTML = '';
+    defaultTasks.forEach(t => body.appendChild(createRow(t.task, t.placeholder)));
+  }
+
+  function addRow() {
+    const body = document.getElementById('scopeBody');
+    body.appendChild(createRow());
+    body.lastElementChild.querySelector('.task-input').focus();
+  }
+
+  function removeRow(btn) {
+    const row = btn.closest('tr');
+    const body = document.getElementById('scopeBody');
+    if (body.rows.length > 1) row.remove();
+  }
+
+  function resetForm() {
+    if (confirm('Clear all fields and reset the form?')) {
+      document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
+      document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+      initTable();
+    }
+  }
+
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('check-box')) {
+      const na = e.target.closest('tr').querySelector('.check-na');
+      if (e.target.checked && na) na.checked = false;
+    }
+    if (e.target.classList.contains('check-na')) {
+      const done = e.target.closest('tr').querySelector('.check-box');
+      if (e.target.checked && done) done.checked = false;
+    }
+  });
+
+  initTable();
+</script>
+
+<script src="https://hwfs-os-one.vercel.app/erp-bridge.js"></script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HuronWest — Property Walk-Through & Bid Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1A3C34; --forest-mid: #224A40;
+    --sage: #5B8C7E; --mint: #A8D5BA; --mint-pale: #E8F5EC;
+    --leaf: #3A7D44; --cream: #F7FAF8; --white: #FFFFFF;
+    --bark: #3E4A47; --bark-light: #7A8B85; --border: #D5E5DC;
+    --yellow-bg: #FFF9C4; --red-bg: #FFEBEE;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#DEE8E2; font-family:'Outfit',sans-serif; color:var(--forest); -webkit-font-smoothing:antialiased; }
+
+  @media print {
+    body { background:white; }
+    .page { box-shadow:none!important; margin:0!important; max-width:none!important; }
+    .no-print { display:none!important; }
+    @page { margin:0.4in 0.5in; size:letter; }
+    .room-block { break-inside:avoid; }
+  }
+
+  .toolbar { max-width:850px; margin:30px auto 16px; padding:14px 24px; background:var(--forest); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .toolbar-label { font-size:13px; color:var(--mint); font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+  .toolbar-hint { font-size:12px; color:var(--bark-light); }
+  .tool-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); color:#fff; font-family:'Outfit',sans-serif; font-size:12px; font-weight:500; padding:8px 16px; cursor:pointer; transition:all .2s; }
+  .tool-btn:hover { background:var(--leaf); border-color:var(--leaf); }
+
+  .page { max-width:850px; margin:0 auto 40px; background:var(--white); box-shadow:0 20px 60px rgba(26,60,52,.14); }
+
+  .doc-header { background:var(--forest); padding:32px 52px; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden; }
+  .doc-header::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--leaf),var(--mint),var(--leaf)); }
+  .header-left { display:flex; align-items:center; gap:16px; z-index:1; }
+  .header-icon { width:44px; height:44px; border:1.5px solid var(--mint); display:flex; align-items:center; justify-content:center; }
+  .header-icon svg { width:24px; height:24px; fill:var(--mint); }
+  .header-brand { font-family:'DM Serif Display',serif; font-size:22px; color:#fff; line-height:1.15; }
+  .header-brand span { color:var(--mint); }
+  .header-right { text-align:right; z-index:1; }
+  .doc-title { font-family:'DM Serif Display',serif; font-size:20px; color:#fff; margin-bottom:4px; }
+  .doc-subtitle { font-size:11px; color:var(--bark-light); text-transform:uppercase; letter-spacing:2px; font-weight:500; }
+
+  .purpose-bar { background:var(--mint-pale); padding:12px 52px; border-bottom:1px solid var(--border); font-size:12px; color:var(--forest); line-height:1.6; font-style:italic; }
+
+  .doc-body { padding:36px 52px; }
+
+  /* INPUTS */
+  .fi { font-family:'Outfit',sans-serif; font-size:14px; color:var(--forest); border:none; border-bottom:1.5px solid var(--border); padding:4px 4px; background:transparent; outline:none; width:100%; transition:border-color .2s; }
+  .fi:focus { border-bottom-color:var(--leaf); background:var(--mint-pale); }
+  .fi::placeholder { color:#B0C4B8; font-style:italic; }
+  .fi-sm { font-size:13px; }
+
+  /* INFO GRID */
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--border); border-radius:4px; overflow:hidden; margin-bottom:28px; }
+  .info-cell { padding:13px 18px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:3px; }
+  .info-cell:nth-child(odd) { border-right:1px solid var(--border); }
+  .info-cell:nth-last-child(-n+2) { border-bottom:none; }
+  .il { font-size:10px; font-weight:700; color:var(--leaf); text-transform:uppercase; letter-spacing:2px; }
+
+  /* SECTION */
+  .sb { display:flex; align-items:center; gap:14px; margin:32px 0 8px; }
+  .sb-num { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--forest); background:var(--mint-pale); border:1px solid var(--border); padding:3px 8px; border-radius:2px; letter-spacing:1px; }
+  .sb-title { font-family:'DM Serif Display',serif; font-size:18px; color:var(--forest); }
+  .sb-line { flex:1; height:1px; background:var(--border); }
+  .sb-desc { font-size:13px; color:var(--bark-light); margin-bottom:16px; font-style:italic; }
+
+  /* PROPERTY OVERVIEW TABLE */
+  .ov-table { width:100%; border-collapse:collapse; border:1px solid var(--border); border-radius:4px; overflow:hidden; margin-bottom:24px; }
+  .ov-table td { padding:10px 16px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .ov-table tr:last-child td { border-bottom:none; }
+  .ov-table td:first-child { width:35%; background:var(--cream); font-size:12px; font-weight:600; color:var(--forest); text-transform:uppercase; letter-spacing:1px; border-right:1px solid var(--border); }
+  .ov-table td:last-child { width:65%; }
+
+  /* ROOM BLOCKS */
+  .room-block { border:1px solid var(--border); border-radius:4px; overflow:hidden; margin-bottom:20px; }
+  .room-header { background:var(--forest-mid); padding:12px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .room-name-input { font-family:'DM Serif Display',serif; font-size:15px; color:#fff; border:none; background:transparent; outline:none; flex:1; }
+  .room-name-input::placeholder { color:rgba(255,255,255,.4); font-style:italic; }
+  .room-name-input:focus { background:rgba(255,255,255,.08); }
+  .remove-room-btn { font-size:18px; color:rgba(255,255,255,.3); background:none; border:none; cursor:pointer; padding:0 6px; transition:color .15s; }
+  .remove-room-btn:hover { color:#ff6b6b; }
+
+  .room-body { padding:14px 18px; }
+  .room-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 18px; margin-bottom:12px; }
+  .room-field { display:flex; flex-direction:column; gap:2px; }
+  .room-field label { font-size:10px; color:var(--bark-light); text-transform:uppercase; letter-spacing:1px; }
+
+  .condition-row { display:flex; gap:16px; align-items:center; margin:10px 0; }
+  .cond-label { font-size:11px; font-weight:600; color:var(--forest); text-transform:uppercase; letter-spacing:1px; min-width:70px; }
+  .cond-opts { display:flex; gap:4px; }
+  .cond-opt { font-family:'Outfit',sans-serif; font-size:11px; padding:5px 12px; border:1px solid var(--border); cursor:pointer; transition:all .15s; background:var(--white); color:var(--bark); font-weight:500; border-radius:2px; }
+  .cond-opt:hover { border-color:var(--leaf); }
+  .cond-opt.selected { background:var(--leaf); color:#fff; border-color:var(--leaf); }
+  .cond-opt.selected.yellow { background:#F9A825; border-color:#F9A825; }
+  .cond-opt.selected.red { background:#E53935; border-color:#E53935; }
+
+  .room-notes { font-family:'Outfit',sans-serif; font-size:12px; color:var(--forest); border:1px solid var(--border); border-radius:3px; outline:none; width:100%; min-height:48px; padding:8px 12px; resize:vertical; line-height:1.6; margin-top:8px; }
+  .room-notes::placeholder { color:#B8C8C0; font-style:italic; }
+
+  .add-btn { font-family:'Outfit',sans-serif; font-size:12px; font-weight:600; color:var(--leaf); background:var(--mint-pale); border:1px dashed var(--mint); padding:10px 22px; cursor:pointer; transition:all .2s; border-radius:3px; display:inline-flex; align-items:center; gap:6px; }
+  .add-btn:hover { background:var(--leaf); color:#fff; border-style:solid; border-color:var(--leaf); }
+
+  /* SERVICES CHECKLIST */
+  .svc-table { width:100%; border-collapse:collapse; border:1px solid var(--border); border-radius:4px; overflow:hidden; margin-bottom:20px; }
+  .svc-table thead th { font-size:9px; font-weight:700; color:var(--white); text-transform:uppercase; letter-spacing:1.5px; background:var(--forest-mid); padding:10px 14px; text-align:left; }
+  .svc-table thead th:nth-child(2) { text-align:center; }
+  .svc-table thead th:nth-child(3) { text-align:center; }
+  .svc-table tbody tr { border-bottom:1px solid #EDF3EF; }
+  .svc-table tbody tr:nth-child(even) { background:#F7FAF8; }
+  .svc-table td { padding:8px 14px; vertical-align:middle; font-size:13px; color:var(--bark); }
+  .svc-table td:nth-child(2), .svc-table td:nth-child(3) { text-align:center; }
+
+  .chk { width:20px; height:20px; appearance:none; -webkit-appearance:none; border:2px solid var(--border); border-radius:3px; cursor:pointer; position:relative; transition:all .15s; vertical-align:middle; }
+  .chk:checked { background:var(--leaf); border-color:var(--leaf); }
+  .chk:checked::after { content:'✓'; color:#fff; font-size:13px; font-weight:700; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
+
+  /* NOTES BOXES */
+  .notes-box { border:1px solid var(--border); border-radius:4px; overflow:hidden; margin-bottom:20px; }
+  .notes-hdr { padding:10px 16px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:2px; border-bottom:1px solid var(--border); }
+  .notes-hdr.green { background:var(--mint-pale); color:var(--forest); }
+  .notes-hdr.yellow { background:var(--yellow-bg); color:#F57F17; }
+  .notes-hdr.red { background:var(--red-bg); color:#C62828; }
+  .notes-ta { font-family:'Outfit',sans-serif; font-size:13px; color:var(--forest); border:none; outline:none; width:100%; min-height:72px; padding:12px 16px; resize:vertical; line-height:1.7; }
+  .notes-ta::placeholder { color:#B8C8C0; font-style:italic; }
+
+  /* BID CALC */
+  .bid-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--border); border-radius:4px; overflow:hidden; margin:20px 0; }
+  .bid-cell { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:3px; }
+  .bid-cell:nth-child(odd) { border-right:1px solid var(--border); }
+  .bid-cell:nth-last-child(-n+2) { border-bottom:none; }
+  .bid-label { font-size:10px; font-weight:700; color:var(--leaf); text-transform:uppercase; letter-spacing:1.5px; }
+
+  .bid-total { background:var(--forest); padding:18px; display:flex; justify-content:space-between; align-items:center; border-radius:0 0 4px 4px; margin-top:-1px; }
+  .bid-total-label { font-size:11px; font-weight:700; color:var(--mint); text-transform:uppercase; letter-spacing:2px; }
+  .bid-total-input { font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:600; color:#fff; background:transparent; border:none; outline:none; text-align:right; width:160px; }
+  .bid-total-input::placeholder { color:rgba(255,255,255,.3); }
+
+  /* FOOTER */
+  .doc-footer { background:var(--cream); padding:14px 52px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); }
+  .footer-text { font-size:10px; color:var(--bark-light); }
+  .footer-text a { color:var(--leaf); text-decoration:none; }
+  .eco-footer { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--leaf); font-weight:600; letter-spacing:1px; }
+  .eco-footer svg { width:13px; height:13px; fill:var(--leaf); }
+
+  @media (max-width:700px) {
+    .doc-body { padding:24px 20px; }
+    .doc-header, .purpose-bar { padding-left:20px; padding-right:20px; }
+    .info-grid, .bid-grid { grid-template-columns:1fr; }
+    .info-cell:nth-child(odd), .bid-cell:nth-child(odd) { border-right:none; }
+    .room-grid { grid-template-columns:1fr; }
+    .doc-footer { padding:12px 20px; flex-direction:column; gap:6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="toolbar-label">🏢 Walk-Through</span>
+    <span class="toolbar-hint">Bring to site visits. Document everything, build your bid on-site.</span>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="tool-btn" onclick="window.print()">Print / PDF</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="doc-header">
+    <div class="header-left">
+      <div class="header-icon"><svg viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7h1a1 1 0 0 0 .7-1.7l-9-9a1 1 0 0 0-1.4 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.6l7 7H5l7-7z"/></svg></div>
+      <div class="header-brand">Huron<span>West</span><br>Facilities Services</div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">Property Walk-Through & Bid Sheet</div>
+      <div class="doc-subtitle">Site Assessment & Pricing Worksheet</div>
+    </div>
+  </div>
+
+  <div class="purpose-bar">
+    Complete this form during the initial property walk-through. This document feeds your Exhibit A scope of work and final quote. Walk every floor, photograph problem areas, and note all access requirements.
+  </div>
+
+  <div class="doc-body">
+
+    <!-- PROPERTY INFO -->
+    <div class="sb"><div class="sb-num">01</div><div class="sb-title">Property Information</div><div class="sb-line"></div></div>
+
+    <div class="info-grid">
+      <div class="info-cell"><div class="il">Property Name</div><input class="fi" type="text" placeholder="Building or complex name" data-erp="property-name"></div>
+      <div class="info-cell"><div class="il">Walk-Through Date</div><input class="fi" type="text" placeholder="MM/DD/YYYY" data-erp="walkthrough-date"></div>
+      <div class="info-cell"><div class="il">Property Address</div><input class="fi" type="text" placeholder="Full address" data-erp="property-address"></div>
+      <div class="info-cell"><div class="il">Property Type</div><input class="fi" type="text" placeholder="e.g. Multifamily, Office, Mixed-Use, Retail" data-erp="property-type"></div>
+      <div class="info-cell"><div class="il">Client / Owner</div><input class="fi" type="text" placeholder="Company or individual name" data-erp="client-name"></div>
+      <div class="info-cell"><div class="il">Contact On-Site</div><input class="fi" type="text" placeholder="Name, phone, email"></div>
+      <div class="info-cell"><div class="il">Current Cleaning Provider</div><input class="fi" type="text" placeholder="Who cleans now? Why switching?"></div>
+      <div class="info-cell"><div class="il">Client Budget Range</div><input class="fi" type="text" placeholder="Monthly budget if shared"></div>
+    </div>
+
+    <!-- BUILDING OVERVIEW -->
+    <div class="sb"><div class="sb-num">02</div><div class="sb-title">Building Overview</div><div class="sb-line"></div></div>
+    <div class="sb-desc">Document the physical characteristics that determine labor hours and equipment needs.</div>
+
+    <table class="ov-table">
+      <tr><td>Total Building Sq Ft</td><td><input class="fi fi-sm" type="text" placeholder="e.g. 45,000 sq ft"></td></tr>
+      <tr><td>Common Area Sq Ft (estimated)</td><td><input class="fi fi-sm" type="text" placeholder="Lobbies, hallways, stairs, elevator, etc."></td></tr>
+      <tr><td>Number of Floors</td><td><input class="fi fi-sm" type="text" placeholder="e.g. 4 above grade + 1 below"></td></tr>
+      <tr><td>Number of Units / Suites</td><td><input class="fi fi-sm" type="text" placeholder="e.g. 42 residential units"></td></tr>
+      <tr><td>Elevators</td><td><input class="fi fi-sm" type="text" placeholder="Count, type (passenger/freight), stainless? mirrors?"></td></tr>
+      <tr><td>Stairwells</td><td><input class="fi fi-sm" type="text" placeholder="Count, floors served, carpeted or hard surface?"></td></tr>
+      <tr><td>Floor Types — Common Areas</td><td><input class="fi fi-sm" type="text" placeholder="e.g. Polished concrete lobby, VCT hallways, carpet stairs"></td></tr>
+      <tr><td>Carpet Sq Ft (estimated)</td><td><input class="fi fi-sm" type="text" placeholder="For extraction pricing"></td></tr>
+      <tr><td>Parking Garage</td><td><input class="fi fi-sm" type="text" placeholder="Levels, sq ft, enclosed/open, current condition"></td></tr>
+      <tr><td>Exterior Entry Points</td><td><input class="fi fi-sm" type="text" placeholder="Count, type, ramps, canopies"></td></tr>
+      <tr><td>Restrooms (Common Area)</td><td><input class="fi fi-sm" type="text" placeholder="Count, fixtures, supplies provided by whom?"></td></tr>
+      <tr><td>Trash / Recycling Setup</td><td><input class="fi fi-sm" type="text" placeholder="Dumpster location, who provides liners, recycling?"></td></tr>
+      <tr><td>Storage / Janitor Closet</td><td><input class="fi fi-sm" type="text" placeholder="Available? Location? Sink/water access?"></td></tr>
+      <tr><td>Access Method</td><td><input class="fi fi-sm" type="text" placeholder="Key, fob, code, lockbox, meet on-site"></td></tr>
+      <tr><td>Preferred Service Days / Hours</td><td><input class="fi fi-sm" type="text" placeholder="e.g. Tuesdays & Fridays, before 8 AM"></td></tr>
+    </table>
+
+    <!-- ROOM-BY-ROOM ASSESSMENT -->
+    <div class="sb"><div class="sb-num">03</div><div class="sb-title">Area-by-Area Condition Assessment</div><div class="sb-line"></div></div>
+    <div class="sb-desc">Walk each area. Rate condition, note floor type, estimate size, and flag issues. Click condition buttons to select.</div>
+
+    <div id="roomsContainer"></div>
+    <button class="add-btn no-print" onclick="addRoom()">+ Add Area</button>
+
+    <!-- SERVICES NEEDED -->
+    <div class="sb"><div class="sb-num">04</div><div class="sb-title">Services Checklist</div><div class="sb-line"></div></div>
+    <div class="sb-desc">Check services the client needs. Use frequency column to note their expectations.</div>
+
+    <table class="svc-table">
+      <thead><tr><th style="width:44%;">Service</th><th style="width:12%;">Needed</th><th style="width:44%;">Frequency / Notes</th></tr></thead>
+      <tbody id="svcBody"></tbody>
+    </table>
+
+    <!-- SPECIAL CONDITIONS -->
+    <div class="sb"><div class="sb-num">05</div><div class="sb-title">Special Conditions & Concerns</div><div class="sb-line"></div></div>
+
+    <div class="notes-box">
+      <div class="notes-hdr yellow">⚠ Problem Areas / Extra Attention Needed</div>
+      <textarea class="notes-ta" placeholder="e.g. Heavy scuff marks on 2nd floor walls, grout discoloration in lobby, persistent odor in stairwell B, carpet stains in 3rd floor hallway..."></textarea>
+    </div>
+    <div class="notes-box">
+      <div class="notes-hdr red">⊘ Pre-Existing Damage to Document</div>
+      <textarea class="notes-ta" placeholder="e.g. Cracked tile in lobby entrance, water damage on ceiling tile 4th floor, chipped paint on garage ramp wall — document/photograph before starting service."></textarea>
+    </div>
+    <div class="notes-box">
+      <div class="notes-hdr green">🌿 Client Preferences & Requirements</div>
+      <textarea class="notes-ta" placeholder="e.g. Fragrance-free products only, must complete before 8 AM, no service on holidays, tenant complaints about dust, wants monthly report emailed to PM..."></textarea>
+    </div>
+
+    <!-- BID CALCULATION -->
+    <div class="sb"><div class="sb-num">06</div><div class="sb-title">Bid Calculation</div><div class="sb-line"></div></div>
+    <div class="sb-desc">Internal worksheet — calculate your costs and build the quote.</div>
+
+    <div class="bid-grid">
+      <div class="bid-cell"><div class="bid-label">Estimated Labor Hours / Visit</div><input class="fi fi-sm" type="text" placeholder="e.g. 3.5 hrs"></div>
+      <div class="bid-cell"><div class="bid-label">Visits / Month</div><input class="fi fi-sm" type="text" placeholder="e.g. 4 (weekly)"></div>
+      <div class="bid-cell"><div class="bid-label">Labor Rate (Internal)</div><input class="fi fi-sm" type="text" placeholder="e.g. $22/hr"></div>
+      <div class="bid-cell"><div class="bid-label">Monthly Labor Cost</div><input class="fi fi-sm" type="text" placeholder="= hours × visits × rate"></div>
+      <div class="bid-cell"><div class="bid-label">Monthly Supply / Chemical Cost</div><input class="fi fi-sm" type="text" placeholder="e.g. $45/mo"></div>
+      <div class="bid-cell"><div class="bid-label">Equipment Depreciation / Month</div><input class="fi fi-sm" type="text" placeholder="e.g. $30/mo"></div>
+      <div class="bid-cell"><div class="bid-label">Travel / Fuel Cost</div><input class="fi fi-sm" type="text" placeholder="e.g. $20/mo"></div>
+      <div class="bid-cell"><div class="bid-label">Insurance Allocation</div><input class="fi fi-sm" type="text" placeholder="e.g. $15/mo"></div>
+      <div class="bid-cell"><div class="bid-label">Target Margin %</div><input class="fi fi-sm" type="text" placeholder="e.g. 35%"></div>
+      <div class="bid-cell"><div class="bid-label">Carpet Extraction (per visit)</div><input class="fi fi-sm" type="text" placeholder="e.g. $630"></div>
+      <div class="bid-cell"><div class="bid-label">Garage HEPA Vac (per visit)</div><input class="fi fi-sm" type="text" placeholder="e.g. $74"></div>
+      <div class="bid-cell"><div class="bid-label">Emergency Rate</div><input class="fi fi-sm" type="text" placeholder="e.g. $40/hr, 2hr min"></div>
+    </div>
+
+    <div class="bid-total">
+      <div class="bid-total-label">Proposed Monthly Quote</div>
+      <input class="bid-total-input" type="text" placeholder="$0.00" data-erp="proposed-quote">
+    </div>
+
+    <!-- GENERAL NOTES -->
+    <div class="sb" style="margin-top:32px;"><div class="sb-num">07</div><div class="sb-title">Walk-Through Notes</div><div class="sb-line"></div></div>
+    <div class="notes-box">
+      <div class="notes-hdr green">General Observations & Follow-Up Items</div>
+      <textarea class="notes-ta" style="min-height:100px;" placeholder="Anything else observed during the walk-through: overall cleanliness impression, tenant interaction, competitor signage, security considerations, follow-up questions for the client, photos taken, next steps..."></textarea>
+    </div>
+
+    <!-- WALKED BY -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:32px;padding-top:24px;border-top:2px solid var(--forest);">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--leaf);text-transform:uppercase;letter-spacing:2.5px;margin-bottom:16px;">Walked By (HuronWest)</div>
+        <div style="border-bottom:1px solid var(--forest);padding-bottom:4px;display:flex;justify-content:space-between;align-items:flex-end;min-height:34px;margin-bottom:14px;"><input style="font-family:'Outfit',sans-serif;font-size:14px;border:none;outline:none;flex:1;padding:0 8px;background:transparent;color:var(--forest);" type="text"><span style="font-size:10px;color:var(--bark-light);text-transform:uppercase;letter-spacing:1.5px;">Name</span></div>
+        <div style="border-bottom:1px solid var(--forest);padding-bottom:4px;display:flex;justify-content:space-between;align-items:flex-end;min-height:34px;"><input style="font-family:'Outfit',sans-serif;font-size:14px;border:none;outline:none;flex:1;padding:0 8px;background:transparent;color:var(--forest);" type="text"><span style="font-size:10px;color:var(--bark-light);text-transform:uppercase;letter-spacing:1.5px;">Date</span></div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--leaf);text-transform:uppercase;letter-spacing:2.5px;margin-bottom:16px;">Client Representative</div>
+        <div style="border-bottom:1px solid var(--forest);padding-bottom:4px;display:flex;justify-content:space-between;align-items:flex-end;min-height:34px;margin-bottom:14px;"><input style="font-family:'Outfit',sans-serif;font-size:14px;border:none;outline:none;flex:1;padding:0 8px;background:transparent;color:var(--forest);" type="text"><span style="font-size:10px;color:var(--bark-light);text-transform:uppercase;letter-spacing:1.5px;">Name</span></div>
+        <div style="border-bottom:1px solid var(--forest);padding-bottom:4px;display:flex;justify-content:space-between;align-items:flex-end;min-height:34px;"><input style="font-family:'Outfit',sans-serif;font-size:14px;border:none;outline:none;flex:1;padding:0 8px;background:transparent;color:var(--forest);" type="text"><span style="font-size:10px;color:var(--bark-light);text-transform:uppercase;letter-spacing:1.5px;">Date</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="doc-footer">
+    <div class="footer-text">© 2026 HuronWest Facilities Services LLC &nbsp;·&nbsp; <a href="#">huronwest.com</a></div>
+    <div class="eco-footer"><svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.71c.95.3 1.96.46 3 .46 5.52 0 10-4.48 10-10h-2c0 4.42-3.58 8-8 8-.87 0-1.73-.14-2.53-.42C9.72 12.68 13 8 17 8z"/></svg>Green Clean Certified</div>
+    <div class="footer-text">Form HW-BID-001 &nbsp;·&nbsp; Internal Use</div>
+  </div>
+</div>
+
+<script>
+// === ROOM BLOCKS ===
+function addRoom(name='', floor='', sqft='', floorType='') {
+  const c = document.getElementById('roomsContainer');
+  const block = document.createElement('div');
+  block.className = 'room-block';
+  block.innerHTML = `
+    <div class="room-header">
+      <input class="room-name-input" type="text" value="${name}" placeholder="Area Name (e.g. Main Lobby, 2nd Floor Hallway, Stairwell A)">
+      <button class="remove-room-btn no-print" onclick="this.closest('.room-block').remove()" title="Remove">×</button>
+    </div>
+    <div class="room-body">
+      <div class="room-grid">
+        <div class="room-field"><label>Floor / Level</label><input class="fi fi-sm" type="text" value="${floor}" placeholder="e.g. Ground, 2nd, Basement"></div>
+        <div class="room-field"><label>Approx Sq Ft</label><input class="fi fi-sm" type="text" value="${sqft}" placeholder="e.g. 800"></div>
+        <div class="room-field"><label>Floor Type</label><input class="fi fi-sm" type="text" value="${floorType}" placeholder="e.g. VCT, Carpet, Concrete, Tile"></div>
+      </div>
+      <div class="condition-row">
+        <span class="cond-label">Condition:</span>
+        <div class="cond-opts">
+          <button class="cond-opt" onclick="selectCond(this,'good')">Good</button>
+          <button class="cond-opt" onclick="selectCond(this,'fair')">Fair</button>
+          <button class="cond-opt" onclick="selectCond(this,'poor')">Poor</button>
+          <button class="cond-opt" onclick="selectCond(this,'needs-deep')">Needs Deep Clean</button>
+        </div>
+      </div>
+      <textarea class="room-notes" placeholder="Issues observed, special needs, photos taken (reference #), stains, damage, odor, lighting..."></textarea>
+    </div>
+  `;
+  c.appendChild(block);
+}
+
+function selectCond(btn, level) {
+  btn.parentElement.querySelectorAll('.cond-opt').forEach(b => b.classList.remove('selected','yellow','red'));
+  btn.classList.add('selected');
+  if (level === 'fair') btn.classList.add('yellow');
+  if (level === 'poor' || level === 'needs-deep') btn.classList.add('red');
+}
+
+// === SERVICES CHECKLIST ===
+const defaultSvcs = [
+  'Common Area Vacuuming (Carpet)',
+  'Dust Mopping (Hard Floors)',
+  'Wet Mopping (Hard Floors)',
+  'Elevator Cleaning & Stainless Polish',
+  'Glass / Window Cleaning (Interior)',
+  'Routine Dusting (Surfaces, Fixtures)',
+  'High Dusting (Above 6 ft)',
+  'Wall Spot Cleaning / Scuff Removal',
+  'Stairwell Sweeping & Mopping',
+  'Carpet Extraction / Shampooing',
+  'Garage Sweeping',
+  'Garage HEPA Vacuuming',
+  'Exterior Entry Debris Removal',
+  'Restroom Cleaning & Restocking',
+  'Trash Removal & Liner Replacement',
+  'Emergency / On-Call Cleaning',
+  'Deep Clean (Move-Out / Pre-Lease)',
+];
+
+function initSvcs() {
+  const body = document.getElementById('svcBody');
+  defaultSvcs.forEach(s => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${s}</td>
+      <td><input type="checkbox" class="chk"></td>
+      <td><input class="fi fi-sm" type="text" placeholder="e.g. 1x/week, 2x/month, as needed..."></td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+// INIT
+const defaultRooms = [
+  { name:'Main Lobby / Entrance', floor:'Ground', sqft:'', floorType:'' },
+  { name:'Hallways', floor:'All Floors', sqft:'', floorType:'' },
+  { name:'Elevator(s)', floor:'All Floors', sqft:'', floorType:'' },
+  { name:'Stairwell(s)', floor:'All Floors', sqft:'', floorType:'' },
+  { name:'Parking Garage', floor:'Below Grade', sqft:'', floorType:'' },
+];
+defaultRooms.forEach(r => addRoom(r.name, r.floor, r.sqft, r.floorType));
+initSvcs();
+</script>
+
+<script src="https://hwfs-os-one.vercel.app/erp-bridge.js"></script>
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HuronWest — Master Service Agreement</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1A3C34;
+    --forest-mid: #224A40;
+    --forest-light: #2D5E51;
+    --sage: #5B8C7E;
+    --mint: #A8D5BA;
+    --mint-pale: #E8F5EC;
+    --leaf: #3A7D44;
+    --cream: #F7FAF8;
+    --white: #FFFFFF;
+    --bark: #3E4A47;
+    --bark-light: #7A8B85;
+    --border: #D5E5DC;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #DEE8E2;
+    font-family: 'Outfit', sans-serif;
+    color: var(--forest);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
+    .no-print { display: none !important; }
+    @page { margin: 0.5in 0.6in; size: letter; }
+    .page-break { page-break-before: always; }
+    .clause { break-inside: avoid; }
+  }
+
+  .toolbar {
+    max-width: 850px;
+    margin: 30px auto 16px;
+    padding: 14px 24px;
+    background: var(--forest);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 12px; }
+  .toolbar-label { font-size: 13px; color: var(--mint); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .toolbar-hint { font-size: 12px; color: var(--bark-light); }
+  .tool-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tool-btn:hover { background: var(--leaf); border-color: var(--leaf); }
+
+  /* ====== PAGE ====== */
+  .page {
+    max-width: 850px;
+    margin: 0 auto 40px;
+    background: var(--white);
+    box-shadow: 0 20px 60px rgba(26,60,52,0.14);
+  }
+
+  /* ====== HEADER ====== */
+  .doc-header {
+    background: var(--forest);
+    padding: 36px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .doc-header::before {
+    content: '';
+    position: absolute;
+    top: -60%;
+    right: -15%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(168,213,186,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .doc-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--leaf), var(--mint), var(--leaf));
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; position: relative; z-index: 1; }
+  .header-icon {
+    width: 44px; height: 44px;
+    border: 1.5px solid var(--mint);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-icon svg { width: 24px; height: 24px; fill: var(--mint); }
+  .header-brand { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--white); line-height: 1.15; }
+  .header-brand span { color: var(--mint); }
+  .header-right { text-align: right; position: relative; z-index: 1; }
+  .doc-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--white); margin-bottom: 4px; }
+  .doc-subtitle { font-size: 11px; color: var(--bark-light); text-transform: uppercase; letter-spacing: 2px; font-weight: 500; }
+
+  /* ====== BODY ====== */
+  .doc-body { padding: 44px 56px; }
+
+  /* ====== INPUTS ====== */
+  .fill-in {
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    font-family: 'Outfit', sans-serif;
+    font-size: inherit;
+    color: var(--forest);
+    background: transparent;
+    outline: none;
+    padding: 2px 4px;
+    min-width: 180px;
+    transition: border-color 0.2s;
+  }
+  .fill-in:focus { border-bottom-color: var(--leaf); background: var(--mint-pale); }
+  .fill-in::placeholder { color: #B0C4B8; font-style: italic; }
+  .fill-in.short { min-width: 80px; max-width: 120px; }
+  .fill-in.med { min-width: 140px; max-width: 200px; }
+  .fill-in.wide { min-width: 280px; width: 100%; }
+  .fill-in.date { min-width: 120px; max-width: 140px; }
+
+  /* ====== PARTIES BOX ====== */
+  .parties-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 24px 0 32px;
+  }
+  .party-box {
+    padding: 22px 24px;
+  }
+  .party-box:first-child { border-right: 1px solid var(--border); }
+  .party-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--leaf);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .party-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .party-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+  .party-field-label {
+    font-size: 10px;
+    color: var(--bark-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ====== SECTION HEADERS ====== */
+  .section-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--forest);
+    margin: 36px 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-num .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--forest);
+    background: var(--mint-pale);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+  .section-num::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .clause {
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--bark);
+  }
+  .clause strong {
+    color: var(--forest);
+    font-weight: 600;
+  }
+  .sub-clause {
+    margin: 10px 0 10px 24px;
+    font-size: 13.5px;
+    line-height: 1.85;
+    color: var(--bark);
+  }
+  .sub-clause-letter {
+    font-weight: 600;
+    color: var(--forest);
+    margin-right: 4px;
+  }
+
+  /* ====== EXHIBIT TABLE ====== */
+  .exhibit-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .exhibit-table thead th {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    background: var(--forest-mid);
+    padding: 11px 14px;
+    text-align: left;
+  }
+  .exhibit-table tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #EDF3EF;
+    font-size: 13px;
+    color: var(--bark);
+    vertical-align: middle;
+  }
+  .exhibit-table tbody tr:nth-child(even) { background: #F7FAF8; }
+  .exhibit-table .fill-cell {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--forest);
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    padding: 2px 0;
+  }
+  .exhibit-table .fill-cell::placeholder { color: #B8C8C0; font-style: italic; }
+  .exhibit-table .fill-cell:focus { background: var(--mint-pale); }
+
+  /* ====== SIGNATURE BLOCK ====== */
+  .sig-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 2px solid var(--forest);
+  }
+  .sig-block { display: flex; flex-direction: column; gap: 22px; }
+  .sig-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--leaf);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+  }
+  .sig-row {
+    border-bottom: 1px solid var(--forest);
+    padding-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    min-height: 36px;
+  }
+  .sig-row-label {
+    font-size: 10px;
+    color: var(--bark-light);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    flex-shrink: 0;
+  }
+  .sig-row-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    border: none;
+    outline: none;
+    flex: 1;
+    padding: 0 8px;
+    background: transparent;
+    color: var(--forest);
+  }
+
+  /* ====== FOOTER ====== */
+  .doc-footer {
+    background: var(--cream);
+    padding: 14px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .footer-text { font-size: 10px; color: var(--bark-light); }
+  .footer-text a { color: var(--leaf); text-decoration: none; }
+  .eco-footer {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; color: var(--leaf); font-weight: 600; letter-spacing: 1px;
+  }
+  .eco-footer svg { width: 13px; height: 13px; fill: var(--leaf); }
+
+  /* ====== INITIAL LINES ====== */
+  .initials-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 32px;
+    margin: 8px 0 0;
+    padding: 6px 0;
+    border-top: 1px dashed var(--border);
+  }
+  .initial-box {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; color: var(--bark-light); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .initial-line {
+    width: 48px;
+    border-bottom: 1px solid var(--forest);
+    display: inline-block;
+  }
+
+  @media (max-width: 700px) {
+    .doc-body { padding: 28px 20px; }
+    .doc-header { padding: 24px 20px; flex-direction: column; gap: 14px; }
+    .parties-grid { grid-template-columns: 1fr; }
+    .party-box:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+    .sig-section { grid-template-columns: 1fr; }
+    .doc-footer { padding: 12px 20px; flex-direction: column; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <div class="toolbar-left">
+    <span class="toolbar-label">📄 MSA Template</span>
+    <span class="toolbar-hint">Click underlined fields to fill in. Ctrl+P to print or save as PDF.</span>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="tool-btn" onclick="window.print()">Print / PDF</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="doc-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7h1a1 1 0 0 0 .7-1.7l-9-9a1 1 0 0 0-1.4 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.6l7 7H5l7-7z"/></svg>
+      </div>
+      <div class="header-brand">Huron<span>West</span><br>Facilities Services</div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">Master Service Agreement</div>
+      <div class="doc-subtitle">Facility Maintenance Services</div>
+    </div>
+  </div>
+
+  <div class="doc-body">
+
+    <!-- PREAMBLE -->
+    <div class="clause">
+      This Master Service Agreement ("Agreement") is entered into as of
+      <input class="fill-in date" type="text" placeholder="MM/DD/YYYY">,
+      by and between the following parties:
+    </div>
+
+    <!-- PARTIES -->
+    <div class="parties-grid">
+      <div class="party-box">
+        <div class="party-label">Service Provider ("Provider")</div>
+        <div class="party-field">
+          <div class="party-field-label">Legal Entity</div>
+          <input class="fill-in wide" type="text" value="HuronWest Facilities Services LLC">
+        </div>
+        <div class="party-field">
+          <div class="party-field-label">Address</div>
+          <input class="fill-in wide" type="text" placeholder="7883 Jackson Road, Ann Arbor, MI 48103">
+        </div>
+        <div class="party-field">
+          <div class="party-field-label">Primary Contact</div>
+          <input class="fill-in wide" type="text" placeholder="Name, title">
+        </div>
+        <div class="party-field">
+          <div class="party-field-label">Phone / Email</div>
+          <input class="fill-in wide" type="text" placeholder="Phone and email">
+        </div>
+      </div>
+      <div class="party-box">
+        <div class="party-label">Client ("Client")</div>
+        <div class="party-field">
+          <div class="party-field-label">Legal Entity</div>
+          <input class="fill-in wide" type="text" placeholder="Client company or individual name" data-erp="client-name">
+        </div>
+        <div class="party-field">
+          <div class="party-field-label">Address</div>
+          <input class="fill-in wide" type="text" placeholder="Client mailing address" data-erp="client-address">
+        </div>
+        <div class="party-field">
+          <div class="party-field-label">Primary Contact</div>
+          <input class="fill-in wide" type="text" placeholder="Name, title">
+        </div>
+        <div class="party-field">
+          <div class="party-field-label">Phone / Email</div>
+          <input class="fill-in wide" type="text" placeholder="Phone and email">
+        </div>
+      </div>
+    </div>
+
+    <div class="clause">
+      Provider and Client are collectively referred to as the "Parties." In consideration of the mutual covenants herein, the Parties agree as follows:
+    </div>
+
+    <!-- SECTION 1 -->
+    <div class="section-num"><span class="num">§1</span> Scope of Services <span style="flex:1;height:1px;background:var(--border);"></span></div>
+    <div class="clause">
+      <strong>1.1</strong> &nbsp;Provider shall perform the janitorial, cleaning, and facility maintenance services described in <strong>Exhibit A — Scope of Work</strong>, attached hereto and incorporated by reference, at the property located at:
+    </div>
+    <div style="margin:12px 0 12px 24px;">
+      <input class="fill-in wide" type="text" placeholder="Full property address" style="font-size:15px;font-weight:500;" data-erp="property-address">
+      <div style="font-size:11px;color:var(--bark-light);margin-top:4px;">(the "Property")</div>
+    </div>
+    <div class="clause">
+      <strong>1.2</strong> &nbsp;Services shall be performed at the frequencies and to the standards set forth in Exhibit A. Provider shall furnish all labor, equipment, materials, and EPA Safer Choice certified cleaning products necessary to complete the scope unless otherwise specified.
+    </div>
+    <div class="clause">
+      <strong>1.3</strong> &nbsp;Additional services not described in Exhibit A may be requested by Client in writing and will be billed at the rates described in Section 3.
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="section-num"><span class="num">§2</span> Term & Renewal</div>
+    <div class="clause">
+      <strong>2.1</strong> &nbsp;This Agreement shall commence on
+      <input class="fill-in date" type="text" placeholder="Start Date" data-erp="start-date">
+      and continue for an initial term of
+      <input class="fill-in short" type="text" placeholder="12"> months
+      (the "Initial Term"), ending on
+      <input class="fill-in date" type="text" placeholder="End Date" data-erp="end-date">.
+    </div>
+    <div class="clause">
+      <strong>2.2</strong> &nbsp;Following the Initial Term, this Agreement shall automatically renew for successive
+      <input class="fill-in short" type="text" placeholder="12">-month periods
+      unless either Party provides written notice of non-renewal at least
+      <input class="fill-in short" type="text" placeholder="30"> days prior to the end of the then-current term.
+    </div>
+    <div class="clause">
+      <strong>2.3</strong> &nbsp;Provider may propose rate adjustments for renewal terms with at least 60 days written notice prior to the renewal date.
+    </div>
+
+    <!-- SECTION 3 -->
+    <div class="section-num"><span class="num">§3</span> Pricing & Payment</div>
+    <div class="clause">
+      <strong>3.1</strong> &nbsp;Client agrees to pay Provider the following for services rendered:
+    </div>
+
+    <table class="exhibit-table">
+      <thead>
+        <tr>
+          <th style="width:40%;">Service Description</th>
+          <th style="width:20%;">Frequency</th>
+          <th style="width:20%;">Rate</th>
+          <th style="width:20%;">Billing Cycle</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input class="fill-cell" type="text" placeholder="e.g. Core Janitorial — Common Areas"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. Weekly"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. $850/mo"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. Monthly"></td>
+        </tr>
+        <tr>
+          <td><input class="fill-cell" type="text" placeholder="e.g. Carpet Extraction"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. 2x/year"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. $630/visit"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. Per Visit"></td>
+        </tr>
+        <tr>
+          <td><input class="fill-cell" type="text" placeholder="e.g. Garage HEPA Vacuuming"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. Monthly"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. $74/visit"></td>
+          <td><input class="fill-cell" type="text" placeholder="e.g. Per Visit"></td>
+        </tr>
+        <tr>
+          <td><input class="fill-cell" type="text" placeholder="Additional service..."></td>
+          <td><input class="fill-cell" type="text" placeholder=""></td>
+          <td><input class="fill-cell" type="text" placeholder=""></td>
+          <td><input class="fill-cell" type="text" placeholder=""></td>
+        </tr>
+        <tr>
+          <td><input class="fill-cell" type="text" placeholder="Additional service..."></td>
+          <td><input class="fill-cell" type="text" placeholder=""></td>
+          <td><input class="fill-cell" type="text" placeholder=""></td>
+          <td><input class="fill-cell" type="text" placeholder=""></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="clause">
+      <strong>3.2</strong> &nbsp;Emergency and unscheduled services shall be billed at
+      $<input class="fill-in short" type="text" placeholder="40"> per labor-hour, with a
+      <input class="fill-in short" type="text" placeholder="2">-hour minimum, invoiced upon completion.
+    </div>
+    <div class="clause">
+      <strong>3.3</strong> &nbsp;Invoices shall be issued
+      <input class="fill-in med" type="text" placeholder="e.g. on the 1st of each month">
+      and are due within
+      <input class="fill-in short" type="text" placeholder="30"> days of invoice date ("Net
+      <input class="fill-in short" type="text" placeholder="30">").
+    </div>
+    <div class="clause">
+      <strong>3.4</strong> &nbsp;Late payments shall accrue interest at the rate of
+      <input class="fill-in short" type="text" placeholder="1.5">% per month (or the maximum rate permitted by law, whichever is less) on any balance remaining unpaid after the due date.
+    </div>
+    <div class="clause">
+      <strong>3.5</strong> &nbsp;Client shall reimburse Provider for any pre-approved materials, supplies, or third-party costs incurred at Client's request, at cost plus
+      <input class="fill-in short" type="text" placeholder="10">%.
+    </div>
+
+    <div class="initials-row">
+      <div class="initial-box">Provider Initials: <span class="initial-line"></span></div>
+      <div class="initial-box">Client Initials: <span class="initial-line"></span></div>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="section-num"><span class="num">§4</span> Insurance & Liability</div>
+    <div class="clause">
+      <strong>4.1</strong> &nbsp;Provider shall maintain, at its own expense, the following insurance coverages throughout the term of this Agreement:
+    </div>
+    <div class="sub-clause">
+      <span class="sub-clause-letter">(a)</span> Commercial General Liability: not less than $<input class="fill-in short" type="text" placeholder="1,000,000"> per occurrence and $<input class="fill-in short" type="text" placeholder="2,000,000"> aggregate.<br>
+      <span class="sub-clause-letter">(b)</span> Workers' Compensation: as required by the State of Michigan.<br>
+      <span class="sub-clause-letter">(c)</span> Commercial Auto Liability (if applicable): not less than $<input class="fill-in short" type="text" placeholder="1,000,000"> combined single limit.
+    </div>
+    <div class="clause">
+      <strong>4.2</strong> &nbsp;Upon request, Provider shall furnish Client a Certificate of Insurance naming Client as an additional insured.
+    </div>
+    <div class="clause">
+      <strong>4.3</strong> &nbsp;Provider's total liability under this Agreement shall not exceed the total fees paid by Client during the
+      <input class="fill-in short" type="text" placeholder="12">-month period preceding the claim.
+    </div>
+    <div class="clause">
+      <strong>4.4</strong> &nbsp;Neither Party shall be liable for indirect, incidental, consequential, or punitive damages arising from this Agreement.
+    </div>
+
+    <!-- SECTION 5 -->
+    <div class="section-num"><span class="num">§5</span> Indemnification</div>
+    <div class="clause">
+      <strong>5.1</strong> &nbsp;Provider shall indemnify, defend, and hold harmless Client from and against any claims, damages, losses, or expenses (including reasonable attorneys' fees) arising from Provider's negligent acts or omissions in the performance of services under this Agreement.
+    </div>
+    <div class="clause">
+      <strong>5.2</strong> &nbsp;Client shall indemnify, defend, and hold harmless Provider from and against any claims arising from hazardous conditions at the Property that Client knew or should have known about and failed to disclose.
+    </div>
+
+    <!-- SECTION 6 -->
+    <div class="section-num"><span class="num">§6</span> Termination</div>
+    <div class="clause">
+      <strong>6.1</strong> &nbsp;Either Party may terminate this Agreement for convenience by providing
+      <input class="fill-in short" type="text" placeholder="30"> days' written notice to the other Party.
+    </div>
+    <div class="clause">
+      <strong>6.2</strong> &nbsp;Either Party may terminate this Agreement immediately upon written notice if the other Party materially breaches any term and fails to cure such breach within
+      <input class="fill-in short" type="text" placeholder="15"> days of receiving written notice of the breach.
+    </div>
+    <div class="clause">
+      <strong>6.3</strong> &nbsp;Upon termination, Client shall pay Provider for all services performed and expenses incurred through the effective date of termination.
+    </div>
+    <div class="clause">
+      <strong>6.4</strong> &nbsp;Provider shall return all Client keys, access devices, and proprietary materials within
+      <input class="fill-in short" type="text" placeholder="5"> business days of termination.
+    </div>
+
+    <!-- SECTION 7 -->
+    <div class="section-num"><span class="num">§7</span> Quality & Standards</div>
+    <div class="clause">
+      <strong>7.1</strong> &nbsp;All cleaning products used by Provider shall carry the U.S. EPA Safer Choice certification or equivalent environmental safety certification, unless Client provides prior written approval for an alternative product.
+    </div>
+    <div class="clause">
+      <strong>7.2</strong> &nbsp;Provider shall complete and deliver a Cleaning Completion Report (Form HW-CR-001) to the Client's designated representative upon completion of each scheduled service visit.
+    </div>
+    <div class="clause">
+      <strong>7.3</strong> &nbsp;Client may request a re-clean of any area within
+      <input class="fill-in short" type="text" placeholder="24"> hours of a service visit at no additional charge if the work does not meet the standards set forth in Exhibit A.
+    </div>
+
+    <!-- SECTION 8 -->
+    <div class="section-num"><span class="num">§8</span> Access & Security</div>
+    <div class="clause">
+      <strong>8.1</strong> &nbsp;Client shall provide Provider reasonable access to the Property during agreed service hours. Client shall furnish keys, access codes, or fobs as necessary.
+    </div>
+    <div class="clause">
+      <strong>8.2</strong> &nbsp;Provider's personnel shall comply with all Property rules, security protocols, and Client instructions regarding restricted areas.
+    </div>
+    <div class="clause">
+      <strong>8.3</strong> &nbsp;Provider shall notify Client immediately of any security incidents, damage observed, or maintenance issues discovered during service.
+    </div>
+
+    <!-- SECTION 9 -->
+    <div class="section-num"><span class="num">§9</span> General Provisions</div>
+    <div class="clause">
+      <strong>9.1 &nbsp;Independent Contractor.</strong> Provider is an independent contractor and not an employee, agent, or partner of Client. Provider shall be solely responsible for all taxes, insurance, and benefits for its personnel.
+    </div>
+    <div class="clause">
+      <strong>9.2 &nbsp;Non-Solicitation.</strong> During the term and for
+      <input class="fill-in short" type="text" placeholder="12"> months thereafter, neither Party shall solicit or hire the other Party's employees or subcontractors who were involved in providing or receiving services under this Agreement.
+    </div>
+    <div class="clause">
+      <strong>9.3 &nbsp;Force Majeure.</strong> Neither Party shall be liable for failure to perform due to circumstances beyond its reasonable control, including natural disasters, pandemics, government orders, or acts of war.
+    </div>
+    <div class="clause">
+      <strong>9.4 &nbsp;Entire Agreement.</strong> This Agreement, together with all Exhibits, constitutes the entire agreement between the Parties and supersedes all prior negotiations, discussions, or agreements.
+    </div>
+    <div class="clause">
+      <strong>9.5 &nbsp;Amendments.</strong> This Agreement may only be modified by a written instrument signed by both Parties.
+    </div>
+    <div class="clause">
+      <strong>9.6 &nbsp;Governing Law.</strong> This Agreement shall be governed by and construed in accordance with the laws of the State of Michigan, without regard to its conflict of law provisions. Any disputes shall be resolved in the courts of Washtenaw County, Michigan.
+    </div>
+    <div class="clause">
+      <strong>9.7 &nbsp;Notices.</strong> All notices under this Agreement shall be in writing and delivered by email (with confirmation) or certified mail to the addresses listed above.
+    </div>
+    <div class="clause">
+      <strong>9.8 &nbsp;Severability.</strong> If any provision of this Agreement is held invalid or unenforceable, the remaining provisions shall continue in full force and effect.
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="sig-section">
+      <div class="sig-block">
+        <div class="sig-title">Provider — HuronWest Facilities Services LLC</div>
+        <div class="sig-row">
+          <input class="sig-row-input" type="text">
+          <span class="sig-row-label">Signature</span>
+        </div>
+        <div class="sig-row">
+          <input class="sig-row-input" type="text">
+          <span class="sig-row-label">Printed Name</span>
+        </div>
+        <div class="sig-row">
+          <input class="sig-row-input" type="text">
+          <span class="sig-row-label">Title</span>
+        </div>
+        <div class="sig-row">
+          <input class="sig-row-input" type="text">
+          <span class="sig-row-label">Date</span>
+        </div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-title">Client</div>
+        <div class="sig-row">
+          <input class="sig-row-input" type="text">
+          <span class="sig-row-label">Signature</span>
+        </div>
+        <div class="sig-row">
+          <input class="sig-row-input" type="text">
+          <span class="sig-row-label">Printed Name</span>
+        </div>
+        <div class="sig-row">
+          <input class="sig-row-input" type="text">
+          <span class="sig-row-label">Title</span>
+        </div>
+        <div class="sig-row">
+          <input class="sig-row-input" type="text">
+          <span class="sig-row-label">Date</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:48px; padding-top:24px; border-top:1px solid var(--border); text-align:center;">
+      <div style="font-size:12px; color:var(--bark-light); font-style:italic;">
+        Exhibit A — Scope of Work to be attached separately.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="doc-footer">
+    <div class="footer-text">© 2026 HuronWest Facilities Services LLC &nbsp;·&nbsp; <a href="#">huronwest.com</a></div>
+    <div class="eco-footer">
+      <svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.71c.95.3 1.96.46 3 .46 5.52 0 10-4.48 10-10h-2c0 4.42-3.58 8-8 8-.87 0-1.73-.14-2.53-.42C9.72 12.68 13 8 17 8z"/></svg>
+      Green Clean Certified
+    </div>
+    <div class="footer-text">Form HW-MSA-001</div>
+  </div>
+
+</div>
+
+<script src="https://hwfs-os-one.vercel.app/erp-bridge.js"></script>
+</body>
+</html>

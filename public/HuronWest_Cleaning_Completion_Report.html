@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HuronWest — Cleaning Completion Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0F1A2E;
+    --navy-mid: #1B2A4A;
+    --gold: #C9A84C;
+    --gold-light: #E8D5A0;
+    --gold-pale: #FBF5E6;
+    --cream: #FAF8F3;
+    --white: #FFFFFF;
+    --slate: #4A5568;
+    --slate-light: #94A3B8;
+    --border: #E2E2E2;
+    --input-bg: #F7FAFD;
+    --green: #2D6A4F;
+    --green-bg: #E8F5E9;
+    --yellow-bg: #FFF9C4;
+    --red-bg: #FFEBEE;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #E8E4DD;
+    font-family: 'Outfit', sans-serif;
+    color: var(--navy);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    input, textarea, select { border-color: #CCC !important; }
+    .add-row-btn, .remove-row-btn { display: none !important; }
+    @page { margin: 0.4in; size: letter; }
+  }
+
+  /* ====== EDIT BAR ====== */
+  .toolbar {
+    max-width: 850px;
+    margin: 30px auto 16px;
+    padding: 14px 24px;
+    background: var(--navy-mid);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .toolbar-label {
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .toolbar-hint {
+    font-size: 12px;
+    color: var(--slate-light);
+  }
+  .toolbar-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .tool-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tool-btn:hover {
+    background: var(--gold);
+    color: var(--navy);
+    border-color: var(--gold);
+  }
+
+  /* ====== PAGE ====== */
+  .page {
+    max-width: 850px;
+    margin: 0 auto 40px;
+    background: var(--white);
+    box-shadow: 0 20px 60px rgba(15,26,46,0.12);
+    padding: 0;
+  }
+
+  /* ====== HEADER ====== */
+  .doc-header {
+    background: var(--navy);
+    padding: 36px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+  }
+  .doc-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .header-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--gold);
+  }
+  .header-brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--white);
+    line-height: 1.15;
+  }
+  .header-brand span { color: var(--gold); }
+  .header-right {
+    text-align: right;
+  }
+  .doc-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+  .doc-subtitle {
+    font-size: 11px;
+    color: var(--slate-light);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 500;
+  }
+
+  /* ====== BODY ====== */
+  .doc-body {
+    padding: 40px 48px;
+  }
+
+  /* ====== INFO GRID ====== */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+  .info-cell {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .info-cell:nth-child(odd) {
+    border-right: 1px solid var(--border);
+  }
+  .info-cell:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+  .info-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .info-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    color: var(--navy);
+    border: none;
+    border-bottom: 1px dashed var(--border);
+    padding: 4px 0;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .info-input:focus {
+    border-bottom-color: var(--gold);
+  }
+  .info-input::placeholder {
+    color: #C0C0C0;
+    font-style: italic;
+  }
+
+  /* ====== SECTION DIVIDER ====== */
+  .section-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 36px 0 20px;
+  }
+  .section-bar-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--gold);
+    background: var(--gold-pale);
+    padding: 4px 10px;
+    letter-spacing: 2px;
+  }
+  .section-bar-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--navy);
+  }
+  .section-bar-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ====== SCOPE TABLE ====== */
+  .scope-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+  }
+  .scope-table thead th {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: var(--navy-mid);
+    padding: 12px 14px;
+    text-align: left;
+  }
+  .scope-table thead th:nth-child(1) { width: 38%; }
+  .scope-table thead th:nth-child(2) { width: 14%; text-align: center; }
+  .scope-table thead th:nth-child(3) { width: 14%; text-align: center; }
+  .scope-table thead th:nth-child(4) { width: 34%; }
+
+  .scope-table tbody tr {
+    border-bottom: 1px solid #F0F0F0;
+    transition: background 0.15s;
+  }
+  .scope-table tbody tr:nth-child(even) {
+    background: #FAFAFA;
+  }
+  .scope-table tbody tr:hover {
+    background: var(--gold-pale);
+  }
+  .scope-table td {
+    padding: 10px 14px;
+    vertical-align: middle;
+  }
+  .scope-table td:nth-child(2),
+  .scope-table td:nth-child(3) {
+    text-align: center;
+  }
+
+  .task-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    padding: 2px 0;
+  }
+  .task-input::placeholder {
+    color: #C8C8C8;
+    font-style: italic;
+  }
+
+  /* Custom checkbox */
+  .check-box {
+    width: 22px;
+    height: 22px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .check-box:checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check-box:checked::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .check-na {
+    width: 22px;
+    height: 22px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .check-na:checked {
+    background: var(--slate-light);
+    border-color: var(--slate-light);
+  }
+  .check-na:checked::after {
+    content: '—';
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .note-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: var(--slate);
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    padding: 2px 0;
+  }
+  .note-input::placeholder {
+    color: #D0D0D0;
+    font-style: italic;
+  }
+
+  .add-row-btn {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    background: var(--gold-pale);
+    border: 1px dashed var(--gold-light);
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .add-row-btn:hover {
+    background: var(--gold);
+    color: var(--navy);
+    border-style: solid;
+  }
+  .remove-row-btn {
+    font-size: 14px;
+    color: #CCC;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .remove-row-btn:hover { color: #E53935; }
+
+  /* ====== NOTES SECTION ====== */
+  .notes-box {
+    border: 1px solid var(--border);
+    padding: 0;
+    margin-bottom: 32px;
+  }
+  .notes-header {
+    background: #F8F8F8;
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .notes-area {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    border: none;
+    outline: none;
+    width: 100%;
+    min-height: 100px;
+    padding: 14px 16px;
+    resize: vertical;
+    line-height: 1.8;
+  }
+  .notes-area::placeholder {
+    color: #C8C8C8;
+    font-style: italic;
+  }
+
+  /* ====== ISSUES FLAGGED ====== */
+  .issues-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .issue-box {
+    border: 1px solid var(--border);
+  }
+  .issue-header {
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .issue-header.maint {
+    background: var(--yellow-bg);
+    color: #F57F17;
+  }
+  .issue-header.damage {
+    background: var(--red-bg);
+    color: #C62828;
+  }
+  .issue-area {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    border: none;
+    outline: none;
+    width: 100%;
+    min-height: 72px;
+    padding: 12px 16px;
+    resize: vertical;
+    line-height: 1.7;
+  }
+  .issue-area::placeholder {
+    color: #D0D0D0;
+    font-style: italic;
+  }
+
+  /* ====== SIGN-OFF ====== */
+  .signoff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 2px solid var(--navy);
+  }
+  .signoff-block {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .signoff-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+  }
+  .sig-line {
+    border-bottom: 1px solid var(--navy);
+    padding-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    min-height: 36px;
+  }
+  .sig-label {
+    font-size: 10px;
+    color: var(--slate-light);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    flex-shrink: 0;
+  }
+  .sig-input {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    border: none;
+    outline: none;
+    flex: 1;
+    text-align: left;
+    padding: 0 8px;
+    background: transparent;
+    color: var(--navy);
+  }
+
+  /* ====== FOOTER ====== */
+  .doc-footer {
+    background: var(--cream);
+    padding: 16px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #E8E4DD;
+  }
+  .footer-text {
+    font-size: 10px;
+    color: var(--slate-light);
+    letter-spacing: 0.5px;
+  }
+  .footer-text a {
+    color: var(--gold);
+    text-decoration: none;
+  }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 700px) {
+    .doc-body { padding: 28px 24px; }
+    .doc-header { padding: 28px 24px; flex-direction: column; gap: 16px; text-align: center; }
+    .header-right { text-align: center; }
+    .info-grid { grid-template-columns: 1fr; }
+    .info-cell:nth-child(odd) { border-right: none; }
+    .info-cell { border-bottom: 1px solid var(--border) !important; }
+    .info-cell:last-child { border-bottom: none !important; }
+    .issues-grid { grid-template-columns: 1fr; }
+    .signoff-grid { grid-template-columns: 1fr; }
+    .toolbar { margin: 16px 10px; }
+    .page { margin: 0 10px 30px; }
+    .doc-footer { padding: 14px 24px; flex-direction: column; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ====== TOOLBAR (non-printing) ====== -->
+<div class="toolbar no-print">
+  <div class="toolbar-left">
+    <span class="toolbar-label">✏️ Live Form</span>
+    <span class="toolbar-hint">Fill in fields, check boxes, add/remove task rows. Ctrl+P to print or save as PDF.</span>
+  </div>
+  <div class="toolbar-actions">
+    <button class="tool-btn" onclick="resetForm()">Clear All</button>
+    <button class="tool-btn" onclick="window.print()">Print / PDF</button>
+  </div>
+</div>
+
+<!-- ====== PAGE ====== -->
+<div class="page" id="report">
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7h1a1 1 0 0 0 .7-1.7l-9-9a1 1 0 0 0-1.4 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4zm2-15.6l7 7H5l7-7z"/></svg>
+      </div>
+      <div class="header-brand">Huron<span>West</span><br>Facilities Services</div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">Cleaning Completion Report</div>
+      <div class="doc-subtitle">Service Verification & Handoff</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="doc-body">
+
+    <!-- JOB INFO -->
+    <div class="info-grid">
+      <div class="info-cell">
+        <div class="info-label">Property Name</div>
+        <input class="info-input" type="text" placeholder="e.g. 309 N. Ashley" data-erp="property-address">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Date of Service</div>
+        <input class="info-input" type="text" placeholder="MM / DD / YYYY" data-erp="service-date">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Service Type</div>
+        <input class="info-input" type="text" placeholder="e.g. Weekly Clean, Biannual Carpet, Emergency" data-erp="service-type">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Crew Lead</div>
+        <input class="info-input" type="text" placeholder="Name of person on-site" data-erp="crew-lead">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Arrival Time</div>
+        <input class="info-input" type="text" placeholder="e.g. 8:00 AM">
+      </div>
+      <div class="info-cell">
+        <div class="info-label">Departure Time</div>
+        <input class="info-input" type="text" placeholder="e.g. 11:30 AM">
+      </div>
+    </div>
+
+    <!-- SCOPE OF WORK -->
+    <div class="section-bar">
+      <div class="section-bar-number">01</div>
+      <div class="section-bar-title">Scope of Work Completed</div>
+      <div class="section-bar-line"></div>
+    </div>
+
+    <table class="scope-table" id="scopeTable">
+      <thead>
+        <tr>
+          <th>Task / Area</th>
+          <th>Done</th>
+          <th>N/A</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="scopeBody">
+      </tbody>
+    </table>
+    <button class="add-row-btn no-print" onclick="addRow()">+ Add Task Row</button>
+
+    <!-- NOTES -->
+    <div class="section-bar">
+      <div class="section-bar-number">02</div>
+      <div class="section-bar-title">General Notes</div>
+      <div class="section-bar-line"></div>
+    </div>
+
+    <div class="notes-box">
+      <div class="notes-header">Crew Notes & Observations</div>
+      <textarea class="notes-area" placeholder="Any additional observations, areas that needed extra attention, product usage notes, or follow-up items..." data-erp="notes"></textarea>
+    </div>
+
+    <!-- ISSUES FLAGGED -->
+    <div class="section-bar">
+      <div class="section-bar-number">03</div>
+      <div class="section-bar-title">Issues Flagged</div>
+      <div class="section-bar-line"></div>
+    </div>
+
+    <div class="issues-grid">
+      <div class="issue-box">
+        <div class="issue-header maint">⚠ Maintenance Needed</div>
+        <textarea class="issue-area" placeholder="e.g. Light out in 3rd floor hallway, carpet stain at unit 204 won't lift, wall scuff near elevator needs repaint..."></textarea>
+      </div>
+      <div class="issue-box">
+        <div class="issue-header damage">⊘ Damage / Concern Noted</div>
+        <textarea class="issue-area" placeholder="e.g. Pre-existing water stain on ceiling tile, cracked lobby glass, damaged baseboard near stairwell B..."></textarea>
+      </div>
+    </div>
+
+    <!-- SIGN-OFF -->
+    <div class="signoff-grid">
+      <div class="signoff-block">
+        <div class="signoff-title">HuronWest Representative</div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Signature</span>
+        </div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Printed Name</span>
+        </div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Date</span>
+        </div>
+      </div>
+      <div class="signoff-block">
+        <div class="signoff-title">Property Manager / Client</div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Signature</span>
+        </div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Printed Name</span>
+        </div>
+        <div class="sig-line">
+          <input class="sig-input" type="text" placeholder="">
+          <span class="sig-label">Date</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="doc-footer">
+    <div class="footer-text">© 2026 HuronWest Facilities Services LLC &nbsp;·&nbsp; <a href="#">huronwest.com</a> &nbsp;·&nbsp; (734) 555-0192</div>
+    <div class="footer-text">Form HW-CR-001 &nbsp;·&nbsp; Retain copy for 12 months</div>
+  </div>
+
+</div>
+
+<script>
+  // ====== DEFAULT ROWS ======
+  const defaultTasks = [
+    { task: '', placeholder: 'e.g. Vacuum hallway carpet — all floors' },
+    { task: '', placeholder: 'e.g. Dust mop hard floors' },
+    { task: '', placeholder: 'e.g. Wet mop hard floors' },
+    { task: '', placeholder: 'e.g. Clean elevator cab, mirrors, stainless' },
+    { task: '', placeholder: 'e.g. Clean glass doors & windows' },
+    { task: '', placeholder: 'e.g. Dust windowsills, ledges, fixtures' },
+    { task: '', placeholder: 'e.g. Spot clean walls, switches, outlets' },
+    { task: '', placeholder: 'e.g. Wipe doors, knobs, kick plates' },
+    { task: '', placeholder: 'e.g. Sweep stairwells' },
+    { task: '', placeholder: 'e.g. Remove exterior entry debris' },
+    { task: '', placeholder: 'e.g. Empty trash & replace liners' },
+    { task: '', placeholder: 'e.g. Garage sweeping' },
+  ];
+
+  function createRow(task = '', placeholder = 'Describe task or area...') {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input class="task-input" type="text" value="${task}" placeholder="${placeholder}">
+          <button class="remove-row-btn no-print" onclick="removeRow(this)" title="Remove row">×</button>
+        </div>
+      </td>
+      <td><input type="checkbox" class="check-box"></td>
+      <td><input type="checkbox" class="check-na"></td>
+      <td><input class="note-input" type="text" placeholder="Optional note..."></td>
+    `;
+    return tr;
+  }
+
+  function initTable() {
+    const body = document.getElementById('scopeBody');
+    body.innerHTML = '';
+    defaultTasks.forEach(t => {
+      body.appendChild(createRow(t.task, t.placeholder));
+    });
+  }
+
+  function addRow() {
+    const body = document.getElementById('scopeBody');
+    body.appendChild(createRow());
+    const newInput = body.lastElementChild.querySelector('.task-input');
+    newInput.focus();
+  }
+
+  function removeRow(btn) {
+    const row = btn.closest('tr');
+    const body = document.getElementById('scopeBody');
+    if (body.rows.length > 1) {
+      row.remove();
+    }
+  }
+
+  function resetForm() {
+    if (confirm('Clear all fields and reset the form?')) {
+      document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
+      document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+      initTable();
+    }
+  }
+
+  // ====== MUTUAL EXCLUSION: Done ↔ N/A ======
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('check-box')) {
+      const row = e.target.closest('tr');
+      const na = row.querySelector('.check-na');
+      if (e.target.checked && na) na.checked = false;
+    }
+    if (e.target.classList.contains('check-na')) {
+      const row = e.target.closest('tr');
+      const done = row.querySelector('.check-box');
+      if (e.target.checked && done) done.checked = false;
+    }
+  });
+
+  // Init on load
+  initTable();
+</script>
+
+<script src="https://hwfs-os-one.vercel.app/erp-bridge.js"></script>
+</body>
+</html>
