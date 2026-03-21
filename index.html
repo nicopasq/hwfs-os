@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HuronWest ERP</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⬡</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="HuronWest ERP">
+  <meta name="theme-color" content="#1A3C34">
+  <style>
+    :root {
+      --forest:        #1A3C34;
+      --forest-mid:    #224A40;
+      --forest-light:  #2D5E51;
+      --sage:          #5B8C7E;
+      --leaf:          #3A7D44;
+      --leaf-hover:    #2E6B38;
+      --leaf-light:    #4CAF50;
+      --mint:          #A8D5BA;
+      --mint-pale:     #E8F5EC;
+      --white:         #FFFFFF;
+      --cream:         #F7FAF8;
+      --gray-50:       #F0F4F1;
+      --gray-100:      #E2E8E4;
+      --gray-200:      #D5E5DC;
+      --gray-300:      #B0BFB6;
+      --gray-400:      #7A8B85;
+      --gray-500:      #5A6B64;
+      --bark:          #3E4A47;
+      --bark-light:    #7A8B85;
+      --success:       #2E7D32;
+      --success-bg:    #E8F5E9;
+      --warning:       #F57F17;
+      --warning-bg:    #FFF9C4;
+      --error:         #C62828;
+      --error-bg:      #FFEBEE;
+      --info:          #1565C0;
+      --info-bg:       #E3F2FD;
+      --border:        #D5E5DC;
+      --border-light:  #E8EFE9;
+      --shadow-sm:     0 1px 3px rgba(26,60,52,0.06);
+      --shadow-md:     0 4px 12px rgba(26,60,52,0.08);
+      --shadow-lg:     0 12px 40px rgba(26,60,52,0.12);
+      --page-bg:       #F0F4F1;
+      --card-bg:       #FFFFFF;
+      --sidebar-bg:    #1A3C34;
+      --header-bg:     #1A3C34;
+      --table-header:  #224A40;
+      --table-stripe:  #F7FAF8;
+      --input-bg:      #FFFFFF;
+      --input-focus-bg:#E8F5EC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: auto; overflow-x: hidden; font-family: 'Outfit', sans-serif; background: var(--page-bg); }
+    input, select, textarea, button { font-family: 'Outfit', sans-serif; }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--leaf) !important;
+      box-shadow: 0 0 0 2px rgba(58,125,68,0.15) !important;
+      background: var(--input-focus-bg) !important;
+      outline: none !important;
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--gray-50); }
+    ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+    ::selection { background: var(--mint-pale); color: var(--forest); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

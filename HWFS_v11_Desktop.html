@@ -1,0 +1,1034 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HWFS Operating System</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⬡</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.9/babel.min.js"></script>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{overflow:auto;overflow-x:hidden;font-family:'DM Sans',sans-serif}</style>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiSFdGUyBPcGVyYXRpbmcgU3lzdGVtIiwic2hvcnRfbmFtZSI6IkhXRlMgT1MiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzA3MDkwZiIsInRoZW1lX2NvbG9yIjoiIzRmOGZmZiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWwsPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0nIzA3MDkwZicvPjx0ZXh0IHg9JzUwJyB5PSc2NScgdGV4dC1hbmNob3I9J21pZGRsZScgZmlsbD0nIzRmOGZmZicgZm9udC1zaXplPSc0MCcgZm9udC13ZWlnaHQ9JzgwMCcgZm9udC1mYW1pbHk9J3NhbnMtc2VyaWYnPkhXPC90ZXh0Pjwvc3ZnPiIsInNpemVzIjoiMTkyeDE5MiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HWFS OS">
+<meta name="theme-color" content="#4f8fff">
+</head><body><div id="root"></div><script type="text/babel">const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+const SK="hwfs-v11";
+const uid=()=>Math.random().toString(36).slice(2,10);
+const td=()=>new Date().toISOString().split("T")[0];
+const fmtF=(n)=>{if(n==null||isNaN(n))return"$0.00";const s="$"+Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});return n<0?"("+s+")":s};
+const fmt=n=>{if(n==null||isNaN(n))return"$0";const a=Math.abs(n);const r=a>=1e6?("$"+(a/1e6).toFixed(1)+"M"):a>=1e3?("$"+(a/1e3).toFixed(a>=1e4?0:1)+"K"):("$"+a.toLocaleString("en-US",{maximumFractionDigits:0}));return n<0?("("+r+")"):r};
+const pct=n=>isNaN(n)||!isFinite(n)?"\u2014":((n*100).toFixed(1)+"%");
+
+const TIERS={"Basic":{rate:.10,churn:.12,color:"#22c992"},"Full-Service":{rate:.14,churn:.07,color:"#4f8fff"},"Premium":{rate:.18,churn:.04,color:"#9070f0"},"Clinical":{rate:.23,churn:.03,color:"#f0c040"}};
+const TK=Object.keys(TIERS);
+const TABS=[
+  {id:"dash",l:"Dashboard",i:"\u2b21"},{id:"crm",l:"CRM & Pipeline",i:"\u2299"},
+  {id:"equip",l:"Expenses",i:"\u2699"},{id:"jobs",l:"Contracts",i:"\u25c8"},
+  {id:"labor",l:"Workforce",i:"\u25ce"},{id:"sga",l:"SG&A",i:"\u25a5"},
+  {id:"inv",l:"Inventory",i:"\u25d0"},{id:"rev",l:"Revenue",i:"\u25b0"},{id:"spec",l:"Specialty Svc",i:"\u2726"},
+  {id:"pnl",l:"P&L",i:"\u25a6"},{id:"bs",l:"Balance Sheet",i:"\u25a3"},
+  {id:"cf",l:"Cash Flow",i:"\u25a4"},{id:"eq",l:"Equity & Dist",i:"\u25b3"},
+  {id:"comp",l:"Compliance",i:"\u25cd"},{id:"inbox",l:"Inbox",i:"\u2709"},{id:"actions",l:"Tasks",i:"\u2611"},
+  {id:"cfg",l:"Settings",i:"\u2295"},
+];
+
+const DA={galPerHr:.12,usagePct:.40,dilution:30,sfPerHr:2800,avgCostGal:8.50,insBase:85,insPer100k:15,bond:150,wcRate:.035,autoIns:175,swept:125,xero:50,phone:75,bankFees:25,legalAnn:2000,licAnn:200,mktg:250,vanOp:300,vanLife:7,eqRef:75,conting:.02,salesTaxRate:.06,burden:.1235,uniformAnn:120,trainAnn:200,storage:0};
+const DS={name:"HuronWest Facility Services LLC",start:"2026-05-01",capHWE:2100,capNico:900,hweEq:.70,nicoEq:.30,loanRate:.07,taxRate:.226,reserve:15000,bonusQ:250,onboard:500,nicoM1:0,nicoM13:3000,nicoStart:"2026-05-01",nicoVestPct:.15,nicoVestYrs:4,nicoCliffYrs:1,emergencyDispatch:250,emergencyHr:75,specFloorSF:.15,specCarpetSF:.25,specPostConSF:.20};
+const DSGA={ins:"GL Insurance",bond:"Bond",wc:"Workers Comp",swept:"Swept",xero:"Xero",phone:"Phone",mktg:"Marketing",eqRef:"Equip Refresh",auto:"Auto Insurance",bank:"Bank Fees",legal:"Legal/Acct",lic:"Licenses",uni:"Uniforms",train:"Training",stor:"Storage",rec:"Recurring",ct:"Contingency"};
+const DEF={expenses:[],jobs:[],workers:[],inventory:[],loans:[],actions:[],prospects:[],outreach:[],certs:[],specJobs:[],dark:false,userId:"Director",activityLog:[],lastSync:null,pending:[],inbox:[],approvalThreshold:500,requireDualApproval:true,postedExpenses:[],sgaN:{...DSGA},A:{...DA},S:{...DS}};
+
+const dk={bg:"#07090f",bg2:"#0c1018",card:"#111824",card2:"#161e2e",border:"#1e2a3a",border2:"#2a3650",accent:"#4f8fff",green:"#22c992",red:"#f0524e",yellow:"#f0c040",orange:"#f08030",purple:"#9070f0",text:"#f0f4fa",ts:"#8ea0bc",td2:"#586880",inp:"#0e1420",inpB:"#243040",side:"#0a0e16",headerBg:"#0d1220"};
+const lt={bg:"#f5f7fa",bg2:"#ffffff",card:"#ffffff",card2:"#f8fafb",border:"#dde4ee",border2:"#c8d4e2",accent:"#2060d0",green:"#0a8a5a",red:"#d03030",yellow:"#b08a00",orange:"#d06a10",purple:"#6a40d0",text:"#1a2030",ts:"#4a5a70",td2:"#8a96aa",inp:"#f0f3f8",inpB:"#c0cadc",side:"#edf0f6",headerBg:"#ffffff"};
+
+// ═══ HEX LOGO SVG ═══
+const HexLogo=({size=60,color="#4f8fff"})=>(
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+    <polygon points="50,5 93,27.5 93,72.5 50,95 7,72.5 7,27.5" fill="none" stroke={color} strokeWidth="3"/>
+    <polygon points="50,20 78,35 78,65 50,80 22,65 22,35" fill={color} opacity=".15"/>
+    <text x="50" y="58" textAnchor="middle" fill={color} fontSize="28" fontWeight="800" fontFamily="'IBM Plex Sans',sans-serif">HW</text>
+  </svg>
+);
+
+// ═══ STARTUP ═══
+function StartupScreen({onDone}){
+  const[phase,setPhase]=useState(0);
+  const[userId,setUserId]=useState("Director");
+  useEffect(()=>{const t=setTimeout(()=>setPhase(1),2400);return()=>clearTimeout(t)},[]);
+  useEffect(()=>{if(phase===1){const h=()=>setPhase(2);window.addEventListener("keydown",h);window.addEventListener("click",h);return()=>{window.removeEventListener("keydown",h);window.removeEventListener("click",h)}}},[phase]);
+  useEffect(()=>{try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.setValueAtTime(523.25,ctx.currentTime);o.frequency.setValueAtTime(659.25,ctx.currentTime+.15);o.frequency.setValueAtTime(783.99,ctx.currentTime+.3);g.gain.setValueAtTime(.06,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+1.2);o.start(ctx.currentTime);o.stop(ctx.currentTime+1.2)}catch(e){}},[]);
+  const font="'IBM Plex Sans',sans-serif";
+  if(phase===0)return(
+    <div style={{position:"fixed",inset:0,background:"#040608",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999}}>
+      <div style={{animation:"fadeIn 1.5s ease-in"}}><HexLogo size={80}/></div>
+      <div style={{fontSize:26,fontWeight:700,color:"#f0f4fa",fontFamily:font,letterSpacing:6,marginTop:20,animation:"fadeIn 2s ease-in",textTransform:"uppercase"}}>HuronWest</div>
+      <div style={{fontSize:13,fontWeight:500,color:"#586880",fontFamily:font,letterSpacing:8,marginTop:6,animation:"fadeIn 2.5s ease-in",textTransform:"uppercase"}}>Facility Services</div>
+      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
+    </div>
+  );
+  if(phase===1)return(
+    <div style={{position:"fixed",inset:0,background:"#040608",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",zIndex:9999,cursor:"pointer"}}>
+      <HexLogo size={64}/>
+      <div style={{fontSize:15,color:"#586880",fontFamily:font,letterSpacing:3,marginTop:24,animation:"blink 1.5s infinite"}}>PRESS ANY KEY TO CONTINUE</div>
+      <style>{`@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}`}</style>
+    </div>
+  );
+  return(
+    <div style={{position:"fixed",inset:0,background:"#040608ee",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}}>
+      <div style={{background:"#111824",border:"1px solid #2a3650",borderRadius:12,padding:40,width:400,textAlign:"center",boxShadow:"0 20px 60px #00000080"}}>
+        <HexLogo size={56}/>
+        <div style={{fontSize:18,fontWeight:700,color:"#f0f4fa",fontFamily:font,letterSpacing:3,marginTop:12}}>HWFS OS</div>
+        <div style={{fontSize:11,color:"#586880",fontFamily:font,marginBottom:6}}>v11.0 \u2014 Financial Operating System</div>
+        <div style={{fontSize:10,color:"#4f8fff",fontFamily:font,marginBottom:24,letterSpacing:1}}>HuronWest Facility Services LLC</div>
+        <div style={{textAlign:"left",marginBottom:12}}>
+          <label style={{fontSize:10,color:"#586880",textTransform:"uppercase",letterSpacing:1,marginBottom:4,display:"block",fontFamily:font}}>User ID</label>
+          <input style={{width:"100%",padding:"12px 16px",background:"#0e1420",border:"1px solid #243040",borderRadius:6,color:"#f0f4fa",fontSize:14,fontFamily:font,outline:"none",boxSizing:"border-box"}} value={userId} onChange={e=>setUserId(e.target.value)} onKeyDown={e=>e.key==="Enter"&&onDone(userId)} autoFocus/>
+        </div>
+        <button onClick={()=>onDone(userId)} style={{width:"100%",padding:"12px",background:"#4f8fff",color:"#fff",border:"none",borderRadius:6,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:font,letterSpacing:1}}>SIGN IN</button>
+        <div style={{fontSize:9,color:"#3a4560",marginTop:20,fontFamily:font}}>\u00a9 2026 HuronWest Enterprises LLC</div>
+      </div>
+    </div>
+  );
+}
+
+
+function Clock({T}){const[t,setT]=useState(new Date());useEffect(()=>{const i=setInterval(()=>setT(new Date()),1000);return()=>clearInterval(i)},[]);return<span style={{fontVariantNumeric:"tabular-nums",color:T.td2,fontSize:13,fontWeight:600}}>{t.toLocaleTimeString("en-US",{hour12:true,hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>}
+function useTime(){const[t,setT]=useState(new Date());useEffect(()=>{const i=setInterval(()=>setT(new Date()),1000);return()=>clearInterval(i)},[]);return t}
+
+// ═══ MAIN ═══
+function App(){
+  const[booted,setBooted]=useState(false);
+  const[tab,setTab]=useState("dash");
+  const[data,setData]=useState(DEF);
+  const[ok,setOk]=useState(false);
+  const[sideOpen,setSideOpen]=useState(false);
+  // clock isolated
+  const dark=data.dark!==false;const T=dark?dk:lt;const font="'IBM Plex Sans',sans-serif";
+
+  useEffect(()=>{try{const raw=localStorage.getItem(SK);if(raw){const p=JSON.parse(raw);setData({...DEF,...p,A:{...DA,...(p.A||{})},S:{...DS,...(p.S||{})},sgaN:{...DSGA,...(p.sgaN||{})},prospects:p.prospects||[],outreach:p.outreach||[],certs:p.certs||[],specJobs:p.specJobs||[]})}}catch(e){}setOk(true)},[]);
+  const save=useCallback(nd=>{setData(nd);try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}},[]);
+  const upd=useCallback((k,v)=>{setData(prev=>{const nd={...prev,[k]:v};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd})},[]);
+  const updS=useCallback((k,v)=>{setData(prev=>{const nd={...prev,S:{...prev.S,[k]:v}};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd})},[]);
+  const updA=useCallback((k,v)=>{setData(prev=>{const nd={...prev,A:{...prev.A,[k]:v}};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd})},[]);
+  const nav=useCallback(t=>setTab(t),[]);
+  const togTheme=useCallback(()=>{setData(prev=>{const nd={...prev,dark:!prev.dark};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd})},[]);
+  const doExport=()=>{try{const json=localStorage.getItem(SK)||JSON.stringify(data,null,2);const b=new Blob([json],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="HWFS_Backup_"+td()+".json";document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),100)}catch(e){alert("Export failed: "+e.message)}};
+  
+  const doPDF=()=>{const w=window.open("","_blank");if(!w)return;const d=td();
+    const row=(l,wk,mo,yr,b,c)=>`<tr style="background:${b?"#f0f4ff":"transparent"}"><td style="padding:5px 10px;border-bottom:1px solid #ddd;font-weight:${b?700:400}">${l}</td><td style="padding:5px 10px;border-bottom:1px solid #ddd;text-align:right;font-weight:${b?700:400}">${fmtF(wk)}</td><td style="padding:5px 10px;border-bottom:1px solid #ddd;text-align:right">${fmtF(mo)}</td><td style="padding:5px 10px;border-bottom:1px solid #ddd;text-align:right;font-weight:${b?700:400}">${fmtF(yr)}</td></tr>`;
+    const openTasks=data.actions.filter(a=>!a.done);const critTasks=openTasks.filter(a=>a.priority==="Critical"||a.priority==="High");
+    const taskHtml=openTasks.slice(0,10).map(a=>`<tr><td style="padding:4px 10px;border-bottom:1px solid #eee;font-weight:${a.priority==="Critical"?700:400}">${a.text}</td><td style="padding:4px 10px;border-bottom:1px solid #eee;text-align:center">${a.priority}</td><td style="padding:4px 10px;border-bottom:1px solid #eee">${a.assignee}</td><td style="padding:4px 10px;border-bottom:1px solid #eee">${a.due||"\u2014"}</td></tr>`).join("");
+    w.document.write(`<!DOCTYPE html><html><head><title>HWFS Financial Update ${d}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:#1a2030;padding:40px;max-width:860px;margin:0 auto}
+h1{font-size:20px;margin-bottom:4px}h2{font-size:14px;margin:18px 0 6px;border-bottom:2px solid #2060d0;padding-bottom:3px;text-transform:uppercase;letter-spacing:1px}
+table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}th{text-align:left;padding:5px 10px;border-bottom:2px solid #333;font-size:9px;text-transform:uppercase;letter-spacing:.5px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}.m{text-align:center;border:1px solid #ddd;border-radius:6px;padding:10px}.m .v{font-size:18px;font-weight:700}.m .l{font-size:8px;text-transform:uppercase;color:#666;margin-top:2px}
+@media print{body{padding:20px}}</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;border-bottom:3px solid #2060d0;padding-bottom:10px">
+<div><h1>\u2b21 HuronWest Facility Services</h1><div style="color:#666;font-size:11px">Financial Update \u2014 ${d}</div></div>
+<div style="text-align:right"><div style="font-size:10px;color:#666">HWFS_FU_${d}</div><div style="font-size:10px;color:#666">${data.S.name}</div></div></div>
+<div class="g3">
+<div class="m"><div class="v" style="color:#2060d0">${E.nj}</div><div class="l">Active Contracts</div></div>
+<div class="m"><div class="v" style="color:#0a8a5a">${fmtF(E.totalWR)}/wk</div><div class="l">Revenue</div></div>
+<div class="m"><div class="v" style="color:${E.ebitdaW>=0?"#0a8a5a":"#d03030"}">${fmtF(E.ebitdaW)}/wk</div><div class="l">EBITDA</div></div>
+</div>
+<div class="g3">
+<div class="m"><div class="v">${E.nw}</div><div class="l">Workers</div></div>
+<div class="m"><div class="v">${pct(E.util)}</div><div class="l">Utilization</div></div>
+<div class="m"><div class="v">${fmt(E.cash)}</div><div class="l">Cash</div></div>
+</div>
+<h2>Income Statement</h2>
+<table><thead><tr><th></th><th style="text-align:right">Weekly</th><th style="text-align:right">Monthly</th><th style="text-align:right">Annual</th></tr></thead><tbody>
+${row("Revenue",E.totalWR,E.totalWR*4.33,E.totalWR*52,true)}
+${row("COGS",E.cogsW,E.cogsW*4.33,E.cogsW*52)}
+${row("Gross Profit",E.gpW+E.specRevW,(E.gpW+E.specRevW)*4.33,(E.gpW+E.specRevW)*52,true)}
+${row("SG&A",E.sgaW,E.sgaW*4.33,E.sgaW*52)}
+${row("EBITDA",E.ebitdaW,E.ebitdaW*4.33,E.ebitdaW*52,true)}
+${row("NOPAT",E.nopatW,E.nopatW*4.33,E.nopatW*52,true)}
+</tbody></table>
+<div class="g3">
+<div class="m"><div class="v">${pct(E.gpM)}</div><div class="l">Gross Margin</div></div>
+<div class="m"><div class="v">${pct(E.totalWR>0?E.ebitdaW/E.totalWR:0)}</div><div class="l">EBITDA Margin</div></div>
+<div class="m"><div class="v">${E.cap>0?(E.nopatW*52/E.cap).toFixed(1)+"x":"0x"}</div><div class="l">MOIC (Annual)</div></div>
+</div>
+<h2>Distribution Waterfall (Annual Run-Rate)</h2>
+<table><tbody>
+${[["1. Member Loan Repay",E.loanRepay],["2. Tax Distributions",E.taxDist],["3. Preferred Return (7%)",E.prefReturn],["4. Return of Capital",E.capReturn],["5. HWE Residual ("+pct(data.S.hweEq)+")",E.hweResidual],["5. Nico Residual ("+pct(data.S.nicoEq)+")",E.nicoResidual]].map(([l,v])=>`<tr><td style="padding:4px 10px;border-bottom:1px solid #ddd">${l}</td><td style="padding:4px 10px;border-bottom:1px solid #ddd;text-align:right;font-weight:600">${fmtF(v)}</td></tr>`).join("")}
+</tbody></table>
+${openTasks.length>0?`<h2>Open Tasks (${openTasks.length})</h2>
+<table><thead><tr><th>Task</th><th style="text-align:center">Priority</th><th>Assigned</th><th>Due</th></tr></thead><tbody>${taskHtml}</tbody></table>`:""}
+<div style="margin-top:24px;padding-top:10px;border-top:1px solid #ddd;font-size:9px;color:#999;text-align:center">
+Confidential \u2014 HuronWest Facility Services LLC \u2014 ${new Date().toLocaleDateString()}
+</div></body></html>`);
+    w.document.close();setTimeout(()=>w.print(),500);
+  };
+  
+  const doDigest=()=>{const w=window.open("","_blank");if(!w)return;const d=td();
+    const weekAgo=new Date(Date.now()-7*864e5).toISOString().split("T")[0];
+    const recentAct=(data.activityLog||[]).filter(a=>a.ts>=weekAgo);
+    const newContracts=data.jobs.filter(j=>j.start>=weekAgo);
+    const completedTasks=data.actions.filter(a=>a.done);
+    const openTasks=data.actions.filter(a=>!a.done);
+    const weekOutreach=(data.outreach||[]).filter(o=>o.date>=weekAgo);
+    w.document.write(`<!DOCTYPE html><html><head><title>HWFS Weekly Digest ${d}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:#1a2030;padding:40px;max-width:800px;margin:0 auto}
+h1{font-size:18px;margin-bottom:4px}h2{font-size:13px;margin:16px 0 6px;border-bottom:2px solid #2060d0;padding-bottom:3px;text-transform:uppercase;letter-spacing:1px}
+table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:11px}td,th{padding:4px 10px;border-bottom:1px solid #eee;text-align:left}th{font-size:9px;text-transform:uppercase;border-bottom:2px solid #333}
+.kpi{display:inline-block;text-align:center;border:1px solid #ddd;border-radius:6px;padding:10px 16px;margin:4px}.kpi .v{font-size:18px;font-weight:700}.kpi .l{font-size:8px;text-transform:uppercase;color:#666}
+@media print{body{padding:20px}}</style></head><body>
+<div style="border-bottom:3px solid #2060d0;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end">
+<div><h1>\u2b21 HWFS Weekly Digest</h1><div style="color:#666">Week ending ${d}</div></div>
+<div style="text-align:right;font-size:10px;color:#666">Generated ${new Date().toLocaleString()}</div></div>
+<div style="margin-bottom:16px">
+<span class="kpi"><span class="v" style="color:#2060d0">${E.nj}</span><br/><span class="l">Contracts</span></span>
+<span class="kpi"><span class="v" style="color:#0a8a5a">${fmtF(E.totalWR)}/wk</span><br/><span class="l">Revenue</span></span>
+<span class="kpi"><span class="v" style="color:${E.ebitdaW>=0?"#0a8a5a":"#d03030"}">${fmtF(E.ebitdaW)}/wk</span><br/><span class="l">EBITDA</span></span>
+<span class="kpi"><span class="v">${pct(E.util)}</span><br/><span class="l">Util</span></span>
+<span class="kpi"><span class="v">${fmt(E.cash)}</span><br/><span class="l">Cash</span></span>
+</div>
+<h2>This Week's Activity (${recentAct.length} events)</h2>
+<table><thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead><tbody>
+${recentAct.slice(0,20).map(a=>"<tr><td>"+new Date(a.ts).toLocaleDateString()+"</td><td style='font-weight:600'>"+a.user+"</td><td>"+a.action+(a.detail?": "+a.detail:"")+"</td></tr>").join("")}
+${recentAct.length===0?"<tr><td colspan=3 style='color:#999'>No logged activity this week</td></tr>":""}
+</tbody></table>
+<h2>Sales Activity (${weekOutreach.length} touches)</h2>
+<table><tbody>
+${weekOutreach.slice(0,10).map(o=>"<tr><td>"+o.date+"</td><td style='font-weight:600'>"+o.type+"</td><td>"+((o.notes||""))+"</td></tr>").join("")}
+${weekOutreach.length===0?"<tr><td colspan=3 style='color:#999'>No outreach logged</td></tr>":""}
+</tbody></table>
+<h2>Open Tasks (${openTasks.length})</h2>
+<table><thead><tr><th>Task</th><th>Priority</th><th>Assigned</th><th>Due</th></tr></thead><tbody>
+${openTasks.slice(0,15).map(a=>"<tr><td"+(a.priority==="Critical"?" style='font-weight:700;color:#d03030'":"")+">"+a.text+"</td><td>"+a.priority+"</td><td>"+a.assignee+"</td><td>"+(a.due||"\u2014")+"</td></tr>").join("")}
+</tbody></table>
+<div style="margin-top:20px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#999;text-align:center">
+Confidential \u2014 ${data.S.name} \u2014 Weekly Digest</div></body></html>`);
+    w.document.close();setTimeout(()=>w.print(),500);
+  };
+  const doImport=()=>{
+    const mode=confirm("MERGE with current data?\n\nOK = Merge (combines records)\nCancel = Replace (overwrites everything)");
+    const inp=document.createElement("input");inp.type="file";inp.accept=".json";inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const imp=JSON.parse(ev.target.result);
+      if(!mode){const nd={...DEF,...imp,A:{...DA,...(imp.A||{})},S:{...DS,...(imp.S||{})}};setData(nd);try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return}
+      // Merge: combine arrays by id, keep unique
+      const mergeArr=(a,b)=>{const ids=new Set(a.map(x=>x.id));return[...a,...(b||[]).filter(x=>!ids.has(x.id))]};
+      const merged={...data,
+        expenses:mergeArr(data.expenses,imp.expenses),jobs:mergeArr(data.jobs,imp.jobs),
+        workers:mergeArr(data.workers,imp.workers),inventory:mergeArr(data.inventory,imp.inventory),
+        loans:mergeArr(data.loans,imp.loans),actions:mergeArr(data.actions,imp.actions),
+        prospects:mergeArr(data.prospects,imp.prospects),outreach:mergeArr(data.outreach||[],imp.outreach),
+        certs:mergeArr(data.certs||[],imp.certs),specJobs:mergeArr(data.specJobs||[],imp.specJobs),
+        activityLog:mergeArr(data.activityLog||[],imp.activityLog||[]).sort((a,b)=>b.ts?.localeCompare(a.ts)).slice(0,100),
+        lastSync:new Date().toISOString(),
+        A:{...data.A,...(imp.A||{})},S:{...data.S,...(imp.S||{})}};
+      setData(merged);try{localStorage.setItem(SK,JSON.stringify(merged))}catch(e){}alert("Merged "+Object.keys(imp).length+" fields. Combined records deduplicated by ID.")
+    }catch(err){alert("Import failed: "+err.message)}};r.readAsText(f)};inp.click()};
+
+  // ═══ ENGINE ═══
+  const E=useMemo(()=>{
+    const aj=data.jobs.filter(j=>j.active&&!j.pipe);const aw=data.workers.filter(w=>w.active);
+    const wR=aj.reduce((s,j)=>s+(+j.wkRate||0),0);const mR=wR*4.33;const yR=wR*52;
+    const mhW=aj.reduce((s,j)=>s+(+j.freq||0)*(+j.hrsVis||0),0);
+    const lCap=aw.reduce((s,w)=>s+(+w.hpw||0),0);const util=lCap>0?mhW/lCap:0;
+    const wWage=aw.reduce((s,w)=>s+(+w.rate||0)*(+w.hpw||0),0);
+    const A=data.A;const S=data.S;
+    const wBurd=wWage*A.burden;const wWC=wWage*A.wcRate;const wBon=aw.length*(S.bonusQ/13);const wLab=wWage+wBurd+wWC+wBon;
+    const supW=aj.reduce((s,j)=>s+(+j.mSup||0)/4.33,0);
+    const recW=data.expenses.filter(e=>e.rec&&!e.cap).reduce((s,e)=>{const a=+e.amt||0;const f=e.rf;return s+(f==="weekly"?a:f==="monthly"?a/4.33:f==="quarterly"?a/13:a/52)},0);
+    const vans=data.expenses.filter(e=>e.cat==="Vehicle"&&e.cap).length;
+    const vanW=vans*(A.vanOp/4.33);const cogsW=wLab+supW+vanW;const gpW=wR-cogsW;const gpM=wR>0?gpW/wR:0;
+    const specRevW=(data.specJobs||[]).filter(s=>!s.done).reduce((sum,s)=>sum+(+s.price||0)/((+s.weeks||4)),0);
+    const insW=(A.insBase+A.insPer100k*((yR+specRevW*52)/1e5))/4.33;
+    const bondW=A.bond/52;const autoW=vans*(A.autoIns/4.33);const swpW=A.swept/4.33;const xerW=A.xero/4.33;const phW=A.phone/4.33;
+    const mkW=A.mktg/4.33;const eqW=A.eqRef/4.33;const bankW=A.bankFees/4.33;const legalW=A.legalAnn/52;const licW=A.licAnn/52;
+    const uniW=aw.length*A.uniformAnn/52;const trainW=aw.length*A.trainAnn/52;const storW=A.storage/4.33;const ctW=(wR+specRevW)*A.conting;
+    const sgaW=insW+bondW+wWC+autoW+swpW+xerW+phW+mkW+eqW+bankW+legalW+licW+uniW+trainW+storW+recW+ctW;
+    const sgaDet={insW,bondW,wcW:wWC,autoW,swpW,xerW,phW,mkW,eqW,bankW,legalW,licW,uniW,trainW,storW,recW,ctW};
+    const deprW=data.expenses.filter(e=>e.dep).reduce((s,e)=>s+(+e.amt||0)/(+e.life||7)/52,0);
+    const totalWR=wR+specRevW;const ebitdaW=gpW+specRevW-sgaW;const ebitW=ebitdaW-deprW;
+    const taxW=Math.max(0,ebitW*S.taxRate);const nopatW=ebitW-taxW;
+    const stUp=data.expenses.filter(e=>e.su).reduce((s,e)=>s+(+e.amt||0),0);
+    const capEx=data.expenses.filter(e=>e.cap).reduce((s,e)=>s+(+e.amt||0),0);
+    const lOut=data.loans.reduce((s,l)=>s+(+l.prin||0)-(+l.rep||0),0);
+    const lTot=data.loans.reduce((s,l)=>s+(+l.prin||0),0);
+    const cap=+S.capHWE+(+S.capNico);const cash=cap+lTot-stUp-capEx;
+    const invVal=data.inventory.reduce((s,i)=>s+(+i.uc||0)*(+i.qty||0),0);
+    const estGalWk=mhW*A.galPerHr;
+    const pipeN=data.jobs.filter(j=>j.pipe).length;const pipeRev=data.jobs.filter(j=>j.pipe).reduce((s,j)=>s+(+j.wkRate||0),0);
+    const clientRev={};aj.forEach(j=>{clientRev[j.client||"Other"]=(clientRev[j.client||"Other"]||0)+(+j.wkRate||0)});
+    const tierRev={};aj.forEach(j=>{tierRev[j.tier||"Basic"]=(tierRev[j.tier||"Basic"]||0)+(+j.wkRate||0)});
+    const moStart=new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString().split("T")[0];
+    const moOut=(data.outreach||[]).filter(o=>o.date>=moStart);
+    const prospTotal=data.prospects.length;const prospHot=data.prospects.filter(p=>p.stage==="Proposal"||p.stage==="Trial").length;
+    const prospWon=data.prospects.filter(p=>p.stage==="Won").length;
+    // Nico vesting
+    const startDate=new Date(S.nicoStart||S.start);const now=new Date();
+    const yrsElapsed=Math.max(0,(now-startDate)/(365.25*864e5));
+    const vestedPct=yrsElapsed<(S.nicoCliffYrs||1)?0:Math.min(S.nicoVestPct||.15,(yrsElapsed/(S.nicoVestYrs||4))*(S.nicoVestPct||.15));
+    // Distribution waterfall (annual)
+    const annNOPAT=nopatW*52;const reserveDef=Math.max(0,S.reserve-cash);const postReserve=Math.max(0,annNOPAT-reserveDef);
+    const loanRepay=Math.min(postReserve,Math.max(0,lOut));const afterLoan=postReserve-loanRepay;
+    const taxDist=taxW*52;const afterTax=Math.max(0,afterLoan-taxDist);
+    const prefReturn=Math.min(afterTax,cap*.07);const afterPref=afterTax-prefReturn;
+    const capReturn=Math.min(afterPref,cap);const afterCapRet=afterPref-capReturn;
+    const hweResidual=afterCapRet*S.hweEq;const nicoResidual=afterCapRet*S.nicoEq;
+    // 12mo projection
+    const proj12=Array.from({length:12},(_,i)=>{const rev=totalWR*4.33;const cogs=cogsW*4.33;const sga=sgaW*4.33;const dep=deprW*4.33;const ebitda=rev+specRevW*4.33-cogs-sga;return{m:i+1,rev,gp:rev-cogs+specRevW*4.33,sga,ebitda,nopat:Math.max(0,(ebitda-dep)*(1-S.taxRate))}});
+    // Notifications
+    const notifs=[];
+    const overdueTasks=data.actions.filter(a=>!a.done&&a.due&&a.due<td());
+    if(overdueTasks.length>0)notifs.push({type:"red",msg:overdueTasks.length+" overdue task"+(overdueTasks.length>1?"s":"")});
+    if(cash<S.reserve)notifs.push({type:"red",msg:"Cash "+fmtF(cash)+" below $"+S.reserve.toLocaleString()+" reserve"});
+    if(invVal>0&&supW>0&&invVal/supW<3)notifs.push({type:"yellow",msg:"Inventory cover under 3 weeks"});
+    if(util>.92)notifs.push({type:"yellow",msg:"Utilization "+pct(util)+" \u2014 near max capacity"});
+    const staleProspects=data.prospects.filter(p=>p.stage!=="Won"&&p.stage!=="Lost"&&p.date&&(Date.now()-new Date(p.date))>30*864e5);
+    if(staleProspects.length>0)notifs.push({type:"yellow",msg:staleProspects.length+" prospect"+(staleProspects.length>1?"s":"")+" stale (30+ days)"});
+    const pendingCount=(data.pending||[]).length;if(pendingCount>0)notifs.push({type:"yellow",msg:pendingCount+" item"+(pendingCount>1?"s":"")+" awaiting approval"});
+    if(moOut.length<20&&new Date().getDate()>7)notifs.push({type:"yellow",msg:"Only "+moOut.length+" outreach touches this month (target: 80)"});
+    return{nj:aj.length,notifs,nw:aw.length,pipeN,pipeRev,wR,mR,yR,totalWR,mhW,lCap,util,wWage,wBurd,wWC,wBon,wLab,supW,vanW,recW,cogsW,gpW,gpM,sgaW,sgaDet,deprW,ebitdaW,ebitW,taxW,nopatW,stUp,capEx,lOut,lTot,cap,cash,vans,invVal,estGalWk,specRevW,prospTotal,prospHot,prospWon,clientRev,tierRev,outreachCount:moOut.length,proposalsSent:moOut.filter(o=>o.type==="Proposal").length,vestedPct,yrsElapsed,loanRepay,taxDist,prefReturn,capReturn,hweResidual,nicoResidual,proj12,insW,bondW,autoW,swpW,xerW,phW,mkW,eqW,bankW,legalW,licW,uniW,trainW,storW,ctW,notifs};
+  },[data]);
+
+  const ss={
+    inp:{width:"100%",padding:"8px 11px",background:T.inp,border:"1px solid "+T.inpB,borderRadius:5,color:T.text,fontSize:13,fontFamily:font,boxSizing:"border-box",outline:"none"},
+    sel:{width:"100%",padding:"8px 11px",background:T.inp,border:"1px solid "+T.inpB,borderRadius:5,color:T.text,fontSize:13,fontFamily:font,boxSizing:"border-box"},
+    btn:{padding:"8px 16px",background:T.accent,color:"#fff",border:"none",borderRadius:5,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:font},
+    btnD:{padding:"4px 8px",background:"transparent",color:T.red,border:"1px solid "+T.red+"33",borderRadius:4,fontSize:11,cursor:"pointer",fontFamily:font,fontWeight:600},
+    btnG:{padding:"6px 12px",background:"transparent",color:T.ts,border:"1px solid "+T.border,borderRadius:5,fontSize:12,cursor:"pointer",fontFamily:font},
+    card:{background:T.card,border:"1px solid "+T.border,borderRadius:8,padding:14,marginBottom:10},
+    ch:{fontSize:11,fontWeight:700,color:T.ts,marginBottom:10,textTransform:"uppercase",letterSpacing:1.5,display:"flex",alignItems:"center",justifyContent:"space-between"},
+    tbl:{width:"100%",borderCollapse:"collapse",fontSize:13,fontFamily:font},
+    th:{textAlign:"left",padding:"6px 8px",borderBottom:"2px solid "+T.border2,fontSize:10,textTransform:"uppercase",color:T.td2,letterSpacing:.8,fontWeight:700},
+    thR:{textAlign:"right",padding:"6px 8px",borderBottom:"2px solid "+T.border2,fontSize:10,textTransform:"uppercase",color:T.td2,letterSpacing:.8,fontWeight:700},
+    td:{padding:"5px 8px",borderBottom:"1px solid "+T.border,fontSize:13},
+    tdR:{padding:"5px 8px",borderBottom:"1px solid "+T.border,textAlign:"right",fontSize:13,fontVariantNumeric:"tabular-nums"},
+    lbl:{fontSize:10,color:T.td2,textTransform:"uppercase",letterSpacing:.5,marginBottom:3,display:"block",fontWeight:600},
+    tag:c=>({display:"inline-block",padding:"2px 7px",borderRadius:4,fontSize:10,fontWeight:700,background:c+"20",color:c}),
+    g2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10},g3:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10},g4:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10},g5:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10},g6:{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:10},g7:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:10},
+  };
+  const Tog=({v,onChange})=><button style={{width:36,height:18,borderRadius:9,background:v?T.green:T.inpB,cursor:"pointer",position:"relative",transition:".2s",display:"inline-block",border:"none",flexShrink:0}} onClick={()=>onChange(!v)}><div style={{width:14,height:14,borderRadius:7,background:"#fff",position:"absolute",top:2,left:v?20:2,transition:".2s"}}/></button>;
+  const F=({l,children})=><div style={{marginBottom:6}}><label style={ss.lbl}>{l}</label>{children}</div>;
+  const Badge=({children,c})=><span style={ss.tag(c||T.accent)}>{children}</span>;
+  const M=({l,v,c,sub,onClick})=><div style={{...ss.card,textAlign:"center",cursor:onClick?"pointer":"default"}} onClick={onClick}><div style={{fontSize:22,fontWeight:800,color:c||T.text,fontVariantNumeric:"tabular-nums"}}>{v}</div><div style={{fontSize:9,color:T.td2,textTransform:"uppercase",marginTop:3,letterSpacing:1}}>{l}</div>{sub&&<div style={{fontSize:11,color:T.ts,marginTop:1}}>{sub}</div>}</div>;
+  const PR=(l,v,o={})=><tr style={{background:o.hl||"transparent"}}><td style={{...ss.td,fontWeight:o.b?700:400,paddingLeft:o.i?22:8,cursor:o.lk?"pointer":"default",color:o.lk?T.accent:o.c||T.text}} onClick={o.lk?()=>nav(o.lk):undefined}>{o.lk?"\u2192 ":""}{l}</td><td style={{...ss.tdR,fontWeight:o.b?700:400,color:o.c||T.text}}>{fmtF(v)}</td><td style={{...ss.tdR,color:o.c||T.text}}>{fmtF(v*4.33)}</td><td style={{...ss.tdR,fontWeight:o.b?700:400,color:o.c||T.text}}>{fmtF(v*52)}</td></tr>;
+  const Sep=l=><tr><td style={{...ss.td,fontSize:10,color:T.td2,fontWeight:700,paddingTop:10}} colSpan={4}>{l}</td></tr>;
+  const BR=(l,vs,o={})=><tr style={{background:o.hl||"transparent"}}><td style={{...ss.td,fontWeight:o.b?700:400,paddingLeft:o.i?22:8,color:o.c||T.text}}>{l}</td>{vs.map((v,i)=><td key={i} style={{...ss.tdR,fontWeight:o.b?700:400,color:o.c||T.text}}>{fmtF(v)}</td>)}</tr>;
+  const ocf=E.nopatW+E.deprW;const fcf=ocf-E.eqW-E.taxW;
+
+  if(!ok)return<div style={{height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:dk.bg}}><span style={{color:dk.accent,fontFamily:font,fontSize:16}}>{"\u2b21"} Loading...</span></div>;
+  if(!booted)return<StartupScreen onDone={uid=>{setData(prev=>{const nd={...prev,userId:uid||"Director"};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd});setBooted(true)}}/>;
+  const sW=sideOpen?190:50;
+
+  // The full app render — this is intentionally long because everything is inline
+  // I'm keeping all tabs in one return to avoid component boundary issues with state
+
+  return(<div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:font,fontSize:13,display:"flex"}}>
+    <style>{`*::-webkit-scrollbar{width:5px;height:5px}*::-webkit-scrollbar-track{background:${T.bg}}*::-webkit-scrollbar-thumb{background:${T.border2};border-radius:3px}input:focus,select:focus{border-color:${T.accent}!important;box-shadow:0 0 0 2px ${T.accent}20}input,select,button{font-family:'IBM Plex Sans',sans-serif}`}</style>
+
+    {/* SIDEBAR */}
+    <div onMouseEnter={()=>setSideOpen(true)} onMouseLeave={()=>setSideOpen(false)} style={{width:sW,minHeight:"100vh",background:T.side,borderRight:"1px solid "+T.border,transition:"width .2s",overflow:"hidden",flexShrink:0,display:"flex",flexDirection:"column",position:"sticky",top:0,height:"100vh",zIndex:200}}>
+      <div style={{padding:sideOpen?"14px":"14px 6px",borderBottom:"1px solid "+T.border,textAlign:"center"}}>
+        <HexLogo size={sideOpen?32:28} color={T.accent}/>
+        {sideOpen&&<div style={{fontSize:10,color:T.td2,marginTop:4}}>v11.0</div>}
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"4px 0"}}>
+        {TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:sideOpen?"8px 14px":"8px 0",background:tab===t.id?T.accent+"15":"transparent",border:"none",color:tab===t.id?T.accent:T.ts,fontFamily:font,fontSize:13,fontWeight:tab===t.id?700:500,cursor:"pointer",textAlign:"left",justifyContent:sideOpen?"flex-start":"center",borderLeft:tab===t.id?"3px solid "+T.accent:"3px solid transparent"}}>
+          <span style={{fontSize:16,width:20,textAlign:"center",flexShrink:0}}>{t.i}</span>
+          {sideOpen&&<><span style={{whiteSpace:"nowrap",flex:1}}>{t.l}</span>{(()=>{const ct=t.id==="inbox"?(data.pending||[]).length:t.id==="crm"?data.prospects.length:t.id==="jobs"?data.jobs.length:t.id==="labor"?data.workers.length:t.id==="actions"?data.actions.filter(a=>!a.done).length:t.id==="inv"?data.inventory.length:0;return ct>0?<span style={{background:t.id==="inbox"?T.orange:T.accent+"30",color:t.id==="inbox"?"#fff":T.accent,borderRadius:8,fontSize:9,fontWeight:800,padding:"1px 5px"}}>{ct}</span>:null})()}</>}
+        </button>)}
+      </div>
+      <div style={{padding:8,borderTop:"1px solid "+T.border}}>
+        <button onClick={togTheme} style={{width:"100%",background:"transparent",border:"1px solid "+T.border,borderRadius:5,padding:6,cursor:"pointer",color:T.ts,fontFamily:font,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+          {dark?"\u2600":"\u25cf"}{sideOpen&&(dark?" Light":" Dark")}
+        </button>
+        {sideOpen&&<div style={{fontSize:9,color:T.td2,textAlign:"center",marginTop:4}}>{data.userId}{data.lastSync&&(" · Sync: "+new Date(data.lastSync).toLocaleDateString())}</div>}
+      </div>
+    </div>
+
+    {/* MAIN */}
+    <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
+      <div style={{background:T.headerBg,borderBottom:"1px solid "+T.border,padding:"8px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <span style={{fontSize:14,fontWeight:700}}>Welcome, {data.userId}!</span>
+          <span style={{color:T.td2}}>|</span>
+          <span style={{fontWeight:600,color:T.accent}}>{TABS.find(t=>t.id===tab)?.l}</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <span style={{fontSize:12,color:T.ts}}>{E.nj} active {"\u00b7"} {E.pipeN} pipe</span>
+          <span style={{fontSize:12,color:T.green,fontWeight:600}}>{fmtF(E.wR)}/wk</span>
+          <span style={{fontSize:12,color:E.ebitdaW>=0?T.green:T.red,fontWeight:600}}>{fmtF(E.ebitdaW)} EBITDA</span>
+          <MenuBar doExport={doExport} doImport={doImport} doPDF={doPDF} ss={ss} T={T}/>
+          <>{(data.pending||[]).length>0&&<button style={{...ss.btnG,color:T.orange,borderColor:T.orange+"44"}} onClick={()=>setTab("inbox")}>{(data.pending||[]).length} pending</button>}</><NotifBell notifs={E.notifs||[]} T={T} ss={ss}/>
+          <Clock T={T}/>
+          <button onClick={()=>{setData(prev=>{const nd={...prev,lastSync:new Date().toISOString()};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd});setBooted(false)}} style={{...ss.btnG,color:T.red,borderColor:T.red+"44"}}>{"\u23fb"} Log Off</button>
+        </div>
+      </div>
+
+      <div style={{padding:"14px 20px",flex:1,overflowY:"auto"}}>
+        {/* ═══ Each tab rendered here. Keeping inline to avoid stale closure issues ═══ */}
+
+        {tab==="dash"&&<>
+          <div style={ss.g7}>
+            <M l="Contracts" v={E.nj} c={T.accent} sub={E.pipeN+" pipe"} onClick={()=>nav("jobs")}/>
+            <M l="Wkly Rev" v={fmt(E.totalWR)} c={T.green} sub={fmtF(E.totalWR*52)+"/yr"} onClick={()=>nav("pnl")}/>
+            <M l="Wkly EBITDA" v={fmt(E.ebitdaW)} c={E.ebitdaW>=0?T.green:T.red} sub={pct(E.totalWR>0?E.ebitdaW/E.totalWR:0)} onClick={()=>nav("pnl")}/>
+            <M l="Workers" v={E.nw} sub={E.lCap+" hrs cap"} onClick={()=>nav("labor")}/>
+            <M l="Utilization" v={pct(E.util)} c={E.util>.95?T.red:E.util>.8?T.yellow:T.green}/>
+            <M l="Cash" v={fmt(E.cash)} c={E.cash>0?T.green:T.red} onClick={()=>nav("bs")}/>
+            <M l="MOIC" v={E.cap>0?(E.nopatW*52/E.cap).toFixed(1)+"x":"0x"} c={T.accent} sub={E.nopatW>0?Math.round(E.cap/(E.nopatW*52)*12)+" mo payback":"\u2014"}/>
+          </div>
+          <div style={ss.g3}>
+            <div style={ss.card}><div style={ss.ch}><span>Weekly P&L</span><button style={ss.btnG} onClick={()=>nav("pnl")}>Full {"\u2192"}</button></div>
+              <table style={ss.tbl}><tbody>
+                {[["Revenue",E.totalWR,T.green,1],["COGS",E.cogsW],["Gross Profit",E.gpW+E.specRevW,T.accent,1],["SG&A",E.sgaW],["EBITDA",E.ebitdaW,E.ebitdaW>=0?T.green:T.red,1],["NOPAT",E.nopatW,T.accent,1]].map(([l,v,c,b],i)=><tr key={i}><td style={{...ss.td,fontWeight:b?700:400}}>{l}</td><td style={{...ss.tdR,fontWeight:b?700:400,color:c||T.text}}>{fmtF(v)}</td></tr>)}
+                <tr><td style={{...ss.td,fontStyle:"italic",color:T.td2}}>Gross Margin</td><td style={{...ss.tdR,color:T.td2}}>{pct(E.gpM)}</td></tr>
+              </tbody></table>
+            </div>
+            <div style={ss.card}><div style={ss.ch}><span>Pipeline</span><button style={ss.btnG} onClick={()=>nav("crm")}>CRM {"\u2192"}</button></div>
+              <table style={ss.tbl}><tbody>
+                {[["Prospects",E.prospTotal,T.accent],["Hot",E.prospHot,T.orange],["Won",E.prospWon,T.green],["Touches/Mo",E.outreachCount,E.outreachCount>=80?T.green:T.red],["Pipe Rev",fmtF(E.pipeRev)+"/wk",T.purple]].map(([l,v,c],i)=><tr key={i}><td style={ss.td}>{l}</td><td style={{...ss.tdR,fontWeight:700,color:c}}>{v}</td></tr>)}
+              </tbody></table>
+            </div>
+            <div style={ss.card}><div style={ss.ch}><span>Waterfall (Annual)</span><button style={ss.btnG} onClick={()=>nav("eq")}>Equity {"\u2192"}</button></div>
+              <table style={ss.tbl}><tbody>
+                {[["1. Loan Repay",E.loanRepay,T.yellow],["2. Tax Dist",E.taxDist],["3. Pref 7%",E.prefReturn,T.accent],["4. Cap Return",E.capReturn],["5a. HWE",E.hweResidual,T.green],["5b. Nico",E.nicoResidual,T.purple]].map(([l,v,c],i)=><tr key={i}><td style={{...ss.td,fontSize:12}}>{l}</td><td style={{...ss.tdR,fontWeight:600,color:c||T.text}}>{fmtF(v)}</td></tr>)}
+              </tbody></table>
+            </div>
+          </div>
+          {/* 12-month */}
+          <div style={ss.card}><div style={ss.ch}><span>12-Month Projection</span></div>
+            <div style={{overflowX:"auto"}}><table style={ss.tbl}>
+              <thead><tr><th style={ss.th}></th>{E.proj12.map((p,i)=><th key={i} style={ss.thR}>M{i+1}</th>)}</tr></thead>
+              <tbody>
+                {["rev","gp","sga","ebitda","nopat"].map(k=><tr key={k}><td style={{...ss.td,fontWeight:k==="ebitda"||k==="nopat"?700:400,textTransform:"uppercase",fontSize:11}}>{k}</td>{E.proj12.map((p,i)=><td key={i} style={{...ss.tdR,fontWeight:k==="ebitda"||k==="nopat"?700:400,color:k==="nopat"?T.accent:k==="ebitda"?(p[k]>=0?T.green:T.red):T.text}}>{fmt(p[k])}</td>)}</tr>)}
+              </tbody>
+            </table></div>
+          </div>
+          <div style={ss.g2}>
+          <div style={ss.card}><div style={ss.ch}><span>{"\u26a0"} Priority Tasks</span><button style={ss.btnG} onClick={()=>nav("actions")}>All Tasks {"\u2192"}</button></div>
+            {(()=>{const open=data.actions.filter(a=>!a.done);const crit=open.filter(a=>a.priority==="Critical");const high=open.filter(a=>a.priority==="High");const overdue=open.filter(a=>a.due&&a.due<td());
+              return<>
+                <div style={{display:"flex",gap:12,marginBottom:8}}>
+                  <span style={{fontSize:12,color:T.red,fontWeight:700}}>{crit.length} Critical</span>
+                  <span style={{fontSize:12,color:T.orange,fontWeight:700}}>{high.length} High</span>
+                  <span style={{fontSize:12,color:T.yellow}}>{open.length-crit.length-high.length} Other</span>
+                  {overdue.length>0&&<span style={{fontSize:12,color:T.red}}>{overdue.length} Overdue</span>}
+                </div>
+                <table style={ss.tbl}><tbody>
+                  {[...crit,...high].slice(0,6).map(a=><tr key={a.id}><td style={{...ss.td,fontWeight:a.priority==="Critical"?700:600}}>{a.text}</td><td style={ss.td}><Badge c={a.priority==="Critical"?T.red:T.orange}>{a.priority}</Badge></td><td style={{...ss.td,color:T.td2,fontSize:12}}>{a.assignee}</td><td style={{...ss.td,color:a.due&&a.due<td()?T.red:T.td2,fontSize:12}}>{a.due||"\u2014"}</td></tr>)}
+                  {crit.length+high.length===0&&<tr><td style={{...ss.td,color:T.green,fontStyle:"italic"}} colSpan={4}>No critical or high-priority tasks</td></tr>}
+                </tbody></table>
+              </>;
+            })()}
+          </div>
+          <div style={ss.card}><div style={ss.ch}><span>Status Summary</span></div>
+            {(()=>{const aj=data.jobs.filter(j=>j.active&&!j.pipe);const openTasks=data.actions.filter(a=>!a.done).length;const overdue=data.actions.filter(a=>!a.done&&a.due&&a.due<td()).length;
+              const lines=[];
+              if(E.nj===0)lines.push({t:"No active contracts yet. Add your first on the Contracts tab.",c:T.yellow});
+              else lines.push({t:E.nj+" active contract"+(E.nj>1?"s":"")+" generating "+fmtF(E.wR)+"/wk recurring revenue.",c:T.green});
+              if(E.pipeN>0)lines.push({t:E.pipeN+" pipeline deal"+(E.pipeN>1?"s":"")+" worth "+fmtF(E.pipeRev)+"/wk pending conversion.",c:T.purple});
+              if(E.nw===0)lines.push({t:"No workers added. Revenue will show 100% margin until labor is entered.",c:T.yellow});
+              if(E.util>.9)lines.push({t:"Utilization at "+pct(E.util)+" \u2014 near capacity. Consider hiring.",c:T.red});
+              else if(E.util>.7)lines.push({t:"Utilization at "+pct(E.util)+" \u2014 healthy with room for 1-2 more contracts.",c:T.green});
+              if(overdue>0)lines.push({t:overdue+" overdue task"+(overdue>1?"s":"")+". Review on the Tasks tab.",c:T.red});
+              if(E.cash<data.S.reserve)lines.push({t:"Cash ("+fmtF(E.cash)+") below reserve target ("+fmtF(data.S.reserve)+").",c:T.red});
+              if(E.prospTotal>0&&E.prospWon===0)lines.push({t:E.prospTotal+" prospects in CRM, none converted yet. Push toward proposals.",c:T.orange});
+              return lines.map((ln,i)=><div key={i} style={{padding:"6px 0",borderBottom:"1px solid "+T.border,fontSize:12,color:ln.c}}>{"\u2022"} {ln.t}</div>);
+            })()}
+          </div>
+          <div style={ss.card}><div style={ss.ch}><span>Recent Activity</span></div>
+            {(data.activityLog||[]).slice(0,8).map(a=><div key={a.id} style={{padding:"4px 0",borderBottom:"1px solid "+T.border,fontSize:11,display:"flex",justifyContent:"space-between",gap:8}}>
+              <span><span style={{fontWeight:600,color:T.accent}}>{a.user}</span> {a.action}{a.detail?": "+a.detail:""}</span>
+              <span style={{color:T.td2,flexShrink:0,fontSize:10}}>{new Date(a.ts).toLocaleDateString()+" "+new Date(a.ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
+            </div>)}
+            {(!data.activityLog||data.activityLog.length===0)&&<div style={{fontSize:12,color:T.td2,fontStyle:"italic"}}>No activity yet</div>}
+          </div>
+        </div>
+        <div style={ss.g3}>
+            <div style={ss.card}><div style={ss.ch}><span>Capacity</span></div>
+              <table style={ss.tbl}><tbody>{[["Hrs needed",E.mhW.toFixed(1)],["Available",""+E.lCap],["Spare",(E.lCap-E.mhW).toFixed(1)],["Status",E.util<.85?"CAN ADD":"FULL"]].map(([l,v],i)=><tr key={i}><td style={ss.td}>{l}</td><td style={ss.tdR}>{v}</td></tr>)}</tbody></table>
+            </div>
+            <div style={ss.card}><div style={ss.ch}><span>Supply</span></div>
+              <table style={ss.tbl}><tbody>{[["Items",""+data.inventory.length],["Value",fmtF(E.invVal)],["$/wk",fmtF(E.supW)],["Cover",(E.supW>0?(E.invVal/E.supW).toFixed(1):"0")+" wk"]].map(([l,v],i)=><tr key={i}><td style={ss.td}>{l}</td><td style={ss.tdR}>{v}</td></tr>)}</tbody></table>
+            </div>
+            <div style={ss.card}><div style={ss.ch}><span>Nico Vesting</span></div>
+              <table style={ss.tbl}><tbody>{[["Target",pct(data.S.nicoVestPct)],["Elapsed",E.yrsElapsed.toFixed(1)+" yr"],["Vested",pct(E.vestedPct)],["Cliff",E.yrsElapsed>=(data.S.nicoCliffYrs||1)?"PASSED":"ACTIVE"]].map(([l,v],i)=><tr key={i}><td style={ss.td}>{l}</td><td style={{...ss.tdR,fontWeight:600,color:l==="Vested"?T.green:T.text}}>{v}</td></tr>)}</tbody></table>
+            </div>
+          </div>
+        </>}
+
+        {/* REMAINING TABS — preserved from v5 code, now using JSX */}
+        {tab==="pnl"&&<div style={ss.card}>
+          <div style={ss.ch}><span>Income Statement</span><span style={{fontSize:10,color:T.td2}}>{"\u2195"} Items {"\u00b7"} {"\u2192"} Periods</span></div>
+          <table style={ss.tbl}><thead><tr><th style={ss.th}></th><th style={ss.thR}>Weekly</th><th style={ss.thR}>Monthly</th><th style={ss.thR}>Annual</th></tr></thead>
+          <tbody>
+            {PR("Revenue (Recurring)",E.wR,{b:true,hl:T.green+"12",c:T.green})}
+            {PR("Revenue (Specialty)",E.specRevW,{i:true,lk:"spec",c:T.green})}
+            {PR("Total Revenue",E.totalWR,{b:true,c:T.green})}
+            {Sep("COST OF SERVICES")}
+            {PR("Crew Wages",E.wWage,{i:true,lk:"labor"})}{PR("Payroll Burden",E.wBurd,{i:true})}{PR("Workers Comp",E.wWC,{i:true})}{PR("Bonus",E.wBon,{i:true})}{PR("Supplies",E.supW,{i:true,lk:"inv"})}{PR("Van Ops",E.vanW,{i:true})}
+            {PR("Total COGS",E.cogsW,{b:true})}
+            {PR("GROSS PROFIT",E.gpW+E.specRevW,{b:true,hl:T.accent+"12",c:E.gpW>=0?T.green:T.red})}
+            <tr><td style={{...ss.td,fontSize:11,color:T.td2}} colSpan={4}>Gross Margin: {pct(E.totalWR>0?(E.gpW+E.specRevW)/E.totalWR:0)}</td></tr>
+            {Sep("SG&A")}
+            {Object.entries(E.sgaDet).map(([k,v])=>{const nk=k.replace("W","");return PR(data.sgaN[nk]||k,v,{i:true})})}
+            {PR("Total SG&A",E.sgaW,{b:true,lk:"sga"})}
+            {PR("EBITDA",E.ebitdaW,{b:true,hl:(E.ebitdaW>=0?T.green:T.red)+"20",c:E.ebitdaW>=0?T.green:T.red})}
+            {PR("Depreciation",E.deprW,{i:true})}{PR("EBIT",E.ebitW,{b:true})}{PR("Tax ("+pct(data.S.taxRate)+")",E.taxW,{i:true})}
+            {PR("NOPAT",E.nopatW,{b:true,hl:T.accent+"20",c:T.accent})}
+          </tbody></table>
+        </div>}
+
+        {tab==="bs"&&<div style={ss.card}>
+          <div style={ss.ch}><span>Balance Sheet</span></div>
+          <table style={ss.tbl}><thead><tr><th style={ss.th}></th><th style={ss.thR}>Today</th><th style={ss.thR}>+1 Wk</th><th style={ss.thR}>+1 Mo</th><th style={ss.thR}>+1 Yr</th></tr></thead>
+          <tbody>
+            <tr><td style={{...ss.td,fontWeight:700,color:T.accent}} colSpan={5}>ASSETS</td></tr>
+            {BR("Cash",[E.cash,E.cash+ocf,E.cash+ocf*4.33,E.cash+ocf*52],{i:true,c:T.green})}
+            {BR("Equipment",[E.capEx,E.capEx-E.deprW,E.capEx-E.deprW*4.33,E.capEx-E.deprW*52],{i:true})}
+            {BR("Inventory",[E.invVal,E.invVal-E.supW,E.invVal-E.supW*4.33,Math.max(0,E.invVal-E.supW*52)],{i:true})}
+            {BR("Total Assets",[E.cash+E.capEx+E.invVal,E.cash+ocf+E.capEx-E.deprW+E.invVal-E.supW,E.cash+ocf*4.33+E.capEx-E.deprW*4.33+E.invVal-E.supW*4.33,E.cash+ocf*52+E.capEx-E.deprW*52+Math.max(0,E.invVal-E.supW*52)],{b:true,hl:T.accent+"10"})}
+            <tr><td style={{...ss.td,fontWeight:700,color:T.red}} colSpan={5}>LIABILITIES</td></tr>
+            {BR("Member Loans",[E.lOut,E.lOut,E.lOut,E.lOut],{i:true})}{BR("Tax Payable",[0,E.taxW,E.taxW*4.33,E.taxW*52],{i:true})}
+            <tr><td style={{...ss.td,fontWeight:700,color:T.green}} colSpan={5}>EQUITY</td></tr>
+            {BR("HWE Capital",[data.S.capHWE,data.S.capHWE,data.S.capHWE,data.S.capHWE],{i:true})}
+            {BR("Nico PI",[data.S.capNico,data.S.capNico,data.S.capNico,data.S.capNico],{i:true})}
+            {BR("Retained",[0,E.nopatW,E.nopatW*4.33,E.nopatW*52],{i:true,c:T.green})}
+            {BR("Total Equity",[E.cap,E.cap+E.nopatW,E.cap+E.nopatW*4.33,E.cap+E.nopatW*52],{b:true,hl:T.green+"10"})}
+          </tbody></table>
+        </div>}
+
+        {tab==="cf"&&<div style={ss.card}>
+          <div style={ss.ch}><span>Cash Flow</span></div>
+          <table style={ss.tbl}><thead><tr><th style={ss.th}></th><th style={ss.thR}>Weekly</th><th style={ss.thR}>Monthly</th><th style={ss.thR}>Annual</th></tr></thead>
+          <tbody>
+            {Sep("OPERATING")}{PR("NOPAT",E.nopatW,{i:true,lk:"pnl"})}{PR("+ Depreciation",E.deprW,{i:true})}{PR("Operating CF",ocf,{b:true,hl:T.green+"12",c:T.green})}
+            {Sep("INVESTING")}{PR("Equip Refresh",-E.eqW,{i:true})}
+            {Sep("FINANCING")}{PR("Tax Dist",-E.taxW,{i:true})}{E.lOut>0&&PR("Loan Interest",-(E.lOut*data.S.loanRate/52),{i:true})}
+            {PR("FREE CASH FLOW",fcf,{b:true,hl:T.accent+"15",c:T.accent})}
+            {Sep("BALANCE")}{PR("Beginning",E.cash,{i:true})}{PR("+ FCF",fcf,{i:true,c:T.green})}{PR("Ending",E.cash+fcf,{b:true,c:T.green,hl:T.green+"12"})}
+          </tbody></table>
+        </div>}
+
+        {tab==="sga"&&<div style={ss.card}>
+          <div style={ss.ch}><span>SG&A Detail</span></div>
+          <table style={ss.tbl}><thead><tr><th style={ss.th}>Line Item</th><th style={ss.thR}>Weekly</th><th style={ss.thR}>Monthly</th><th style={ss.thR}>Annual</th><th style={{...ss.th,width:180}}>Edit Name</th></tr></thead>
+          <tbody>
+            {Object.entries(E.sgaDet).map(([k,v])=>{const nk=k.replace("W","");return<tr key={k}><td style={{...ss.td,fontWeight:600}}>{data.sgaN[nk]||k}</td><td style={ss.tdR}>{fmtF(v)}</td><td style={ss.tdR}>{fmtF(v*4.33)}</td><td style={ss.tdR}>{fmtF(v*52)}</td><td style={ss.td}><input style={{...ss.inp,fontSize:11,padding:"3px 6px"}} value={data.sgaN[nk]||""} onChange={e=>{const val=e.target.value;const key=nk;setData(prev=>{const nd={...prev,sgaN:{...prev.sgaN,[key]:val}};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}/></td></tr>})}
+            <tr style={{background:T.accent+"12"}}><td style={{...ss.td,fontWeight:700}}>Total SG&A</td><td style={{...ss.tdR,fontWeight:700}}>{fmtF(E.sgaW)}</td><td style={{...ss.tdR,fontWeight:700}}>{fmtF(E.sgaW*4.33)}</td><td style={{...ss.tdR,fontWeight:700}}>{fmtF(E.sgaW*52)}</td><td></td></tr>
+          </tbody></table>
+        </div>}
+
+        {/* CRM, EQUIP, JOBS, LABOR, INV, SPEC, EQ, COMP, ACTIONS, CFG — rendered as child components */}
+        {tab==="inbox"&&<InboxTab data={data} upd={upd} setData={setData} E={E} ss={ss} T={T} F={F} Badge={Badge}/>}
+        {tab==="crm"&&<CRMTab data={data} upd={upd} E={E} ss={ss} T={T} F={F} Tog={Tog} Badge={Badge}/>}
+        {tab==="equip"&&<EquipTab data={data} upd={upd} setData={setData} E={E} ss={ss} T={T} F={F} Tog={Tog} Badge={Badge}/>}
+        {tab==="jobs"&&<JobsTab data={data} upd={upd} E={E} ss={ss} T={T} F={F} Tog={Tog} Badge={Badge}/>}
+        {tab==="labor"&&<LaborTab data={data} upd={upd} E={E} ss={ss} T={T} F={F} Tog={Tog} Badge={Badge}/>}
+        {tab==="inv"&&<InvTab data={data} upd={upd} E={E} ss={ss} T={T} F={F} Badge={Badge} updA={updA}/>}
+        {tab==="rev"&&<div style={ss.card}><div style={ss.ch}><span>Consolidated Revenue</span></div>
+          {(()=>{const aj=data.jobs.filter(j=>j.active&&!j.pipe);const byClient={};aj.forEach(j=>{const c=j.client||"Other";if(!byClient[c])byClient[c]={wkRev:0,n:0,sf:0};byClient[c].wkRev+=(+j.wkRate||0);byClient[c].n++;byClient[c].sf+=(+j.sf||0)});const byTier={};aj.forEach(j=>{const t=j.tier||"Basic";if(!byTier[t])byTier[t]={wkRev:0,n:0};byTier[t].wkRev+=(+j.wkRate||0);byTier[t].n++});const maxR=Math.max(1,...Object.values(byClient).map(c=>c.wkRev));
+          return<><div style={ss.g4}>{[["Recurring/Wk",fmtF(E.wR),T.green],["Specialty/Wk",fmtF(E.specRevW),T.purple],["Total/Wk",fmtF(E.totalWR),T.accent],["Annual",fmtF(E.totalWR*52),T.yellow]].map(([l,v,c],i)=><div key={i} style={{...ss.card,textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:c}}>{v}</div><div style={{fontSize:9,color:T.td2,textTransform:"uppercase",marginTop:3}}>{l}</div></div>)}</div>
+          <div style={ss.g2}><div style={ss.card}><div style={ss.ch}><span>By Client</span></div><table style={ss.tbl}><thead><tr><th style={ss.th}>Client</th><th style={ss.thR}>#</th><th style={ss.thR}>SF</th><th style={ss.thR}>$/Wk</th><th style={{...ss.th,width:100}}>Share</th></tr></thead><tbody>{Object.entries(byClient).sort((a,b)=>b[1].wkRev-a[1].wkRev).map(([c,d])=><tr key={c}><td style={{...ss.td,fontWeight:600}}>{c}</td><td style={ss.tdR}>{d.n}</td><td style={ss.tdR}>{d.sf.toLocaleString()}</td><td style={{...ss.tdR,fontWeight:700,color:T.green}}>{fmtF(d.wkRev)}</td><td style={ss.td}><div style={{height:12,background:T.bg2,borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:(d.wkRev/maxR*100)+"%",background:T.accent,borderRadius:3}}/></div></td></tr>)}</tbody></table></div>
+          <div style={ss.card}><div style={ss.ch}><span>By Tier</span></div><table style={ss.tbl}><thead><tr><th style={ss.th}>Tier</th><th style={ss.thR}>#</th><th style={ss.thR}>$/Wk</th><th style={ss.thR}>% of Total</th></tr></thead><tbody>{Object.entries(byTier).sort((a,b)=>b[1].wkRev-a[1].wkRev).map(([t,d])=><tr key={t}><td style={ss.td}><Badge c={TIERS[t]?.color||T.accent}>{t}</Badge></td><td style={ss.tdR}>{d.n}</td><td style={{...ss.tdR,fontWeight:700}}>{fmtF(d.wkRev)}</td><td style={ss.tdR}>{pct(E.wR>0?d.wkRev/E.wR:0)}</td></tr>)}</tbody></table></div></div></>})()}
+        </div>}
+        {tab==="spec"&&<SpecTab data={data} upd={upd} E={E} ss={ss} T={T} F={F} Badge={Badge}/>}
+        {tab==="eq"&&<EqTab data={data} upd={upd} E={E} ss={ss} T={T} F={F} Badge={Badge}/>}
+        {tab==="comp"&&<CompTab data={data} upd={upd} ss={ss} T={T} F={F} Badge={Badge}/>}
+        {tab==="actions"&&<ActTab data={data} upd={upd} setData={setData} ss={ss} T={T} F={F} Tog={Tog} Badge={Badge}/>}
+        {tab==="cfg"&&<CfgTab data={data} updS={updS} updA={updA} setData={setData} ss={ss} T={T} F={F}/>}
+      </div>
+    </div>
+  </div>);
+}
+
+
+
+// ═══ MENU BAR ═══
+function MenuBar({doExport,doImport,doPDF,ss,T}){
+  const[open,setOpen]=useState(false);
+  const ref=useRef(null);
+  useEffect(()=>{
+    const handler=(e)=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false)};
+    document.addEventListener("mousedown",handler);
+    return()=>document.removeEventListener("mousedown",handler);
+  },[]);
+  const items=[{l:"Export Backup (.json)",fn:doExport},{l:"Import Backup (.json)",fn:doImport},{l:"---"},{l:"Print / Save as PDF",fn:doPDF},{l:"---"},{l:"Weekly Digest",fn:()=>doDigest()}];
+  return(<div ref={ref} style={{position:"relative",display:"inline-block"}}>
+    <button onClick={()=>setOpen(!open)} style={{padding:"4px 12px",background:open?(T.accent+"20"):"transparent",border:"none",color:open?T.accent:T.ts,fontFamily:"'IBM Plex Sans',sans-serif",fontSize:12,fontWeight:600,cursor:"pointer",borderRadius:4}}>File {open?"\u25b4":"\u25be"}</button>
+    {open&&<div style={{position:"absolute",top:"calc(100% + 4px)",left:0,background:T.card,border:"1px solid "+T.border,borderRadius:6,padding:"4px 0",minWidth:220,zIndex:9999,boxShadow:"0 8px 24px #00000040"}}>
+      {items.map((item,i)=>item.l==="---"?<div key={i} style={{borderTop:"1px solid "+T.border,margin:"4px 0"}}/>:<button key={i} onMouseDown={()=>{item.fn();setOpen(false)}} style={{display:"block",width:"100%",padding:"8px 16px",background:"transparent",border:"none",color:T.text,fontFamily:"'IBM Plex Sans',sans-serif",fontSize:12,cursor:"pointer",textAlign:"left"}} onMouseEnter={e=>e.target.style.background=T.accent+"15"} onMouseLeave={e=>e.target.style.background="transparent"}>{item.l}</button>)}
+    </div>}
+  </div>);
+}
+
+
+// ═══ NOTIFICATION BELL ═══
+function NotifBell({notifs,T,ss}){
+  const[open,setOpen]=useState(false);
+  const ref=useRef(null);
+  useEffect(()=>{
+    const handler=(e)=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false)};
+    document.addEventListener("mousedown",handler);
+    return()=>document.removeEventListener("mousedown",handler);
+  },[]);
+  const hasRed=notifs.some(n=>n.type==="red");
+  return(<div ref={ref} style={{position:"relative",display:"inline-block"}}>
+    <button onClick={()=>setOpen(!open)} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:18,position:"relative",padding:"2px 6px",color:hasRed?T.red:notifs.length>0?T.yellow:T.td2}}>
+      {"\ud83d\udd14"}
+      {notifs.length>0&&<span style={{position:"absolute",top:-2,right:0,background:hasRed?T.red:T.yellow,color:"#fff",borderRadius:8,fontSize:9,fontWeight:800,padding:"1px 5px",fontFamily:"'IBM Plex Sans',sans-serif"}}>{notifs.length}</span>}
+    </button>
+    {open&&<div style={{position:"absolute",top:"calc(100% + 4px)",right:0,background:T.card,border:"1px solid "+T.border,borderRadius:6,padding:8,minWidth:280,zIndex:9999,boxShadow:"0 8px 24px #00000040"}}>
+      <div style={{fontSize:11,fontWeight:700,color:T.ts,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Notifications</div>
+      {notifs.length===0&&<div style={{fontSize:12,color:T.td2,padding:8}}>All clear {"\u2714"}</div>}
+      {notifs.map((n,i)=><div key={i} style={{padding:"6px 8px",borderBottom:"1px solid "+T.border,fontSize:12,display:"flex",gap:8,alignItems:"center"}}>
+        <span style={{color:n.type==="red"?T.red:T.yellow,fontSize:14}}>{n.type==="red"?"\u26a0":"\u25cf"}</span>
+        <span style={{color:T.text}}>{n.msg}</span>
+      </div>)}
+    </div>}
+  </div>);
+}
+
+
+// ═══ INBOX & APPROVALS ═══
+function InboxTab({data,upd,setData,ss,T,F,Badge}){
+  const pending=data.pending||[];
+  const posted=data.postedExpenses||[];
+  const approve=(item)=>{
+    const approved={...item,status:"approved",approvedBy:data.userId,approvedAt:new Date().toISOString()};
+    if(item.type==="expense"){
+      setData(prev=>{const nd={...prev,
+        expenses:[...prev.expenses,approved],
+        pending:(prev.pending||[]).filter(p=>p.id!==item.id),
+        postedExpenses:[...(prev.postedExpenses||[]),approved],
+        activityLog:[{id:uid(),ts:new Date().toISOString(),user:prev.userId,action:"Approved expense",detail:item.desc+" $"+item.amt},...(prev.activityLog||[]).slice(0,99)]
+      };try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd});
+    }
+  };
+  const reject=(item)=>{
+    setData(prev=>{const nd={...prev,
+      pending:(prev.pending||[]).filter(p=>p.id!==item.id),
+      activityLog:[{id:uid(),ts:new Date().toISOString(),user:prev.userId,action:"Rejected",detail:item.desc},...(prev.activityLog||[]).slice(0,99)]
+    };try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd});
+  };
+  // CSV Import
+  const doCSV=()=>{
+    const inp=document.createElement("input");inp.type="file";inp.accept=".csv";
+    inp.onchange=e=>{const f=e.target.files[0];if(!f)return;
+      const r=new FileReader();r.onload=ev=>{
+        try{
+          const lines=ev.target.result.split("\n").filter(l=>l.trim());
+          if(lines.length<2){alert("CSV needs header + data rows");return}
+          const headers=lines[0].split(",").map(h=>h.trim().toLowerCase().replace(/"/g,""));
+          const dateIdx=headers.findIndex(h=>h.includes("date"));
+          const descIdx=headers.findIndex(h=>h.includes("desc")||h.includes("memo")||h.includes("name"));
+          const amtIdx=headers.findIndex(h=>h.includes("amount")||h.includes("amt")||h.includes("total")||h.includes("debit"));
+          const catIdx=headers.findIndex(h=>h.includes("cat")||h.includes("category")||h.includes("type"));
+          if(descIdx===-1||amtIdx===-1){alert("CSV must have description and amount columns");return}
+          const items=lines.slice(1).map(line=>{
+            const cols=line.split(",").map(c=>c.trim().replace(/"/g,""));
+            const amt=Math.abs(parseFloat(cols[amtIdx])||0);
+            if(amt===0)return null;
+            return{id:uid(),date:cols[dateIdx]||td(),desc:cols[descIdx]||"Imported",amt,cat:cols[catIdx]||"Misc",by:"HWFS",cap:false,dep:false,life:7,su:false,rec:false,rf:"monthly",submittedBy:"CSV Import",submittedAt:new Date().toISOString(),status:"pending",type:"expense"};
+          }).filter(Boolean);
+          if(items.length===0){alert("No valid rows found");return}
+          setData(prev=>{const nd={...prev,pending:[...(prev.pending||[]),...items]};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd});
+          alert("Imported "+items.length+" items to approval queue");
+        }catch(err){alert("CSV error: "+err.message)}
+      };r.readAsText(f);
+    };inp.click();
+  };
+
+  return(<>
+    <div style={ss.g3}>
+      {[["Pending",pending.length,T.orange],["Approved (All Time)",posted.length,T.green],["This Session",posted.filter(p=>p.approvedBy===data.userId).length,T.accent]].map(([l,v,c],i)=><div key={i} style={{...ss.card,textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:c}}>{v}</div><div style={{fontSize:9,color:T.td2,textTransform:"uppercase",marginTop:3}}>{l}</div></div>)}
+    </div>
+    <div style={ss.card}>
+      <div style={ss.ch}><span>Approval Queue ({pending.length})</span>
+        <div style={{display:"flex",gap:8}}>
+          <button style={ss.btn} onClick={doCSV}>{"\ud83d\udcc4"} Import CSV</button>
+          {pending.length>0&&<button style={{...ss.btn,background:T.green}} onClick={()=>{pending.forEach(item=>approve(item))}}>Approve All</button>}
+        </div>
+      </div>
+      {pending.length===0&&<div style={{padding:20,textAlign:"center",color:T.td2,fontSize:13}}>No items pending approval</div>}
+      <table style={ss.tbl}>
+        {pending.length>0&&<thead><tr>{["Date","Description","Amount","Category","Submitted By","Time","",""].map((h,i)=><th key={i} style={i===2?ss.thR:ss.th}>{h}</th>)}</tr></thead>}
+        <tbody>{pending.map(item=><tr key={item.id}>
+          <td style={ss.td}>{item.date}</td>
+          <td style={{...ss.td,fontWeight:600}}>{item.desc}</td>
+          <td style={{...ss.tdR,fontWeight:700}}>{fmtF(item.amt)}</td>
+          <td style={ss.td}><Badge>{item.cat||"Misc"}</Badge></td>
+          <td style={ss.td}>{item.submittedBy}</td>
+          <td style={{...ss.td,fontSize:11,color:T.td2}}>{item.submittedAt?new Date(item.submittedAt).toLocaleDateString():""}</td>
+          <td style={ss.td}><button style={{...ss.btn,padding:"4px 12px",fontSize:11,background:T.green}} onClick={()=>approve(item)}>{"\u2713"} Approve</button></td>
+          <td style={ss.td}><button style={{...ss.btnD}} onClick={()=>reject(item)}>{"\u2715"}</button></td>
+        </tr>)}</tbody>
+      </table>
+    </div>
+    <div style={ss.card}>
+      <div style={ss.ch}><span>Settings</span></div>
+      <div style={ss.g3}>
+        <F l="Auto-approve threshold ($)"><input type="number" style={ss.inp} value={data.approvalThreshold||500} onChange={e=>{const val=+e.target.value;setData(prev=>{const nd={...prev,approvalThreshold:val};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}/></F>
+        <F l="CSV Format Info"><div style={{fontSize:11,color:T.ts,padding:8,background:T.bg2,borderRadius:4}}>CSV headers: date, description/memo, amount/debit, category (optional). Auto-maps common bank export formats.</div></F>
+      </div>
+    </div>
+    {posted.length>0&&<div style={ss.card}>
+      <div style={ss.ch}><span>Approval History ({posted.length})</span></div>
+      <div style={{maxHeight:300,overflowY:"auto"}}><table style={ss.tbl}>
+        <thead><tr>{["Date","Description","Amount","Approved By","When"].map((h,i)=><th key={i} style={i===2?ss.thR:ss.th}>{h}</th>)}</tr></thead>
+        <tbody>{posted.slice().reverse().slice(0,25).map(item=><tr key={item.id}>
+          <td style={ss.td}>{item.date}</td><td style={{...ss.td,fontWeight:600}}>{item.desc}</td>
+          <td style={{...ss.tdR,fontWeight:700}}>{fmtF(item.amt)}</td>
+          <td style={ss.td}><Badge c={T.green}>{item.approvedBy}</Badge></td>
+          <td style={{...ss.td,fontSize:11,color:T.td2}}>{item.approvedAt?new Date(item.approvedAt).toLocaleDateString():""}</td>
+        </tr>)}</tbody>
+      </table></div>
+    </div>}
+  </>);
+}
+
+// ═══ CRM ═══
+function CRMTab({data,upd,E,ss,T,F,Tog,Badge}){
+  const STAGES=["Lead","Contact Made","Walkthrough","Proposal","Trial","Won","Lost"];
+  const SC={"Lead":T.td2,"Contact Made":T.accent,"Walkthrough":T.purple,"Proposal":T.orange,"Trial":T.yellow,"Won":T.green,"Lost":T.red};
+  const[f,setF]=useState({name:"",contact:"",phone:"",vertical:"Dental",sf:"",stage:"Lead",notes:"",client:"",estWkRate:"",date:td()});
+  const[oF,setOF]=useState({date:td(),type:"Walk-in",notes:""});
+  const add=()=>{if(!f.name)return;upd("prospects",[...data.prospects,{...f,id:uid(),sf:+f.sf||0,estWkRate:+f.estWkRate||0}]);setF({...f,name:"",contact:"",phone:"",notes:"",sf:"",estWkRate:""})};
+  const rm=id=>upd("prospects",data.prospects.filter(p=>p.id!==id));
+  const updP=(id,k,v)=>upd("prospects",data.prospects.map(p=>p.id===id?{...p,[k]:v}:p));
+  const addO=()=>{upd("outreach",[...(data.outreach||[]),{...oF,id:uid()}]);setOF({...oF,notes:""})};
+  return(<>
+    <div style={{...ss.card,display:"flex",gap:4}}>{STAGES.filter(s=>s!=="Lost").map(s=>{const c=data.prospects.filter(p=>p.stage===s).length;return<div key={s} style={{flex:1,textAlign:"center"}}><div style={{padding:8,background:SC[s]+"20",borderRadius:4}}><div style={{fontSize:20,fontWeight:800,color:SC[s]}}>{c}</div></div><div style={{fontSize:9,color:T.ts,marginTop:2,textTransform:"uppercase"}}>{s}</div></div>})}</div>
+    <div style={ss.card}><div style={ss.ch}><span>+ Prospect</span></div>
+      <div style={ss.g5}>
+        <F l="Business"><input style={ss.inp} value={f.name} onChange={e=>setF({...f,name:e.target.value})}/></F>
+        <F l="Contact"><input style={ss.inp} value={f.contact} onChange={e=>setF({...f,contact:e.target.value})}/></F>
+        <F l="Phone"><input style={ss.inp} value={f.phone} onChange={e=>setF({...f,phone:e.target.value})}/></F>
+        <F l="Vertical"><select style={ss.sel} value={f.vertical} onChange={e=>setF({...f,vertical:e.target.value})}>{["Dental","Medical","HOA/PM","Office","Industrial","Other"].map(v=><option key={v}>{v}</option>)}</select></F>
+        <F l="Est $/wk"><input type="number" style={ss.inp} value={f.estWkRate} onChange={e=>setF({...f,estWkRate:e.target.value})}/></F>
+      </div>
+      <button style={ss.btn} onClick={add}>+ Add</button>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Prospects ({data.prospects.length})</span></div>
+      <div style={{overflowX:"auto"}}><table style={ss.tbl}>
+        <thead><tr>{["Business","Vertical","Contact","Est $/wk","Stage",""].map((h,i)=><th key={i} style={i===3?ss.thR:ss.th}>{h}</th>)}</tr></thead>
+        <tbody>{data.prospects.map(p=><tr key={p.id}><td style={{...ss.td,fontWeight:600}}>{p.name}</td><td style={ss.td}><Badge c={T.accent}>{p.vertical}</Badge></td><td style={ss.td}>{p.contact}</td><td style={{...ss.tdR,fontWeight:600}}>{p.estWkRate?fmtF(p.estWkRate):""}</td><td style={ss.td}><select style={{...ss.sel,padding:"3px 5px",fontSize:11}} value={p.stage} onChange={e=>updP(p.id,"stage",e.target.value)}>{STAGES.map(s=><option key={s}>{s}</option>)}</select></td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(p.id)}>{"\u2715"}</button></td></tr>)}</tbody>
+      </table></div>
+    </div>
+    <div style={ss.g2}>
+      <div style={ss.card}><div style={ss.ch}><span>+ Outreach</span></div>
+        <div style={ss.g2}><F l="Date"><input type="date" style={ss.inp} value={oF.date} onChange={e=>setOF({...oF,date:e.target.value})}/></F><F l="Type"><select style={ss.sel} value={oF.type} onChange={e=>setOF({...oF,type:e.target.value})}>{["Walk-in","Call","LinkedIn","Email","Referral Ask","Site Walk","LSA Callback","Proposal","Follow-up"].map(v=><option key={v}>{v}</option>)}</select></F></div>
+        <F l="Notes"><input style={ss.inp} value={oF.notes} onChange={e=>setOF({...oF,notes:e.target.value})} onKeyDown={e=>e.key==="Enter"&&addO()}/></F>
+        <button style={ss.btn} onClick={addO}>+ Log</button>
+      </div>
+      <div style={ss.card}><div style={ss.ch}><span>KPIs</span></div>
+        <table style={ss.tbl}><tbody>{[["Touches",E.outreachCount,80],["Proposals",E.proposalsSent,7],["Won",E.prospWon,2]].map(([l,a,t],i)=><tr key={i}><td style={ss.td}>{l}</td><td style={{...ss.tdR,fontWeight:700}}>{a}/{t}</td><td style={ss.td}><Badge c={a>=t?T.green:a>=t*.6?T.yellow:T.red}>{a>=t?"OK":"BEHIND"}</Badge></td></tr>)}</tbody></table>
+      </div>
+    </div>
+  </>);
+}
+
+// ═══ EQUIPMENT ═══
+function EquipTab({data,upd,setData,E,ss,T,F,Tog,Badge}){
+  const df={date:td(),desc:"",amt:"",cat:"Equipment",by:"HWE",cap:false,dep:false,life:7,su:false,rec:false,rf:"monthly"};
+  const[f,setF]=useState(df);
+  const add=()=>{if(!f.desc||!f.amt)return;
+    const item={...f,id:uid(),amt:+f.amt,submittedBy:data.userId||"Director",submittedAt:new Date().toISOString(),status:"approved"};
+    setData(prev=>{
+      const threshold=prev.approvalThreshold||500;
+      const nd=+f.amt<=threshold
+        ?{...prev,expenses:[...prev.expenses,item]}
+        :{...prev,pending:[...(prev.pending||[]),{...item,type:"expense",status:"pending"}]};
+      try{localStorage.setItem(SK,JSON.stringify(nd))}catch(e){}return nd});
+    setF(df);};
+  const rm=id=>upd("expenses",data.expenses.filter(e=>e.id!==id));
+  const tog=(id,k)=>upd("expenses",data.expenses.map(e=>e.id===id?{...e,[k]:!e[k]}:e));
+  return(<>
+    <div style={ss.card}><div style={ss.ch}><span>+ Expense</span></div>
+      <div style={ss.g5}>
+        <F l="Date"><input type="date" style={ss.inp} value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></F>
+        <F l="Description"><input style={ss.inp} value={f.desc} onChange={e=>setF({...f,desc:e.target.value})}/></F>
+        <F l="Amount"><input type="number" style={ss.inp} value={f.amt} onChange={e=>setF({...f,amt:e.target.value})}/></F>
+        <F l="Category"><select style={ss.sel} value={f.cat} onChange={e=>setF({...f,cat:e.target.value})}>{["Equipment","Supplies","Insurance","Software","Vehicle","Legal","Marketing","Misc"].map(v=><option key={v}>{v}</option>)}</select></F>
+        <F l="Paid By"><select style={ss.sel} value={f.by} onChange={e=>setF({...f,by:e.target.value})}>{["HWE","Nico","HWFS"].map(v=><option key={v}>{v}</option>)}</select></F>
+      </div>
+      <div style={{display:"flex",gap:16,flexWrap:"wrap",alignItems:"center",marginTop:4}}>
+        <F l="Receipt"><label style={{...ss.btnG,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:4}}><span>{f.rcptName||"Upload"}</span><input type="file" accept="image/*,.pdf" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file||file.size>2e6)return;const r=new FileReader();r.onload=ev=>setF({...f,receipt:ev.target.result,rcptName:file.name});r.readAsDataURL(file)}}/></label></F>
+        <F l="Startup"><Tog v={f.su} onChange={v=>setF({...f,su:v})}/></F>
+        <F l="CapEx"><Tog v={f.cap} onChange={v=>setF({...f,cap:v})}/></F>
+        <F l="Depr"><Tog v={f.dep} onChange={v=>setF({...f,dep:v})}/></F>
+        {f.dep&&<F l="Life(yr)"><input type="number" style={{...ss.inp,width:55}} value={f.life} onChange={e=>setF({...f,life:e.target.value})}/></F>}
+        <F l="Recurring"><Tog v={f.rec} onChange={v=>setF({...f,rec:v})}/></F>
+        {f.rec&&<F l="Freq"><select style={{...ss.sel,width:90}} value={f.rf} onChange={e=>setF({...f,rf:e.target.value})}>{["weekly","monthly","quarterly","annual"].map(v=><option key={v} value={v}>{v}</option>)}</select></F>}
+        <div style={{marginLeft:"auto"}}><button style={ss.btn} onClick={add}>+ Add</button></div>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Register ({data.expenses.length})</span></div>
+      <div style={{overflowX:"auto"}}><table style={ss.tbl}>
+        <thead><tr>{["Date","Description","Amt","Cat","By","SU","Cap","Dep","Rec","Rcpt",""].map((h,i)=><th key={i} style={i===2?ss.thR:ss.th}>{h}</th>)}</tr></thead>
+        <tbody>{data.expenses.map(e=><tr key={e.id}>
+          <td style={ss.td}><input type="date" style={{...ss.inp,padding:"2px 4px",fontSize:11,width:108}} value={e.date||""} onChange={ev=>{const v=ev.target.value;const eid=e.id;setData(prev=>{const nd={...prev,expenses:prev.expenses.map(x=>x.id===eid?{...x,date:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}/></td>
+          <td style={ss.td}><input style={{...ss.inp,padding:"2px 4px",fontSize:11,fontWeight:600}} value={e.desc||""} onChange={ev=>{const v=ev.target.value;const eid=e.id;setData(prev=>{const nd={...prev,expenses:prev.expenses.map(x=>x.id===eid?{...x,desc:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}/></td>
+          <td style={ss.td}><input type="number" style={{...ss.inp,padding:"2px 4px",fontSize:11,fontWeight:700,textAlign:"right",width:75}} value={e.amt||""} onChange={ev=>{const v=+ev.target.value;const eid=e.id;setData(prev=>{const nd={...prev,expenses:prev.expenses.map(x=>x.id===eid?{...x,amt:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}/></td>
+          <td style={ss.td}><select style={{...ss.sel,padding:"2px 4px",fontSize:10}} value={e.cat||"Misc"} onChange={ev=>{const v=ev.target.value;const eid=e.id;setData(prev=>{const nd={...prev,expenses:prev.expenses.map(x=>x.id===eid?{...x,cat:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}>{["Equipment","Supplies","Insurance","Software","Vehicle","Legal","Marketing","Misc"].map(v=><option key={v}>{v}</option>)}</select></td>
+          <td style={ss.td}><select style={{...ss.sel,padding:"2px 4px",fontSize:10}} value={e.by||"HWE"} onChange={ev=>{const v=ev.target.value;const eid=e.id;setData(prev=>{const nd={...prev,expenses:prev.expenses.map(x=>x.id===eid?{...x,by:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}>{["HWE","Nico","HWFS"].map(v=><option key={v}>{v}</option>)}</select></td><td style={ss.td}><Tog v={e.su} onChange={()=>tog(e.id,"su")}/></td><td style={ss.td}><Tog v={e.cap} onChange={()=>tog(e.id,"cap")}/></td><td style={ss.td}><Tog v={e.dep} onChange={()=>tog(e.id,"dep")}/></td><td style={ss.td}>{e.rec?<Badge c={T.purple}>{e.rf}</Badge>:"\u2014"}</td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(e.id)}>{"\u2715"}</button></td></tr>)}</tbody>
+      </table></div>
+    </div>
+    <div style={ss.g4}>{[["Startup",E.stUp,T.yellow],["CapEx",E.capEx,T.accent],["Wk Depr",E.deprW],["Wk Recur",E.recW,T.purple]].map(([l,v,c],i)=><div key={i} style={{...ss.card,textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:c||T.text}}>{fmtF(v)}</div><div style={{fontSize:9,color:T.td2,textTransform:"uppercase",marginTop:3}}>{l}</div></div>)}</div>
+  </>);
+}
+
+// ═══ JOBS ═══
+function JobsTab({data,upd,E,ss,T,F,Tog,Badge}){
+  const df={name:"",client:"Thomson AAM",type:"Small Condo",tier:"Basic",sf:"",freq:1,wkRate:"",hrsVis:"",mSup:65,start:td(),active:true,pipe:false};
+  const[f,setF]=useState(df);
+  const ap=(sf,freq,tier)=>{const r=TIERS[tier]?.rate||.10;return sf?Math.round(+sf*r*(+freq||1)):""};
+  const add=()=>{if(!f.name||!f.wkRate)return;upd("jobs",[...data.jobs,{...f,id:uid(),sf:+f.sf,wkRate:+f.wkRate,freq:+f.freq,hrsVis:+f.hrsVis,mSup:+f.mSup}]);setF(df)};
+  const rm=id=>upd("jobs",data.jobs.filter(j=>j.id!==id));
+  return(<>
+    <div style={ss.card}><div style={ss.ch}><span>+ Contract</span><span style={{fontSize:10,color:T.td2}}>Auto: SF {"\u00d7"} tier {"\u00d7"} freq</span></div>
+      <div style={ss.g5}>
+        <F l="Property"><input style={ss.inp} value={f.name} onChange={e=>setF({...f,name:e.target.value})}/></F>
+        <F l="Client"><select style={ss.sel} value={f.client} onChange={e=>setF({...f,client:e.target.value})}>{["Thomson AAM","McKinley","Oxford","Wickfield","Baker Street","Direct"].map(v=><option key={v}>{v}</option>)}</select></F>
+        <F l="Tier"><select style={ss.sel} value={f.tier} onChange={e=>{const t=e.target.value;setF({...f,tier:t,wkRate:ap(f.sf,f.freq,t)||f.wkRate})}}>{TK.map(t=><option key={t}>{t}</option>)}</select></F>
+        <F l="SF"><input type="number" style={ss.inp} value={f.sf} onChange={e=>setF({...f,sf:e.target.value,wkRate:ap(e.target.value,f.freq,f.tier)||f.wkRate})}/></F>
+        <F l="$/wk"><input type="number" style={ss.inp} value={f.wkRate} onChange={e=>setF({...f,wkRate:e.target.value})}/></F>
+      </div>
+      <div style={ss.g5}>
+        <F l="Freq/wk"><input type="number" style={ss.inp} value={f.freq} onChange={e=>setF({...f,freq:e.target.value})}/></F>
+        <F l="Hrs/visit"><input type="number" step=".5" style={ss.inp} value={f.hrsVis} onChange={e=>setF({...f,hrsVis:e.target.value})}/></F>
+        <F l="Supply $/mo"><input type="number" style={ss.inp} value={f.mSup} onChange={e=>setF({...f,mSup:e.target.value})}/></F>
+        <F l="Start"><input type="date" style={ss.inp} value={f.start} onChange={e=>setF({...f,start:e.target.value})}/></F>
+        <div style={{display:"flex",gap:8,alignItems:"flex-end"}}><F l="Active"><Tog v={f.active} onChange={v=>setF({...f,active:v})}/></F><F l="Pipe"><Tog v={f.pipe} onChange={v=>setF({...f,pipe:v})}/></F><button style={ss.btn} onClick={add}>+ Add</button></div>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Contracts ({data.jobs.length})</span></div>
+      <div style={{overflowX:"auto"}}><table style={ss.tbl}>
+        <thead><tr>{["Property","Client","Tier","SF","Freq","$/wk","$/SF/yr","Margin","Status",""].map((h,i)=><th key={i} style={[3,5,6,7].includes(i)?ss.thR:ss.th}>{h}</th>)}</tr></thead>
+        <tbody>{data.jobs.map(j=>{const yr=(+j.wkRate||0)*52;const psfyr=j.sf?yr/j.sf:0;const hrs=(+j.freq||0)*(+j.hrsVis||0);const lc=hrs*18*1.17;const sw=(+j.mSup||0)/4.33;const gp=(+j.wkRate||0)-lc-sw;const gm=(+j.wkRate||0)>0?gp/(+j.wkRate||1):0;const tc=TIERS[j.tier]||{};
+          return<tr key={j.id} style={{opacity:j.pipe?.6:1}}><td style={{...ss.td,fontWeight:600}}>{j.name}</td><td style={ss.td}>{j.client}</td><td style={ss.td}><Badge c={tc.color||T.accent}>{j.tier||"Basic"}</Badge></td><td style={ss.tdR}>{j.sf?j.sf.toLocaleString():""}</td><td style={ss.td}>{j.freq}x</td><td style={{...ss.tdR,fontWeight:700}}>{fmtF(j.wkRate)}</td><td style={ss.tdR}>{psfyr?("$"+psfyr.toFixed(2)):""}</td><td style={{...ss.tdR,fontWeight:600,color:gm>.6?T.green:gm>.4?T.yellow:T.red}}>{pct(gm)}</td><td style={ss.td}>{j.pipe?<Badge c={T.purple}>PIPE</Badge>:j.active?<Badge c={T.green}>ACTIVE</Badge>:<Badge c={T.red}>OFF</Badge>}</td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(j.id)}>{"\u2715"}</button></td></tr>})}</tbody>
+      </table></div>
+    </div>
+  </>);
+}
+
+// ═══ LABOR ═══
+function LaborTab({data,upd,E,ss,T,F,Tog,Badge}){
+  const df={name:"",role:"Cleaner",rate:16,hpw:25,active:true,start:td(),ft:false,pri:1};
+  const[f,setF]=useState(df);
+  const add=()=>{if(!f.name)return;upd("workers",[...data.workers,{...f,id:uid(),rate:+f.rate,hpw:+f.hpw}]);setF(df)};
+  const rm=id=>upd("workers",data.workers.filter(w=>w.id!==id));
+  const tog=(id,k)=>upd("workers",data.workers.map(w=>w.id===id?{...w,[k]:!w[k]}:w));
+  return(<>
+    <div style={ss.card}><div style={ss.ch}><span>+ Worker</span></div>
+      <div style={ss.g5}>
+        <F l="Name"><input style={ss.inp} value={f.name} onChange={e=>setF({...f,name:e.target.value})}/></F>
+        <F l="Role"><select style={ss.sel} value={f.role} onChange={e=>setF({...f,role:e.target.value})}>{["Cleaner","Lead","Supervisor","Ops Director"].map(v=><option key={v}>{v}</option>)}</select></F>
+        <F l="$/hr"><input type="number" style={ss.inp} value={f.rate} onChange={e=>setF({...f,rate:e.target.value})}/></F>
+        <F l="Hrs/wk"><input type="number" style={ss.inp} value={f.hpw} onChange={e=>setF({...f,hpw:e.target.value})}/></F>
+        <div style={{display:"flex",gap:8,alignItems:"flex-end"}}><F l="Active"><Tog v={f.active} onChange={v=>setF({...f,active:v})}/></F><F l="FT"><Tog v={f.ft} onChange={v=>setF({...f,ft:v})}/></F><button style={ss.btn} onClick={add}>+ Add</button></div>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Workforce</span></div>
+      <table style={ss.tbl}><thead><tr>{["Name","Role","$/hr","Hrs/wk","Weekly","Loaded","FT","Active",""].map((h,i)=><th key={i} style={[2,3,4,5].includes(i)?ss.thR:ss.th}>{h}</th>)}</tr></thead>
+      <tbody>{data.workers.map(w=>{const base=(+w.rate)*(+w.hpw);const loaded=base*(1+data.A.burden+data.A.wcRate);return<tr key={w.id}><td style={{...ss.td,fontWeight:600}}>{w.name}<br/><span style={{fontSize:10,color:T.td2}}>{w.start}</span></td><td style={ss.td}><Badge>{w.role}</Badge></td><td style={ss.tdR}>${(+w.rate).toFixed(2)}</td><td style={ss.tdR}>{w.hpw}</td><td style={ss.tdR}>{fmtF(base)}</td><td style={{...ss.tdR,fontWeight:600}}>{fmtF(loaded)}</td><td style={ss.td}><Tog v={w.ft} onChange={()=>tog(w.id,"ft")}/></td><td style={ss.td}><Tog v={w.active} onChange={()=>tog(w.id,"active")}/></td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(w.id)}>{"\u2715"}</button></td></tr>})}</tbody></table>
+    </div>
+    <div style={ss.g4}>{[["Wages",E.wWage,T.accent],["Burden",E.wBurd],["WC",E.wWC,T.yellow],["Total Labor",E.wLab,T.red]].map(([l,v,c],i)=><div key={i} style={{...ss.card,textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:c||T.text}}>{fmtF(v)}</div><div style={{fontSize:9,color:T.td2,textTransform:"uppercase",marginTop:3}}>{l}</div></div>)}</div>
+  </>);
+}
+
+// ═══ INVENTORY ═══
+function InvTab({data,upd,E,ss,T,F,Badge,updA}){
+  const df={name:"",cat:"Chemical",uc:"",qty:"",usePW:"",reorderAt:2};const[f,setF]=useState(df);
+  const add=()=>{if(!f.name)return;upd("inventory",[...data.inventory,{...f,id:uid(),uc:+f.uc||0,qty:+f.qty||0}]);setF(df)};
+  const rm=id=>upd("inventory",data.inventory.filter(i=>i.id!==id));
+  return(<>
+    <div style={ss.card}><div style={ss.ch}><span>Consumption</span></div>
+      <div style={ss.g4}>
+        <F l="Gal/Hr"><input type="number" step=".01" style={ss.inp} value={data.A.galPerHr} onChange={e=>updA("galPerHr",+e.target.value)}/></F>
+        <F l="Usage %"><input type="number" step=".01" style={ss.inp} value={data.A.usagePct} onChange={e=>updA("usagePct",+e.target.value)}/></F>
+        <F l="Dilution (x:1)"><input type="number" style={ss.inp} value={data.A.dilution} onChange={e=>updA("dilution",+e.target.value)}/></F>
+        <F l="SF/Hr"><input type="number" style={ss.inp} value={data.A.sfPerHr} onChange={e=>updA("sfPerHr",+e.target.value)}/></F>
+      </div>
+      <div style={{fontSize:11,color:T.ts,marginTop:4}}>Est weekly: {E.estGalWk.toFixed(2)} gal conc from {E.mhW.toFixed(1)} man-hrs</div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>+ Item</span></div>
+      <div style={ss.g4}>
+        <F l="Product"><input style={ss.inp} value={f.name} onChange={e=>setF({...f,name:e.target.value})}/></F>
+        <F l="Cat"><select style={ss.sel} value={f.cat} onChange={e=>setF({...f,cat:e.target.value})}>{["Chemical","Paper","Equipment","Microfiber","Trash","PPE"].map(v=><option key={v}>{v}</option>)}</select></F>
+        <F l="Unit $"><input type="number" step=".01" style={ss.inp} value={f.uc} onChange={e=>setF({...f,uc:e.target.value})}/></F>
+        <div style={{display:"flex",alignItems:"flex-end",gap:8}}><F l="Qty"><input type="number" style={ss.inp} value={f.qty} onChange={e=>setF({...f,qty:e.target.value})}/></F><button style={ss.btn} onClick={add}>+</button></div>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Stock ({data.inventory.length})</span><span style={{fontSize:11}}>{fmtF(E.invVal)} {"\u00b7"} {E.supW>0?(E.invVal/E.supW).toFixed(1):"0"} wk cover</span></div>
+      <table style={ss.tbl}><thead><tr>{["Product","Cat","$","Qty","Value",""].map((h,i)=><th key={i} style={[2,3,4].includes(i)?ss.thR:ss.th}>{h}</th>)}</tr></thead>
+      <tbody>{data.inventory.map(i=><tr key={i.id}><td style={{...ss.td,fontWeight:600}}>{i.name}</td><td style={ss.td}><Badge>{i.cat}</Badge></td><td style={ss.tdR}>${(+i.uc).toFixed(2)}</td><td style={ss.tdR}>{i.qty}</td><td style={{...ss.tdR,fontWeight:600}}>{fmtF((+i.uc)*(+i.qty))}</td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(i.id)}>{"\u2715"}</button></td></tr>)}</tbody></table>
+    </div>
+  </>);
+}
+
+// ═══ SPECIALTY ═══
+function SpecTab({data,upd,E,ss,T,F,Badge}){
+  const df={date:td(),client:"",type:"Floor Wax",sf:"",price:"",weeks:4,done:false};
+  const[f,setF]=useState(df);
+  const add=()=>{if(!f.client||!f.price)return;upd("specJobs",[...(data.specJobs||[]),{...f,id:uid(),sf:+f.sf||0,price:+f.price,weeks:+f.weeks||4}]);setF(df)};
+  const rm=id=>upd("specJobs",(data.specJobs||[]).filter(s=>s.id!==id));
+  const tog=id=>upd("specJobs",(data.specJobs||[]).map(s=>s.id===id?{...s,done:!s.done}:s));
+  const active=(data.specJobs||[]).filter(s=>!s.done);
+  return(<>
+    <div style={ss.g4}>{[["Active",active.length,T.accent],["Wkly Rev",fmtF(E.specRevW),T.green],["Booked",fmtF((data.specJobs||[]).reduce((s,j)=>s+(+j.price||0),0)),T.purple],["Done",(data.specJobs||[]).filter(s=>s.done).length,T.td2]].map(([l,v,c],i)=><div key={i} style={{...ss.card,textAlign:"center"}}><div style={{fontSize:20,fontWeight:800,color:c}}>{v}</div><div style={{fontSize:9,color:T.td2,textTransform:"uppercase",marginTop:3}}>{l}</div></div>)}</div>
+    <div style={ss.card}><div style={ss.ch}><span>+ Job</span><span style={{fontSize:10,color:T.td2}}>Floor wax {"\u00b7"} Carpet {"\u00b7"} Post-con {"\u00b7"} Emergency</span></div>
+      <div style={ss.g5}>
+        <F l="Client"><input style={ss.inp} value={f.client} onChange={e=>setF({...f,client:e.target.value})}/></F>
+        <F l="Type"><select style={ss.sel} value={f.type} onChange={e=>setF({...f,type:e.target.value})}>{["Floor Wax","Carpet Extract","Post-Construction","Emergency","Pressure Wash","Deep Clean"].map(v=><option key={v}>{v}</option>)}</select></F>
+        <F l="SF"><input type="number" style={ss.inp} value={f.sf} onChange={e=>setF({...f,sf:e.target.value})}/></F>
+        <F l="Price"><input type="number" style={ss.inp} value={f.price} onChange={e=>setF({...f,price:e.target.value})}/></F>
+        <div style={{display:"flex",alignItems:"flex-end",gap:8}}><F l="Spread(wk)"><input type="number" style={{...ss.inp,width:60}} value={f.weeks} onChange={e=>setF({...f,weeks:e.target.value})}/></F><button style={ss.btn} onClick={add}>+ Add</button></div>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Active ({active.length})</span></div>
+      <table style={ss.tbl}><thead><tr>{["Date","Client","Type","Price","$/wk","",""].map((h,i)=><th key={i} style={[3,4].includes(i)?ss.thR:ss.th}>{h}</th>)}</tr></thead>
+      <tbody>{active.map(s=><tr key={s.id}><td style={ss.td}>{s.date}</td><td style={{...ss.td,fontWeight:600}}>{s.client}</td><td style={ss.td}><Badge c={s.type==="Emergency"?T.red:T.accent}>{s.type}</Badge></td><td style={{...ss.tdR,fontWeight:700}}>{fmtF(s.price)}</td><td style={{...ss.tdR,color:T.green}}>{fmtF(s.price/s.weeks)}</td><td style={ss.td}><button style={ss.btnG} onClick={()=>tog(s.id)}>{"\u2713"}</button></td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(s.id)}>{"\u2715"}</button></td></tr>)}</tbody></table>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Rate Card</span></div>
+      <table style={ss.tbl}><tbody>{[["Floor Strip & Wax","$"+data.S.specFloorSF+"/SF"],["Carpet Extraction","$"+data.S.specCarpetSF+"/SF"],["Post-Construction","$"+data.S.specPostConSF+"/SF"],["Emergency","$"+data.S.emergencyDispatch+" + $"+data.S.emergencyHr+"/hr"]].map(([l,r],i)=><tr key={i}><td style={ss.td}>{l}</td><td style={{...ss.tdR,fontWeight:700}}>{r}</td></tr>)}</tbody></table>
+    </div>
+  </>);
+}
+
+// ═══ EQUITY ═══
+function EqTab({data,upd,E,ss,T,F,Badge}){
+  const df={date:td(),ldr:"HWE",prin:"",purp:"",rep:0};const[f,setF]=useState(df);
+  const add=()=>{if(!f.prin)return;upd("loans",[...data.loans,{...f,id:uid(),prin:+f.prin,rep:+f.rep||0}]);setF(df)};
+  const rm=id=>upd("loans",data.loans.filter(l=>l.id!==id));
+  return(<>
+    <div style={ss.card}><div style={ss.ch}><span>OA Article V {"\u2014"} Distribution Waterfall (Annual)</span></div>
+      <table style={ss.tbl}><tbody>
+        {[["Annual NOPAT",E.nopatW*52,T.green,true],["Reserve Deficit",Math.max(0,data.S.reserve-E.cash),T.red],["\u0031\u20e3 Member Loan Repay",E.loanRepay,T.yellow],["\u0032\u20e3 Tax Distributions",E.taxDist],["\u0033\u20e3 Preferred Return (7%)",E.prefReturn,T.accent],["\u0034\u20e3 Return of Capital",E.capReturn],["\u0035\u20e3 Residual \u2192 HWE ("+pct(data.S.hweEq)+")",E.hweResidual,T.green,true],["\u0035\u20e3 Residual \u2192 Nico ("+pct(data.S.nicoEq)+")",E.nicoResidual,T.purple,true]].map(([l,v,c,b],i)=><tr key={i} style={{background:b?((c||T.text)+"10"):"transparent"}}><td style={{...ss.td,fontWeight:b?700:400}}>{l}</td><td style={{...ss.tdR,fontWeight:b?700:600,color:c||T.text}}>{fmtF(v)}</td></tr>)}
+      </tbody></table>
+    </div>
+    <div style={ss.g4}>
+      {[{l:"HWE EQUITY",v:pct(data.S.hweEq),c:T.accent,sub:fmtF(data.S.capHWE)},{l:"NICO VESTED",v:pct(E.vestedPct),c:T.purple,sub:pct(data.S.nicoVestPct)+" target \u00b7 "+E.yrsElapsed.toFixed(1)+"yr"},{l:"ANNUAL MOIC",v:E.cap>0?(E.nopatW*52/E.cap).toFixed(1)+"x":"0x",c:T.green},{l:"PAYBACK",v:E.nopatW>0?Math.round(E.cap/(E.nopatW*52)*12)+" mo":"\u2014",c:T.yellow}].map((m,i)=><div key={i} style={{...ss.card,textAlign:"center",background:T.card2}}><div style={{fontSize:26,fontWeight:800,color:m.c}}>{m.v}</div><div style={{fontSize:9,color:T.td2,marginTop:3}}>{m.l}</div>{m.sub&&<div style={{fontSize:11,color:T.ts,marginTop:2}}>{m.sub}</div>}</div>)}
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>+ Member Loan (Art IV, {data.S.loanRate*100}%)</span></div>
+      <div style={ss.g4}>
+        <F l="Date"><input type="date" style={ss.inp} value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></F>
+        <F l="Lender"><select style={ss.sel} value={f.ldr} onChange={e=>setF({...f,ldr:e.target.value})}>{["HWE","Nico","Dad"].map(v=><option key={v}>{v}</option>)}</select></F>
+        <F l="Principal"><input type="number" style={ss.inp} value={f.prin} onChange={e=>setF({...f,prin:e.target.value})}/></F>
+        <div style={{display:"flex",alignItems:"flex-end",gap:8}}><F l="Purpose"><input style={ss.inp} value={f.purp} onChange={e=>setF({...f,purp:e.target.value})}/></F><button style={ss.btn} onClick={add}>+ Add</button></div>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Loans</span><span style={{color:T.yellow,fontWeight:700}}>Out: {fmtF(E.lOut)}</span></div>
+      <table style={ss.tbl}><thead><tr>{["Date","Lender","Principal","Purpose","Balance","Interest",""].map((h,i)=><th key={i} style={[2,4,5].includes(i)?ss.thR:ss.th}>{h}</th>)}</tr></thead>
+      <tbody>{data.loans.map(l=>{const d=Math.max(0,(Date.now()-new Date(l.date))/864e5);const int=(l.prin-l.rep)*data.S.loanRate*(d/365);return<tr key={l.id}><td style={ss.td}>{l.date}</td><td style={ss.td}>{l.ldr}</td><td style={{...ss.tdR,fontWeight:700}}>{fmtF(l.prin)}</td><td style={ss.td}>{l.purp}</td><td style={{...ss.tdR,color:T.yellow,fontWeight:700}}>{fmtF(l.prin-l.rep)}</td><td style={{...ss.tdR,color:T.ts}}>{fmtF(int)}</td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(l.id)}>{"\u2715"}</button></td></tr>})}</tbody></table>
+    </div>
+  </>);
+}
+
+// ═══ COMPLIANCE ═══
+function CompTab({data,upd,ss,T,F,Badge}){
+  const CTS=["OSHA BBP/HazCom","CMI Basic","CIMS-GB","CPR","Drug Screen","BG Check"];
+  const df={worker:"",cert:"OSHA BBP/HazCom",date:td()};const[f,setF]=useState(df);
+  const add=()=>{if(!f.worker)return;upd("certs",[...(data.certs||[]),{...f,id:uid(),status:"Completed"}]);setF(df)};
+  const rm=id=>upd("certs",(data.certs||[]).filter(c=>c.id!==id));
+  return(<>
+    <div style={ss.g3}>{[{c:"OSHA BBP/HazCom",t:"Pre-medical",cost:"$300\u2013500",i:"\ud83d\udee1"},{c:"CMI Basic",t:"Month 3",cost:"$800\u20131,200",i:"\ud83d\udccb"},{c:"CIMS-GB",t:"Month 10\u201314",cost:"$5\u20137K",i:"\ud83c\udfc5"}].map((m,i)=>{const has=(data.certs||[]).some(c=>c.cert===m.c);return<div key={i} style={{...ss.card,border:"1px solid "+(has?T.green:T.border)}}><span style={{fontSize:24}}>{m.i}</span><div style={{fontSize:14,fontWeight:700,color:has?T.green:T.text,marginTop:4}}>{m.c}</div><div style={{fontSize:11,color:T.ts}}>Target: {m.t} {"\u00b7"} {m.cost}</div><div style={{marginTop:6}}><Badge c={has?T.green:T.yellow}>{has?"DONE":"PENDING"}</Badge></div></div>})}</div>
+    <div style={ss.card}><div style={ss.ch}><span>+ Cert</span></div>
+      <div style={ss.g3}>
+        <F l="Worker"><select style={ss.sel} value={f.worker} onChange={e=>setF({...f,worker:e.target.value})}><option value="">{"\u2014"}</option>{data.workers.map(w=><option key={w.id} value={w.name}>{w.name}</option>)}<option>Company-wide</option></select></F>
+        <F l="Cert"><select style={ss.sel} value={f.cert} onChange={e=>setF({...f,cert:e.target.value})}>{CTS.map(c=><option key={c}>{c}</option>)}</select></F>
+        <div style={{display:"flex",alignItems:"flex-end",gap:8}}><F l="Date"><input type="date" style={ss.inp} value={f.date} onChange={e=>setF({...f,date:e.target.value})}/></F><button style={ss.btn} onClick={add}>+ Log</button></div>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Log ({(data.certs||[]).length})</span></div>
+      <table style={ss.tbl}><thead><tr>{["Worker","Cert","Date",""].map((h,i)=><th key={i} style={ss.th}>{h}</th>)}</tr></thead>
+      <tbody>{(data.certs||[]).map(c=><tr key={c.id}><td style={{...ss.td,fontWeight:600}}>{c.worker}</td><td style={ss.td}><Badge c={T.accent}>{c.cert}</Badge></td><td style={ss.td}>{c.date}</td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(c.id)}>{"\u2715"}</button></td></tr>)}</tbody></table>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Matrix</span></div>
+      <table style={ss.tbl}><thead><tr><th style={ss.th}>Worker</th>{CTS.map(c=><th key={c} style={{...ss.th,fontSize:8,textAlign:"center"}}>{c}</th>)}</tr></thead>
+      <tbody>{data.workers.map(w=><tr key={w.id}><td style={{...ss.td,fontWeight:600}}>{w.name}</td>{CTS.map(c=>{const has=(data.certs||[]).some(ce=>ce.worker===w.name&&ce.cert===c);return<td key={c} style={{...ss.td,textAlign:"center",color:has?T.green:T.td2}}>{has?"\u2713":"\u2014"}</td>})}</tr>)}</tbody></table>
+    </div>
+  </>);
+}
+
+// ═══ ACTIONS ═══
+function ActTab({data,upd,setData,ss,T,F,Tog,Badge}){
+  const[f,setF]=useState({text:"",priority:"Medium",due:"",assignee:"Rob"});
+  const add=()=>{if(!f.text)return;upd("actions",[...data.actions,{...f,id:uid(),done:false,created:td()}]);setF({...f,text:"",due:""})};
+  const rm=id=>upd("actions",data.actions.filter(a=>a.id!==id));
+  const tog=id=>upd("actions",data.actions.map(a=>a.id===id?{...a,done:!a.done}:a));
+  const open=data.actions.filter(a=>!a.done);const done=data.actions.filter(a=>a.done);
+  return(<>
+    <div style={ss.card}><div style={ss.ch}><span>+ Task</span></div>
+      <div style={ss.g4}>
+        <F l="Task"><input style={ss.inp} value={f.text} onChange={e=>setF({...f,text:e.target.value})} onKeyDown={e=>e.key==="Enter"&&add()}/></F>
+        <F l="Priority"><select style={ss.sel} value={f.priority} onChange={e=>setF({...f,priority:e.target.value})}>{["Critical","High","Medium","Low"].map(v=><option key={v}>{v}</option>)}</select></F>
+        <F l="Due"><input type="date" style={ss.inp} value={f.due} onChange={e=>setF({...f,due:e.target.value})}/></F>
+        <F l="Who"><select style={ss.sel} value={f.assignee} onChange={e=>setF({...f,assignee:e.target.value})}>{["Rob","Nico","Both"].map(v=><option key={v}>{v}</option>)}</select></F>
+      </div><button style={ss.btn} onClick={add}>+ Add</button>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Open ({open.length})</span></div>
+      <table style={ss.tbl}><thead><tr>{["\u2713","Task","Priority","Due","Who",""].map((h,i)=><th key={i} style={ss.th}>{h}</th>)}</tr></thead>
+      <tbody>{open.map(a=><tr key={a.id}><td style={ss.td}><Tog v={a.done} onChange={()=>tog(a.id)}/></td>
+          <td style={ss.td}><input style={{...ss.inp,padding:"2px 4px",fontSize:11,fontWeight:600}} value={a.text||""} onChange={ev=>{const v=ev.target.value;const aid=a.id;setData(prev=>{const nd={...prev,actions:prev.actions.map(x=>x.id===aid?{...x,text:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}/></td>
+          <td style={ss.td}><select style={{...ss.sel,padding:"2px 4px",fontSize:10}} value={a.priority} onChange={ev=>{const v=ev.target.value;const aid=a.id;setData(prev=>{const nd={...prev,actions:prev.actions.map(x=>x.id===aid?{...x,priority:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}>{["Critical","High","Medium","Low"].map(v=><option key={v}>{v}</option>)}</select></td>
+          <td style={ss.td}><input type="date" style={{...ss.inp,padding:"2px 4px",fontSize:10}} value={a.due||""} onChange={ev=>{const v=ev.target.value;const aid=a.id;setData(prev=>{const nd={...prev,actions:prev.actions.map(x=>x.id===aid?{...x,due:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}/></td>
+          <td style={ss.td}><select style={{...ss.sel,padding:"2px 4px",fontSize:10}} value={a.assignee||"Rob"} onChange={ev=>{const v=ev.target.value;const aid=a.id;setData(prev=>{const nd={...prev,actions:prev.actions.map(x=>x.id===aid?{...x,assignee:v}:x)};try{localStorage.setItem(SK,JSON.stringify(nd))}catch(er){}return nd})}}>{["Rob","Nico","Both"].map(v=><option key={v}>{v}</option>)}</select></td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(a.id)}>{"\u2715"}</button></td></tr>)}</tbody></table>
+    </div>
+    {done.length>0&&<div style={ss.card}><div style={ss.ch}><span>Done ({done.length})</span></div>
+      <table style={ss.tbl}><tbody>{done.map(a=><tr key={a.id} style={{opacity:.4}}><td style={ss.td}><Tog v={a.done} onChange={()=>tog(a.id)}/></td><td style={{...ss.td,textDecoration:"line-through"}}>{a.text}</td><td style={ss.td}>{a.due}</td><td style={ss.td}>{a.assignee}</td><td style={ss.td}><button style={ss.btnD} onClick={()=>rm(a.id)}>{"\u2715"}</button></td></tr>)}</tbody></table>
+    </div>}
+  </>);
+}
+
+// ═══ SETTINGS ═══
+function CfgTab({data,updS,updA,setData,ss,T,F}){
+  return(<>
+    <div style={ss.g2}>
+      <div style={ss.card}><div style={ss.ch}><span>Company</span></div>
+        <F l="Name"><input style={ss.inp} value={data.S.name} onChange={e=>updS("name",e.target.value)}/></F>
+        <F l="Start"><input type="date" style={ss.inp} value={data.S.start} onChange={e=>updS("start",e.target.value)}/></F>
+        <div style={ss.g2}><F l="HWE Cap"><input type="number" style={ss.inp} value={data.S.capHWE} onChange={e=>updS("capHWE",+e.target.value)}/></F><F l="Nico Cap"><input type="number" style={ss.inp} value={data.S.capNico} onChange={e=>updS("capNico",+e.target.value)}/></F></div>
+        <div style={ss.g2}><F l="HWE Eq %"><input type="number" step=".01" style={ss.inp} value={data.S.hweEq} onChange={e=>updS("hweEq",+e.target.value)}/></F><F l="Nico Eq %"><input type="number" step=".01" style={ss.inp} value={data.S.nicoEq} onChange={e=>updS("nicoEq",+e.target.value)}/></F></div>
+      </div>
+      <div style={ss.card}><div style={ss.ch}><span>Tax & Finance</span></div>
+        <F l="Tax Rate"><input type="number" step=".001" style={ss.inp} value={data.S.taxRate} onChange={e=>updS("taxRate",+e.target.value)}/></F>
+        <F l="Loan Rate"><input type="number" step=".01" style={ss.inp} value={data.S.loanRate} onChange={e=>updS("loanRate",+e.target.value)}/></F>
+        <F l="Min Reserve"><input type="number" style={ss.inp} value={data.S.reserve} onChange={e=>updS("reserve",+e.target.value)}/></F>
+        <div style={ss.g2}><F l="Bonus/Qtr"><input type="number" style={ss.inp} value={data.S.bonusQ} onChange={e=>updS("bonusQ",+e.target.value)}/></F><F l="Onboard $"><input type="number" style={ss.inp} value={data.S.onboard} onChange={e=>updS("onboard",+e.target.value)}/></F></div>
+      </div>
+    </div>
+    <div style={ss.g2}>
+      <div style={ss.card}><div style={ss.ch}><span>Nico Comp & Vesting</span></div>
+        <div style={ss.g2}><F l="M1-12 $/mo"><input type="number" style={ss.inp} value={data.S.nicoM1} onChange={e=>updS("nicoM1",+e.target.value)}/></F><F l="M13+ $/mo"><input type="number" style={ss.inp} value={data.S.nicoM13} onChange={e=>updS("nicoM13",+e.target.value)}/></F></div>
+        <F l="Start"><input type="date" style={ss.inp} value={data.S.nicoStart} onChange={e=>updS("nicoStart",e.target.value)}/></F>
+        <div style={ss.g3}><F l="Vest %"><input type="number" step=".01" style={ss.inp} value={data.S.nicoVestPct} onChange={e=>updS("nicoVestPct",+e.target.value)}/></F><F l="Vest Yrs"><input type="number" style={ss.inp} value={data.S.nicoVestYrs} onChange={e=>updS("nicoVestYrs",+e.target.value)}/></F><F l="Cliff"><input type="number" style={ss.inp} value={data.S.nicoCliffYrs} onChange={e=>updS("nicoCliffYrs",+e.target.value)}/></F></div>
+      </div>
+      <div style={ss.card}><div style={ss.ch}><span>Specialty Rates</span></div>
+        <div style={ss.g2}><F l="Floor $/SF"><input type="number" step=".01" style={ss.inp} value={data.S.specFloorSF} onChange={e=>updS("specFloorSF",+e.target.value)}/></F><F l="Carpet $/SF"><input type="number" step=".01" style={ss.inp} value={data.S.specCarpetSF} onChange={e=>updS("specCarpetSF",+e.target.value)}/></F></div>
+        <div style={ss.g2}><F l="Post-Con $/SF"><input type="number" step=".01" style={ss.inp} value={data.S.specPostConSF} onChange={e=>updS("specPostConSF",+e.target.value)}/></F><F l="Emergency $"><input type="number" style={ss.inp} value={data.S.emergencyDispatch} onChange={e=>updS("emergencyDispatch",+e.target.value)}/></F></div>
+        <F l="Emergency $/hr"><input type="number" style={ss.inp} value={data.S.emergencyHr} onChange={e=>updS("emergencyHr",+e.target.value)}/></F>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Operating Assumptions</span></div>
+      <div style={ss.g4}>{[["insBase","Ins Base $/mo"],["insPer100k","Ins/$100K"],["bond","Bond (ann)"],["autoIns","Auto $/van/mo"],["swept","Swept $/mo"],["xero","Xero $/mo"],["phone","Phone $/mo"],["bankFees","Bank $/mo"],["mktg","Mktg $/mo"],["legalAnn","Legal (ann)"],["licAnn","Lic (ann)"],["vanOp","Van Ops $/mo"],["eqRef","Eq Refresh $/mo"],["conting","Contingency %"],["burden","Burden %"],["wcRate","WC %"],["uniformAnn","Uni $/yr"],["trainAnn","Train $/yr"],["storage","Storage $/mo"],["salesTaxRate","Sales Tax %"]].map(([k,l])=><F key={k} l={l}><input type="number" step={["conting","burden","wcRate"].includes(k)?".001":"1"} style={ss.inp} value={data.A[k]} onChange={e=>updA(k,+e.target.value)}/></F>)}</div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>{"\ud83d\udd17"} Shared Access Setup</span></div>
+      <div style={{fontSize:12,color:T.ts,lineHeight:1.6,marginBottom:12}}>
+        <strong>To enable real-time shared access between Rob and Nico:</strong><br/>
+        1. Go to <a href="https://console.firebase.google.com" target="_blank" style={{color:T.accent}}>Firebase Console</a> {"\u2192"} Create Project {"\u2192"} "HWFS-OS"<br/>
+        2. Add a Web App {"\u2192"} copy the config object<br/>
+        3. Go to Realtime Database {"\u2192"} Create Database {"\u2192"} Start in Test Mode<br/>
+        4. Paste your Firebase config below and hit Save<br/>
+        5. Both users open the same HTML file {"\u2014"} data syncs automatically<br/>
+        <div style={{marginTop:8,padding:8,background:T.bg2,borderRadius:4,fontSize:11}}>
+          <strong>Current mode:</strong> Local storage (single machine). Enable Firebase for multi-user sync.<br/>
+          <strong>Version:</strong> v11.0 | <strong>Storage key:</strong> hwfs-v7 | <strong>Data size:</strong> {(JSON.stringify(data).length/1024).toFixed(1)}KB
+        </div>
+      </div>
+    </div>
+    <div style={ss.card}><div style={ss.ch}><span>Tier Rates</span></div>
+      <table style={ss.tbl}><tbody>{TK.map(k=>{const t=TIERS[k];return<tr key={k}><td style={ss.td}><span style={ss.tag(t.color)}>{k}</span></td><td style={{...ss.tdR,fontWeight:700}}>${t.rate.toFixed(2)}/SF</td><td style={ss.tdR}>{pct(t.churn)} churn</td></tr>})}</tbody></table>
+    </div>
+  </>);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script></body></html>
