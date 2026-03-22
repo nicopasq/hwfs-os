@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { useApp } from '../context';
 import { fmtF, uid, td } from '../utils';
 import { Badge } from '../components/ui';
 import { SK } from '../constants';
-import { deleteIncoming } from '../firebase';
+import { deleteIncoming, markMessageRead, sendReply } from '../firebase';
 
 // ── Document type → badge colour / action label ───────────────────────────
 const DOC_META = {
@@ -24,8 +25,10 @@ function fieldRow(label, value, T, mono) {
   );
 }
 
-export default function InboxTab({ data, upd, setData, E, incomingDocs = [] }) {
+export default function InboxTab({ data, upd, setData, E, incomingDocs = [], clientMessages = [] }) {
   const { T, ss, mono, font } = useApp();
+  const [expandedMsg, setExpandedMsg] = useState(null);
+  const [replyText, setReplyText]     = useState({});
   const pending = data.pending || [];
   const posted  = data.postedExpenses || [];
 
@@ -256,14 +259,33 @@ export default function InboxTab({ data, upd, setData, E, incomingDocs = [] }) {
     );
   };
 
+  const unreadMsgs = clientMessages.filter(m => !m.read).length;
+
+  const doReply = async (msg) => {
+    const text = (replyText[msg.msgId || msg.id] || '').trim();
+    if (!text) return;
+    await sendReply(msg.jobId, msg.msgId || msg.id, text, data.userId || 'ERP');
+    setReplyText(prev => ({ ...prev, [msg.msgId || msg.id]: '' }));
+  };
+
+  const toggleMsg = (msg) => {
+    const key = msg.msgId || msg.id;
+    const isOpen = expandedMsg === key;
+    setExpandedMsg(isOpen ? null : key);
+    if (!msg.read && !isOpen) {
+      markMessageRead(msg.jobId, msg.msgId || msg.id);
+    }
+  };
+
   return (
     <>
       {/* ── Summary stats ─────────────────────────────────────────────────── */}
-      <div style={ss.g3}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 12 }}>
         {[
-          ['Incoming Docs',   incomingDocs.length,  T.purple],
-          ['Expenses Pending', pending.length,        T.orange],
-          ['Approved (All)',  posted.length,          T.green],
+          ['Incoming Docs',    incomingDocs.length, T.purple],
+          ['Client Messages',  clientMessages.length, T.accent],
+          ['Unread',           unreadMsgs,           T.orange],
+          ['Approved (All)',   posted.length,         T.green],
         ].map(([l, v, c], i) =>
           <div key={i} style={{ ...ss.card, textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: c }}>{v}</div>
@@ -290,6 +312,88 @@ export default function InboxTab({ data, upd, setData, E, incomingDocs = [] }) {
             .slice()
             .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
             .map(renderDoc)
+        )}
+      </div>
+
+      {/* ── Client Messages ──────────────────────────────────────────────── */}
+      <div style={ss.card}>
+        <div style={ss.ch}>
+          <span>Client Messages ({clientMessages.length})</span>
+          {unreadMsgs > 0 && <Badge c={T.orange}>{unreadMsgs} unread</Badge>}
+        </div>
+        {clientMessages.length === 0 ? (
+          <div style={{ padding: '24px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>💬</div>
+            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 15, color: T.text, marginBottom: 4 }}>No messages yet</div>
+            <div style={{ fontSize: 12, color: T.td2 }}>When clients send messages through their portal, they'll appear here.</div>
+          </div>
+        ) : (
+          clientMessages.map(msg => {
+            const key      = msg.msgId || msg.id;
+            const isOpen   = expandedMsg === key;
+            const jobName  = (data.jobs || []).find(j => j.id === msg.jobId)?.name || msg.jobId;
+            return (
+              <div key={key} style={{ border: '1px solid ' + T.border, borderRadius: 4, marginBottom: 10, overflow: 'hidden' }}>
+                {/* Message header (always visible) */}
+                <div
+                  style={{ padding: '12px 16px', background: msg.read ? T.bg2 : T.mintPale, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderLeft: msg.read ? 'none' : '3px solid ' + T.accent }}
+                  onClick={() => toggleMsg(msg)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 18 }}>💬</span>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: msg.read ? 500 : 700, color: T.text }}>{jobName}</div>
+                      <div style={{ fontSize: 11, color: T.td2, marginTop: 1 }}>
+                        {msg.name || 'Client'} · {msg.ts ? new Date(msg.ts).toLocaleString() : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {!msg.read && <Badge c={T.accent}>New</Badge>}
+                    {msg.reply && <Badge c={T.green}>Replied</Badge>}
+                    <span style={{ fontSize: 10, color: T.td2 }}>{isOpen ? '▾' : '▸'}</span>
+                  </div>
+                </div>
+
+                {/* Expanded: message body + reply */}
+                {isOpen && (
+                  <div style={{ padding: '16px', background: T.card }}>
+                    {/* Message text */}
+                    <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6, marginBottom: 16, padding: '12px 16px', background: T.bg2, borderRadius: 4, borderLeft: '3px solid ' + T.border }}>
+                      {msg.text}
+                    </div>
+
+                    {/* Previous reply */}
+                    {msg.reply && (
+                      <div style={{ marginBottom: 16 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>Your Reply</div>
+                        <div style={{ fontSize: 13, color: T.ts, lineHeight: 1.6, padding: '10px 14px', background: T.mintPale, borderRadius: 4, borderLeft: '3px solid ' + T.green }}>
+                          {msg.reply.text}
+                          <span style={{ fontSize: 11, color: T.td2, marginLeft: 10 }}>— {msg.reply.by} · {msg.reply.ts ? new Date(msg.reply.ts).toLocaleString() : ''}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reply box */}
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <textarea
+                        style={{ ...ss.inp, flex: 1, height: 72, resize: 'vertical', fontSize: 13 }}
+                        placeholder="Type a reply to the client…"
+                        value={replyText[key] || ''}
+                        onChange={e => setReplyText(prev => ({ ...prev, [key]: e.target.value }))}
+                      />
+                      <button
+                        style={{ ...ss.btn, padding: '10px 18px', fontSize: 12, whiteSpace: 'nowrap', marginTop: 0 }}
+                        onClick={() => doReply(msg)}
+                      >
+                        Send Reply
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 

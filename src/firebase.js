@@ -17,12 +17,16 @@ import { getDatabase, ref, onValue, set, remove, off } from 'firebase/database';
 const FB_CFG_KEY    = 'hwfs-fb-config';
 const DB_PATH       = 'hwfs-os/data';
 const INCOMING_PATH = 'hwfs-os/incoming';
+const PORTAL_PATH   = 'hwfs-os/portal';
+const MESSAGES_PATH = 'hwfs-os/messages';
 
 let _db      = null;
 let _ref     = null;
-let _unsubscribe = null;
-let _incomingRef = null;
+let _unsubscribe   = null;
+let _incomingRef   = null;
 let _incomingUnsub = null;
+let _messagesRef   = null;
+let _messagesUnsub = null;
 
 /** Save config to localStorage for persistence */
 export function saveFirebaseConfig(configObj) {
@@ -50,6 +54,7 @@ export function connectFirebase(config) {
     _db          = getDatabase(app);
     _ref         = ref(_db, DB_PATH);
     _incomingRef = ref(_db, INCOMING_PATH);
+    _messagesRef = ref(_db, MESSAGES_PATH);
     saveFirebaseConfig(config);
     return { ok: true };
   } catch (e) {
@@ -100,6 +105,47 @@ export function deleteIncoming(id) {
     .catch(e => console.warn('deleteIncoming failed:', e));
 }
 
+/** Publish portal data for a job */
+export function publishPortal(jobId, portalData) {
+  if (!_db) return Promise.reject(new Error('Not connected'));
+  return set(ref(_db, PORTAL_PATH + '/' + jobId), portalData)
+    .catch(e => { console.warn('publishPortal failed:', e); throw e; });
+}
+
+/** Subscribe to all client messages across all jobs */
+export function subscribeMessages(onMessages) {
+  if (!_messagesRef) return () => {};
+  if (_messagesUnsub) _messagesUnsub();
+
+  const unsub = onValue(_messagesRef, snap => {
+    const val = snap.val();
+    if (!val) { onMessages([]); return; }
+    // Flatten: { jobId: { msgId: msg } } → flat array
+    const msgs = Object.entries(val).flatMap(([jobId, jobMsgs]) =>
+      Object.values(jobMsgs).map(m => ({ ...m, jobId }))
+    );
+    onMessages(msgs.sort((a, b) => b.ts?.localeCompare(a.ts)));
+  }, err => console.warn('Firebase messages read error:', err));
+
+  _messagesUnsub = () => { try { off(_messagesRef); } catch(e) {/***/} };
+  return _messagesUnsub;
+}
+
+/** Mark a message as read */
+export function markMessageRead(jobId, msgId) {
+  if (!_db) return Promise.resolve();
+  return set(ref(_db, MESSAGES_PATH + '/' + jobId + '/' + msgId + '/read'), true)
+    .catch(e => console.warn('markMessageRead failed:', e));
+}
+
+/** Send a reply from ERP to a client message thread */
+export function sendReply(jobId, msgId, replyText, userId) {
+  if (!_db) return Promise.resolve();
+  const replyRef = ref(_db, MESSAGES_PATH + '/' + jobId + '/' + msgId + '/reply');
+  return set(replyRef, { text: replyText, by: userId, ts: new Date().toISOString() })
+    .catch(e => console.warn('sendReply failed:', e));
+}
+
 /** Push local data to Firebase (debounced in App) */
 export function pushFirebase(data) {
   if (!_ref) return Promise.resolve();
@@ -108,10 +154,12 @@ export function pushFirebase(data) {
 
 /** Disconnect and clean up listeners */
 export function disconnect() {
-  if (_unsubscribe)        { _unsubscribe();        _unsubscribe        = null; }
-  if (_incomingUnsub)      { _incomingUnsub();      _incomingUnsub      = null; }
+  if (_unsubscribe)   { _unsubscribe();   _unsubscribe   = null; }
+  if (_incomingUnsub) { _incomingUnsub(); _incomingUnsub = null; }
+  if (_messagesUnsub) { _messagesUnsub(); _messagesUnsub = null; }
   _ref         = null;
   _incomingRef = null;
+  _messagesRef = null;
   _db          = null;
 }
 

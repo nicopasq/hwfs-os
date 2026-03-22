@@ -4,10 +4,10 @@ import { F } from '../components/ui';
 import { SK, TIERS, TK } from '../constants';
 import {
   loadFirebaseConfig, connectFirebase, subscribeFirebase, subscribeIncoming,
-  clearFirebaseConfig,
+  subscribeMessages, clearFirebaseConfig,
 } from '../firebase';
 
-export default function CfgTab({ data, updS, updA, setData, fbStatus, setFbStatus, mergeRemote, onIncoming }) {
+export default function CfgTab({ data, updS, updA, setData, fbStatus, setFbStatus, mergeRemote, onIncoming, onMessages }) {
   const { T, ss } = useApp();
 
   const [cfgText, setCfgText] = useState(() => {
@@ -23,6 +23,7 @@ export default function CfgTab({ data, updS, updA, setData, fbStatus, setFbStatu
         setFbStatus('connected');
         subscribeFirebase(mergeRemote);
         subscribeIncoming(docs => onIncoming && onIncoming(docs));
+        subscribeMessages(msgs => onMessages && onMessages(msgs));
       } else {
         alert('Firebase connection failed:\n' + result.error);
         setFbStatus('error');
