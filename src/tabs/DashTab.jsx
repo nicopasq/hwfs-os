@@ -142,6 +142,9 @@ export default function DashTab({ data, E }) {
   const openTasks    = data.actions.filter(a => !a.done);
   const critTasks    = openTasks.filter(a => a.priority === "Critical" || a.priority === "High");
   const overdueTasks = openTasks.filter(a => a.due && a.due < today);
+  const dueFollowUps = (data.prospects || []).filter(p => p.followUp && p.followUp <= today && p.stage !== "Won" && p.stage !== "Lost");
+  const overdueInvoices = (data.invoices || []).filter(i => i.status === "Overdue");
+  const overdueInvoiceAmt = overdueInvoices.reduce((s, i) => s + i.amount, 0);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -169,6 +172,32 @@ export default function DashTab({ data, E }) {
           ))}
         </div>
       </div>
+
+      {/* ── Alert banners ───────────────────────────────────────────────────── */}
+      {(dueFollowUps.length > 0 || overdueInvoices.length > 0) && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {dueFollowUps.length > 0 && (
+            <div style={{ background: T.yellow + "18", border: "1px solid " + T.yellow + "55", borderRadius: 4, padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+              onClick={() => nav("crm")} onMouseEnter={e => e.currentTarget.style.cursor = "pointer"}>
+              <div>
+                <span style={{ fontWeight: 700, color: T.yellow, fontSize: 13 }}>⏰ {dueFollowUps.length} follow-up{dueFollowUps.length > 1 ? "s" : ""} due</span>
+                <span style={{ color: T.td2, fontSize: 12, marginLeft: 10 }}>{dueFollowUps.map(p => p.name).join(", ")}</span>
+              </div>
+              <span style={{ fontSize: 12, color: T.accent, fontWeight: 600 }}>→ Go to CRM</span>
+            </div>
+          )}
+          {overdueInvoices.length > 0 && (
+            <div style={{ background: T.red + "10", border: "1px solid " + T.red + "44", borderRadius: 4, padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+              onClick={() => nav("invoices")} onMouseEnter={e => e.currentTarget.style.cursor = "pointer"}>
+              <div>
+                <span style={{ fontWeight: 700, color: T.red, fontSize: 13 }}>⚠ {overdueInvoices.length} overdue invoice{overdueInvoices.length > 1 ? "s" : ""}</span>
+                <span style={{ color: T.td2, fontSize: 12, marginLeft: 10 }}>{fmtF(overdueInvoiceAmt)} outstanding</span>
+              </div>
+              <span style={{ fontSize: 12, color: T.accent, fontWeight: 600 }}>→ Go to Invoices</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── KPI row ─────────────────────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>

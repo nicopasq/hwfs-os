@@ -24,7 +24,8 @@ import BsTab     from './tabs/BsTab';
 import CfTab     from './tabs/CfTab';
 import SgaTab    from './tabs/SgaTab';
 import RevTab    from './tabs/RevTab';
-import InboxTab  from './tabs/InboxTab';
+import InboxTab     from './tabs/InboxTab';
+import InvoicesTab  from './tabs/InvoicesTab';
 import CRMTab    from './tabs/CRMTab';
 import EquipTab  from './tabs/EquipTab';
 import JobsTab   from './tabs/JobsTab';
@@ -461,8 +462,9 @@ export default function App() {
             {tab === "cf"      && <CfTab    data={data} E={E} />}
             {tab === "sga"     && <SgaTab   data={data} setData={setData} E={E} />}
             {tab === "rev"     && <RevTab   data={data} E={E} />}
-            {tab === "inbox"   && <InboxTab data={data} upd={upd} setData={setData} E={E} incomingDocs={incomingDocs} />}
-            {tab === "crm"     && <CRMTab   data={data} upd={upd} E={E} />}
+            {tab === "inbox"    && <InboxTab    data={data} upd={upd} setData={setData} E={E} incomingDocs={incomingDocs} />}
+            {tab === "invoices" && <InvoicesTab data={data} setData={setData} />}
+            {tab === "crm"     && <CRMTab   data={data} upd={upd} setData={setData} E={E} />}
             {tab === "equip"   && <EquipTab data={data} upd={upd} setData={setData} E={E} />}
             {tab === "jobs"    && <JobsTab  data={data} upd={upd} E={E} />}
             {tab === "labor"   && <LaborTab data={data} upd={upd} E={E} />}
