@@ -573,8 +573,9 @@ export default function App() {
                 <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: font, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser.email}</span>
               )}
               <button
-                onClick={() => {
-                  if (authUser) signOut().catch(() => {});
+                onClick={async () => {
+                  try { await signOut(); } catch {}
+                  setAuthUser(null);
                 }}
                 style={{ background: "rgba(198,40,40,0.15)", border: "1px solid rgba(198,40,40,0.35)", borderRadius: 4, padding: "4px 12px", cursor: "pointer", color: "#ef9090", fontFamily: font, fontSize: 12, fontWeight: 500 }}
               >Sign Out</button>
