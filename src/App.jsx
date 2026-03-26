@@ -17,7 +17,6 @@ import HexLogo        from './components/HexLogo';
 import Clock          from './components/Clock';
 import MenuBar        from './components/MenuBar';
 import NotifBell      from './components/NotifBell';
-import StartupScreen  from './components/StartupScreen';
 
 import DashTab   from './tabs/DashTab';
 import PnlTab    from './tabs/PnlTab';
@@ -52,7 +51,7 @@ function persist(data) {
 }
 
 export default function App() {
-  const [booted,   setBooted]   = useState(false);
+  const [booted,   setBooted]   = useState(true);
   const [tab,      setTab]      = useState("dash");
   const [data,     setData]     = useState(DEF);
   const [ok,       setOk]       = useState(false);
@@ -369,13 +368,6 @@ export default function App() {
     </div>
   );
 
-  if (!booted) return (
-    <StartupScreen onDone={userId => {
-      setData(prev => { const nd = { ...prev, userId: userId || "Director" }; persist(nd); return nd; });
-      setBooted(true);
-    }} />
-  );
-
   // Auth gate — only when Firebase is configured
   if (fbConfigured && authUser === undefined) return (
     <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b0e15" }}>
@@ -479,11 +471,9 @@ export default function App() {
               <button
                 onClick={() => {
                   if (authUser) signOut().catch(() => {});
-                  setData(prev => { const nd = { ...prev, lastSync: new Date().toISOString() }; persist(nd); return nd; });
-                  setBooted(false);
                 }}
                 style={{ background: "rgba(198,40,40,0.15)", border: "1px solid rgba(198,40,40,0.35)", borderRadius: 4, padding: "4px 12px", cursor: "pointer", color: "#ef9090", fontFamily: font, fontSize: 12, fontWeight: 500 }}
-              >{authUser ? "Sign Out" : "Log Off"}</button>
+              >Sign Out</button>
             </div>
           </div>
 
