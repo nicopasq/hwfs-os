@@ -80,6 +80,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
       billingNotes: j.billingNotes || "",
       clientNotes:  j.clientNotes  || "",
       photos:       (j.photos || "").split("\n").map(u => u.trim()).filter(Boolean),
+      scopeItems:   (j.scopeItems || "").split("\n").map(s => s.trim()).filter(Boolean),
       portalEnabled: j.portalEnabled !== false,
       publishedAt:  new Date().toISOString(),
     };
@@ -190,6 +191,24 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <span style={{ fontSize: 11, color: T.ts }}>Portal enabled</span>
                                 <Tog v={j.portalEnabled !== false} onChange={v => updJ(j.id, { portalEnabled: v })} />
+                              </div>
+                            </div>
+
+                            {/* Scope of Work */}
+                            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid " + T.border }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>Scope of Work</div>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "flex-start" }}>
+                                <F l="Scope items — one per line (workers see these as sections)">
+                                  <textarea
+                                    style={{ ...ss.inp, height: 88, resize: "vertical", fontFamily: mono, fontSize: 12 }}
+                                    value={j.scopeItems || ""}
+                                    onChange={e => updJ(j.id, { scopeItems: e.target.value })}
+                                    placeholder={"Floor Cleaning\nWall Washing\nFurniture Dusting\nMopping\nRestroom Sanitizing"}
+                                  />
+                                </F>
+                                <div style={{ paddingTop: 20, fontSize: 11, color: T.td2, lineHeight: 1.6, maxWidth: 220 }}>
+                                  Workers select each section on the upload form and attach photos + notes per category.
+                                </div>
                               </div>
                             </div>
 
