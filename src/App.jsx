@@ -12,6 +12,7 @@ import { AppContext }     from './context';
 import { SK, TABS, DA, DS, DSGA, DEF, dk, lt, font, serif, TIERS, TK } from './constants';
 import { uid, td, fmtF, fmt, pct } from './utils';
 
+import LoginScreen    from './components/LoginScreen';
 import HexLogo        from './components/HexLogo';
 import Clock          from './components/Clock';
 import MenuBar        from './components/MenuBar';
@@ -39,7 +40,8 @@ import CfgTab    from './tabs/CfgTab';
 
 import {
   loadFirebaseConfig, connectFirebase, subscribeFirebase, subscribeIncoming,
-  subscribeMessages, subscribeVisits, pushFirebase, disconnect as fbDisconnect, isConnected,
+  subscribeMessages, subscribeVisits, pushFirebase, disconnect as fbDisconnect,
+  isConnected, onAuthChanged, signOut,
 } from './firebase';
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
@@ -59,6 +61,8 @@ export default function App() {
   const [incomingDocs,   setIncomingDocs]   = useState([]);
   const [clientMessages, setClientMessages] = useState([]);
   const [visits,         setVisits]         = useState([]);
+  const [authUser,       setAuthUser]       = useState(undefined); // undefined=loading, null=signed out, obj=signed in
+  const [fbConfigured,   setFbConfigured]   = useState(false);
 
   const mergeRemote = remote => setData(() => ({
     ...DEF, ...remote,
@@ -92,21 +96,27 @@ export default function App() {
 
     // Auto-connect Firebase if a config was previously saved
     const fbCfg = loadFirebaseConfig();
+    let unsubAuth = () => {};
     if (fbCfg) {
       const result = connectFirebase(fbCfg);
       if (result.ok) {
         setFbStatus('connected');
+        setFbConfigured(true);
         subscribeFirebase(mergeRemote);
         subscribeIncoming(docs => setIncomingDocs(docs));
         subscribeMessages(msgs => setClientMessages(msgs));
         subscribeVisits(vs => setVisits(vs));
+        unsubAuth = onAuthChanged(user => setAuthUser(user || null));
       } else {
         setFbStatus('error');
+        setAuthUser(null); // no auth gate if Firebase failed
       }
+    } else {
+      setAuthUser(null); // no Firebase configured — skip auth
     }
 
     setOk(true);
-    return () => fbDisconnect();
+    return () => { fbDisconnect(); unsubAuth(); };
   }, []);
 
   // ── State updaters ──────────────────────────────────────────────────────────
@@ -366,6 +376,18 @@ export default function App() {
     }} />
   );
 
+  // Auth gate — only when Firebase is configured
+  if (fbConfigured && authUser === undefined) return (
+    <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b0e15" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 28, color: "#e8eaf0", marginBottom: 12, fontFamily: "'DM Serif Display',serif" }}>HuronWest</div>
+        <div style={{ fontSize: 13, color: "#8892a0", fontFamily: "'Inter','Segoe UI',sans-serif" }}>Checking authentication…</div>
+      </div>
+    </div>
+  );
+
+  if (fbConfigured && authUser === null) return <LoginScreen />;
+
   const sW = sideOpen ? 240 : 64;
 
   const contextValue = { T, ss, font, serif, mono: "'JetBrains Mono','Fira Code',monospace", nav };
@@ -451,10 +473,17 @@ export default function App() {
               )}
               <NotifBell notifs={E.notifs || []} />
               <Clock />
+              {authUser && (
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: font, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser.email}</span>
+              )}
               <button
-                onClick={() => { setData(prev => { const nd = { ...prev, lastSync: new Date().toISOString() }; persist(nd); return nd; }); setBooted(false); }}
+                onClick={() => {
+                  if (authUser) signOut().catch(() => {});
+                  setData(prev => { const nd = { ...prev, lastSync: new Date().toISOString() }; persist(nd); return nd; });
+                  setBooted(false);
+                }}
                 style={{ background: "rgba(198,40,40,0.15)", border: "1px solid rgba(198,40,40,0.35)", borderRadius: 4, padding: "4px 12px", cursor: "pointer", color: "#ef9090", fontFamily: font, fontSize: 12, fontWeight: 500 }}
-              >Log Off</button>
+              >{authUser ? "Sign Out" : "Log Off"}</button>
             </div>
           </div>
 

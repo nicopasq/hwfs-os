@@ -13,6 +13,7 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getDatabase, ref, onValue, set, remove, off } from 'firebase/database';
+import { getAuth, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged } from 'firebase/auth';
 
 const FB_CFG_KEY    = 'hwfs-fb-config';
 const DB_PATH       = 'hwfs-os/data';
@@ -21,6 +22,7 @@ const PORTAL_PATH   = 'hwfs-os/portal';
 const MESSAGES_PATH = 'hwfs-os/messages';
 const VISITS_PATH   = 'hwfs-os/visits';
 
+let _auth    = null;
 let _db      = null;
 let _ref     = null;
 let _unsubscribe   = null;
@@ -54,6 +56,7 @@ export function clearFirebaseConfig() {
 export function connectFirebase(config) {
   try {
     const app    = getApps().length ? getApp() : initializeApp(config);
+    _auth        = getAuth(app);
     _db          = getDatabase(app);
     _ref         = ref(_db, DB_PATH);
     _incomingRef = ref(_db, INCOMING_PATH);
@@ -189,3 +192,26 @@ export function disconnect() {
 }
 
 export const isConnected = () => !!_ref;
+
+/** Sign in with email + password */
+export function signIn(email, password) {
+  if (!_auth) return Promise.reject(new Error('Firebase not connected'));
+  return signInWithEmailAndPassword(_auth, email, password);
+}
+
+/** Sign out the current user */
+export function signOut() {
+  if (!_auth) return Promise.resolve();
+  return fbSignOut(_auth);
+}
+
+/** Subscribe to auth state changes. Returns unsubscribe fn. */
+export function onAuthChanged(callback) {
+  if (!_auth) { callback(null); return () => {}; }
+  return onAuthStateChanged(_auth, callback);
+}
+
+/** Get the currently signed-in user (or null) */
+export function getCurrentUser() {
+  return _auth ? _auth.currentUser : null;
+}
