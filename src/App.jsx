@@ -50,6 +50,12 @@ function persist(data) {
   if (isConnected()) pushFirebase(data).catch(() => {});
 }
 
+const NAV_GROUPS = [
+  { key: "ops",  label: "Operations", tabs: ["jobs", "labor", "inv", "spec", "comp"] },
+  { key: "fin",  label: "Financials",  tabs: ["rev", "equip", "sga", "invoices"] },
+  { key: "stmt", label: "Statements",  tabs: ["pnl", "bs", "cf", "eq"] },
+];
+
 export default function App() {
   const [booted,   setBooted]   = useState(true);
   const [tab,      setTab]      = useState("dash");
@@ -62,6 +68,10 @@ export default function App() {
   const [visits,         setVisits]         = useState([]);
   const [authUser,       setAuthUser]       = useState(undefined); // undefined=loading, null=signed out, obj=signed in
   const [fbConfigured,   setFbConfigured]   = useState(false);
+  const [groupsOpen,     setGroupsOpen]     = useState(() => {
+    try { const r = localStorage.getItem('hwfs-nav-groups'); if (r) return JSON.parse(r); } catch {}
+    return { ops: false, fin: false, stmt: false };
+  });
 
   const mergeRemote = remote => setData(() => ({
     ...DEF, ...remote,
@@ -117,6 +127,23 @@ export default function App() {
     setOk(true);
     return () => { fbDisconnect(); unsubAuth(); };
   }, []);
+
+  // Auto-expand the nav group containing the active tab
+  useEffect(() => {
+    const g = NAV_GROUPS.find(g => g.tabs.includes(tab));
+    if (g) setGroupsOpen(prev => {
+      if (prev[g.key]) return prev;
+      const next = { ...prev, [g.key]: true };
+      try { localStorage.setItem('hwfs-nav-groups', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [tab]);
+
+  const toggleGroup = key => setGroupsOpen(prev => {
+    const next = { ...prev, [key]: !prev[key] };
+    try { localStorage.setItem('hwfs-nav-groups', JSON.stringify(next)); } catch {}
+    return next;
+  });
 
   // ── State updaters ──────────────────────────────────────────────────────────
   const save = useCallback(nd => { setData(nd); persist(nd); }, []);
@@ -412,11 +439,13 @@ export default function App() {
 
           {/* Nav items */}
           <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
-            {TABS.map(t => {
+            {/* ── Top-level: Dashboard, CRM ── */}
+            {["dash", "crm"].map(id => {
+              const t = TABS.find(x => x.id === id); if (!t) return null;
               const isActive = tab === t.id;
-              const ct = t.id === "inbox" ? (data.pending || []).length : t.id === "crm" ? data.prospects.length : t.id === "jobs" ? data.jobs.length : t.id === "labor" ? data.workers.length : t.id === "actions" ? data.actions.filter(a => !a.done).length : t.id === "inv" ? data.inventory.length : 0;
+              const ct = id === "crm" ? data.prospects.length : 0;
               return (
-                <button key={t.id} onClick={() => setTab(t.id)}
+                <button key={id} onClick={() => setTab(id)}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#224A40"; }}
                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
@@ -424,22 +453,97 @@ export default function App() {
                   <span style={{ fontSize: 15, width: 20, textAlign: "center", flexShrink: 0, color: isActive ? "#A8D5BA" : "#5B8C7E" }}>{t.i}</span>
                   {sideOpen && <>
                     <span style={{ whiteSpace: "nowrap", flex: 1 }}>{t.l}</span>
-                    {ct > 0 && <span style={{ background: t.id === "inbox" ? "#C62828" : "rgba(168,213,186,0.18)", color: t.id === "inbox" ? "#fff" : "#A8D5BA", borderRadius: 8, fontSize: 9, fontWeight: 700, padding: "1px 6px", marginRight: 12 }}>{ct}</span>}
+                    {ct > 0 && <span style={{ background: "rgba(168,213,186,0.18)", color: "#A8D5BA", borderRadius: 8, fontSize: 9, fontWeight: 700, padding: "1px 6px", marginRight: 12 }}>{ct}</span>}
+                  </>}
+                </button>
+              );
+            })}
+
+            {/* ── Collapsible groups ── */}
+            {NAV_GROUPS.map(g => {
+              const isOpen = groupsOpen[g.key];
+              const groupTabs = g.tabs.map(id => TABS.find(x => x.id === id)).filter(Boolean);
+              return (
+                <div key={g.key}>
+                  {sideOpen ? (
+                    <button onClick={() => toggleGroup(g.key)}
+                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: 30, background: "transparent", border: "none", borderLeft: "3px solid transparent", color: "#5B8C7E", fontFamily: font, fontSize: 10, fontWeight: 700, cursor: "pointer", paddingLeft: 20, paddingRight: 14, textTransform: "uppercase", letterSpacing: "1.2px", marginTop: 4, transition: "background .15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    >
+                      <span>{g.label}</span>
+                      <span style={{ fontSize: 11, display: "inline-block", transition: "transform .2s", transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)" }}>▾</span>
+                    </button>
+                  ) : (
+                    <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "5px 10px" }} />
+                  )}
+                  {(isOpen || !sideOpen) && groupTabs.map(t => {
+                    const isActive = tab === t.id;
+                    const ct = t.id === "jobs" ? data.jobs.length : t.id === "labor" ? data.workers.length : t.id === "inv" ? data.inventory.length : 0;
+                    return (
+                      <button key={t.id} onClick={() => setTab(t.id)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 38, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 13, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 29 : 32) : 0, transition: "background .15s" }}
+                        onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#224A40"; }}
+                        onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+                      >
+                        <span style={{ fontSize: 13, width: 18, textAlign: "center", flexShrink: 0, color: isActive ? "#A8D5BA" : "#5B8C7E" }}>{t.i}</span>
+                        {sideOpen && <>
+                          <span style={{ whiteSpace: "nowrap", flex: 1 }}>{t.l}</span>
+                          {ct > 0 && <span style={{ background: "rgba(168,213,186,0.18)", color: "#A8D5BA", borderRadius: 8, fontSize: 9, fontWeight: 700, padding: "1px 6px", marginRight: 12 }}>{ct}</span>}
+                        </>}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+
+            {/* ── Inbox, Tasks ── */}
+            {["inbox", "actions"].map(id => {
+              const t = TABS.find(x => x.id === id); if (!t) return null;
+              const isActive = tab === t.id;
+              const ct = id === "inbox" ? (data.pending || []).length : data.actions.filter(a => !a.done).length;
+              return (
+                <button key={id} onClick={() => setTab(id)}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#224A40"; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+                >
+                  <span style={{ fontSize: 15, width: 20, textAlign: "center", flexShrink: 0, color: isActive ? "#A8D5BA" : "#5B8C7E" }}>{t.i}</span>
+                  {sideOpen && <>
+                    <span style={{ whiteSpace: "nowrap", flex: 1 }}>{t.l}</span>
+                    {ct > 0 && <span style={{ background: id === "inbox" ? "#C62828" : "rgba(168,213,186,0.18)", color: id === "inbox" ? "#fff" : "#A8D5BA", borderRadius: 8, fontSize: 9, fontWeight: 700, padding: "1px 6px", marginRight: 12 }}>{ct}</span>}
                   </>}
                 </button>
               );
             })}
           </div>
 
-          {/* Bottom */}
-          <div style={{ padding: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-            <button onClick={togTheme} style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 4, padding: 7, cursor: "pointer", color: "#9ab5ae", fontFamily: font, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background .15s" }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-            >
-              {dark ? "☀" : "◑"}{sideOpen && (dark ? " Light Mode" : " Dark Mode")}
-            </button>
-            {sideOpen && <div style={{ fontSize: 10, color: "#5B8C7E", textAlign: "center", marginTop: 8 }}>{data.userId}{data.lastSync && (" · synced " + new Date(data.lastSync).toLocaleDateString())}</div>}
+          {/* Bottom — Settings pinned above theme/user */}
+          <div style={{ flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            {(() => {
+              const t = TABS.find(x => x.id === "cfg");
+              const isActive = tab === "cfg";
+              return (
+                <button onClick={() => setTab("cfg")}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#224A40"; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+                >
+                  <span style={{ fontSize: 15, width: 20, textAlign: "center", flexShrink: 0, color: isActive ? "#A8D5BA" : "#5B8C7E" }}>{t.i}</span>
+                  {sideOpen && <span style={{ whiteSpace: "nowrap" }}>{t.l}</span>}
+                </button>
+              );
+            })()}
+            <div style={{ padding: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <button onClick={togTheme} style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 4, padding: 7, cursor: "pointer", color: "#9ab5ae", fontFamily: font, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background .15s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                {dark ? "☀" : "◑"}{sideOpen && (dark ? " Light Mode" : " Dark Mode")}
+              </button>
+              {sideOpen && <div style={{ fontSize: 10, color: "#5B8C7E", textAlign: "center", marginTop: 8 }}>{data.userId}{data.lastSync && (" · synced " + new Date(data.lastSync).toLocaleDateString())}</div>}
+            </div>
           </div>
         </div>
 
