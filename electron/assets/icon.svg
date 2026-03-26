@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background with rounded corners -->
+  <rect width="1024" height="1024" rx="180" fill="#1A3C34"/>
+
+  <!-- Outer hex ring -->
+  <polygon
+    points="512,72 904,292 904,732 512,952 120,732 120,292"
+    fill="none" stroke="#A8D5BA" stroke-width="22"/>
+
+  <!-- Inner hex fill -->
+  <polygon
+    points="512,195 798,360 798,664 512,829 226,664 226,360"
+    fill="#3A7D44" opacity="0.35"/>
+
+  <!-- HW wordmark -->
+  <text
+    x="512" y="636"
+    text-anchor="middle"
+    fill="#FFFFFF"
+    font-size="320"
+    font-weight="800"
+    font-family="Arial, 'Helvetica Neue', sans-serif"
+    letter-spacing="-8">HW</text>
+</svg>

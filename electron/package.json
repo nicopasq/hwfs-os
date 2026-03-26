@@ -1,0 +1,75 @@
+{
+  "name": "huronwest-erp",
+  "productName": "HuronWest",
+  "version": "1.0.0",
+  "description": "HuronWest Facility Services ERP — Desktop Client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "generate-icons": "node scripts/generate-icons.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "release": "electron-builder --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "png2icons": "^2.0.1",
+    "sharp": "^0.33.5"
+  },
+  "build": {
+    "appId": "com.huronwest.erp",
+    "productName": "HuronWest",
+    "copyright": "Copyright © 2026 HuronWest Enterprises LLC",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "nicopasq",
+        "repo": "hwfs-os"
+      }
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "offline.html",
+      "assets/icon.ico",
+      "assets/icon.icns",
+      "assets/icon.png"
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "HuronWest ERP",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.business",
+      "darkModeSupport": true
+    },
+    "dmg": {
+      "title": "HuronWest ERP",
+      "icon": "assets/icon.icns"
+    }
+  }
+}

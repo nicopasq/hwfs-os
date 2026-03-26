@@ -2,3 +2,11 @@ node_modules/
 dist/
 .env
 .env.local
+
+# Electron build output
+electron/node_modules/
+electron/dist/
+electron/out/
+electron/assets/icon.png
+electron/assets/icon.ico
+electron/assets/icon.icns
