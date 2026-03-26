@@ -5,7 +5,7 @@ import { F, Tog, Badge } from '../components/ui';
 import { TIERS, TK, SK } from '../constants';
 import { publishPortal, isConnected } from '../firebase';
 
-const DF = { name: "", client: "Thomson AAM", type: "Small Condo", tier: "Basic", sf: "", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), active: true, pipe: false };
+const DF = { name: "", client: "", type: "Small Condo", tier: "Basic", sf: "", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), active: true, pipe: false };
 
 const PORTAL_BASE = window.location.origin + "/portal.html";
 const WORKER_BASE = window.location.origin + "/worker.html";
@@ -101,11 +101,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
         <div style={ss.ch}><span>+ Contract</span><span style={{ fontSize: 10, color: T.td2 }}>Auto: SF × tier × freq</span></div>
         <div style={ss.g5}>
           <F l="Property"><input style={ss.inp} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></F>
-          <F l="Client">
-            <select style={ss.sel} value={f.client} onChange={e => setF({ ...f, client: e.target.value })}>
-              {["Thomson AAM", "McKinley", "Oxford", "Wickfield", "Baker Street", "Direct"].map(v => <option key={v}>{v}</option>)}
-            </select>
-          </F>
+          <F l="Client"><input style={ss.inp} value={f.client} onChange={e => setF({ ...f, client: e.target.value })} placeholder="Client name" /></F>
           <F l="Tier">
             <select style={ss.sel} value={f.tier} onChange={e => { const t = e.target.value; setF({ ...f, tier: t, wkRate: ap(f.sf, f.freq, t) || f.wkRate }); }}>
               {TK.map(t => <option key={t}>{t}</option>)}
