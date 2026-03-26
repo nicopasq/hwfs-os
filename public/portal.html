@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HuronWest — Client Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK — enables real-time updates without page reload -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
 <style>
   :root {
     --forest:     #1A3C34;
@@ -53,31 +58,34 @@
   .logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: #fff; }
   .logo span { color: var(--mint); }
   .header-right { font-size: 12px; color: rgba(255,255,255,0.5); }
+  .live-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--mint); margin-right: 6px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
   /* ── Layout ── */
   .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
 
   /* ── Property hero ── */
   .hero {
-    background: var(--white);
-    border: 1px solid var(--border-lt);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 20px;
+    background: var(--white); border: 1px solid var(--border-lt);
+    border-radius: 4px; overflow: hidden; margin-bottom: 20px;
     box-shadow: var(--shadow);
   }
   .hero-header {
-    background: var(--forest);
-    padding: 28px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    background: var(--forest); padding: 28px 32px;
+    display: flex; align-items: center; justify-content: space-between;
   }
   .hero-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #fff; margin-bottom: 4px; }
-  .hero-sub { font-size: 13px; color: var(--mint); letter-spacing: 0.5px; }
-  .hero-badge { background: rgba(168,213,186,0.15); border: 1px solid rgba(168,213,186,0.3); color: var(--mint); font-size: 11px; font-weight: 600; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; }
+  .hero-sub   { font-size: 13px; color: var(--mint); letter-spacing: 0.5px; }
+  .hero-badge {
+    background: rgba(168,213,186,0.15); border: 1px solid rgba(168,213,186,0.3);
+    color: var(--mint); font-size: 11px; font-weight: 600;
+    padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px;
+  }
   .hero-body { padding: 24px 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  .stat-cell { }
   .stat-label { font-size: 10px; font-weight: 700; color: var(--bark-lt); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
   .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; color: var(--forest); }
 
@@ -86,43 +94,64 @@
 
   /* ── Cards ── */
   .card {
-    background: var(--white);
-    border: 1px solid var(--border-lt);
-    border-radius: 4px;
-    padding: 24px;
-    box-shadow: var(--shadow);
-    margin-bottom: 20px;
+    background: var(--white); border: 1px solid var(--border-lt);
+    border-radius: 4px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px;
   }
   .card-header {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--bark-lt);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
+    font-size: 10px; font-weight: 700; color: var(--bark-lt);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 16px; padding-bottom: 10px;
     border-bottom: 1px solid var(--border-lt);
+    display: flex; align-items: center; justify-content: space-between;
   }
+  .card-header-ct { font-size: 11px; color: var(--sage); font-weight: 500; letter-spacing: 0; }
 
   /* ── Crew card ── */
   .crew-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--forest); margin-bottom: 4px; }
   .crew-role { font-size: 12px; color: var(--bark-lt); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
-  .crew-contact a { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-lt); color: var(--leaf); font-size: 13px; font-weight: 500; text-decoration: none; }
+  .crew-contact a {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid var(--border-lt); color: var(--leaf);
+    font-size: 13px; font-weight: 500; text-decoration: none;
+  }
   .crew-contact a:last-child { border-bottom: none; }
   .crew-contact a:hover { color: var(--leaf-hover); }
-  .contact-icon { width: 30px; height: 30px; border-radius: 15px; background: var(--mint-pale); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .contact-icon {
+    width: 30px; height: 30px; border-radius: 15px; background: var(--mint-pale);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+  }
 
-  /* ── Next service ── */
+  /* ── Schedule ── */
   .next-service-date { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--leaf); margin: 8px 0 4px; }
-  .next-service-sub { font-size: 12px; color: var(--bark-lt); }
   .schedule-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-lt); font-size: 13px; }
   .schedule-row:last-child { border-bottom: none; }
   .schedule-row span:last-child { font-weight: 600; color: var(--forest); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 
-  /* ── Photos ── */
+  /* ── Notes ── */
+  .notes-box { background: var(--mint-pale); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-size: 13px; color: var(--forest); line-height: 1.6; }
+
+  /* ── Visit timeline ── */
+  .visit-item { padding: 18px 0; border-bottom: 1px solid var(--border-lt); }
+  .visit-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .visit-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .visit-date { font-size: 14px; font-weight: 600; color: var(--forest); }
+  .visit-crew { font-size: 11px; color: var(--bark-lt); background: var(--border-lt); padding: 3px 8px; border-radius: 10px; }
+  .visit-note { font-size: 13px; color: var(--bark); line-height: 1.6; margin-bottom: 10px; }
+  .visit-photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .visit-photo { aspect-ratio: 1; border-radius: 4px; overflow: hidden; cursor: pointer; background: var(--border-lt); }
+  .visit-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s; }
+  .visit-photo:hover img { transform: scale(1.05); }
+  .more-photos {
+    aspect-ratio: 1; border-radius: 4px; background: var(--forest); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--mint);
+  }
+  .no-visits { padding: 20px 0; text-align: center; color: var(--bark-lt); font-size: 14px; }
+
+  /* ── Static photos ── */
   .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .photo-item { aspect-ratio: 4/3; border-radius: 4px; overflow: hidden; background: var(--border-lt); cursor: pointer; }
-  .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+  .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
   .photo-item:hover img { transform: scale(1.04); }
 
   /* ── Lightbox ── */
@@ -131,28 +160,33 @@
   .lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 4px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
   .lightbox-close { position: absolute; top: 20px; right: 28px; color: #fff; font-size: 32px; cursor: pointer; opacity: 0.7; }
   .lightbox-close:hover { opacity: 1; }
-
-  /* ── Notes ── */
-  .notes-box { background: var(--mint-pale); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-size: 13px; color: var(--forest); line-height: 1.6; }
+  .lightbox-prev, .lightbox-next {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    color: #fff; font-size: 28px; cursor: pointer; opacity: 0.6;
+    padding: 12px; user-select: none;
+  }
+  .lightbox-prev { left: 16px; }
+  .lightbox-next { right: 16px; }
+  .lightbox-prev:hover, .lightbox-next:hover { opacity: 1; }
 
   /* ── Message form ── */
-  .msg-list { margin-bottom: 20px; }
+  .msg-thread { margin-bottom: 20px; max-height: 420px; overflow-y: auto; }
   .msg-bubble { padding: 12px 16px; border-radius: 4px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
   .msg-from-client { background: var(--mint-pale); border: 1px solid var(--border); }
   .msg-from-hw { background: var(--forest); color: #fff; }
   .msg-meta { font-size: 11px; opacity: 0.6; margin-bottom: 4px; }
-  .msg-text { }
+  .msg-reply { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.12); border-radius: 3px; }
+  .msg-reply-meta { font-size: 11px; opacity: 0.7; margin-bottom: 3px; }
+  .empty-msgs { padding: 20px 0; text-align: center; color: var(--bark-lt); font-size: 13px; }
 
   textarea.msg-input {
-    width: 100%; min-height: 90px; padding: 12px 14px;
+    width: 100%; min-height: 88px; padding: 12px 14px;
     border: 1px solid var(--border); border-radius: 4px;
     font-family: 'Outfit', sans-serif; font-size: 14px;
     color: var(--forest); background: var(--white);
-    resize: vertical; outline: none;
-    transition: border-color .15s;
+    resize: vertical; outline: none; transition: border-color .15s;
   }
   textarea.msg-input:focus { border-color: var(--leaf); }
-
   input.name-input {
     width: 100%; padding: 10px 14px; margin-bottom: 10px;
     border: 1px solid var(--border); border-radius: 4px;
@@ -161,7 +195,6 @@
     transition: border-color .15s;
   }
   input.name-input:focus { border-color: var(--leaf); }
-
   .send-btn {
     margin-top: 10px; padding: 11px 24px;
     background: var(--leaf); color: #fff; border: none; border-radius: 4px;
@@ -171,11 +204,6 @@
   }
   .send-btn:hover { background: var(--leaf-hover); }
   .send-btn:disabled { opacity: 0.5; cursor: default; }
-
-  /* ── Billing ── */
-  .billing-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-lt); font-size: 13px; color: var(--bark); }
-  .billing-row:last-child { border-bottom: none; }
-  .billing-row .val { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--forest); }
 
   /* ── Loading / error ── */
   .loading { text-align: center; padding: 80px 24px; }
@@ -191,6 +219,9 @@
     .hero-body { grid-template-columns: 1fr 1fr; }
     .grid2 { grid-template-columns: 1fr; }
     .photo-grid { grid-template-columns: 1fr 1fr; }
+    .visit-photos { grid-template-columns: repeat(3, 1fr); }
+    .header { padding: 0 16px; }
+    .container { padding: 20px 14px; }
   }
 </style>
 </head>
@@ -198,7 +229,7 @@
 
 <div class="header">
   <div class="logo">Huron<span>West</span> Facility Services</div>
-  <div class="header-right">Client Portal</div>
+  <div class="header-right"><span class="live-dot"></span>Live</div>
 </div>
 
 <div id="loading" class="container">
@@ -209,248 +240,323 @@
 </div>
 
 <div id="app" class="container" style="display:none"></div>
-<div id="lightbox" class="lightbox"><span class="lightbox-close" onclick="closeLightbox()">✕</span><img id="lightbox-img" src="" alt=""></div>
+<div id="lightbox" class="lightbox">
+  <span class="lightbox-close" onclick="closeLightbox()">✕</span>
+  <span class="lightbox-prev" onclick="lightboxStep(-1)">‹</span>
+  <img id="lightbox-img" src="" alt="">
+  <span class="lightbox-next" onclick="lightboxStep(1)">›</span>
+</div>
 <div id="toast"></div>
 
 <script>
-  // ── Config ────────────────────────────────────────────────────────────────
-  var FB_CFG_KEY = 'hwfs-fb-config';
+// ── Config ─────────────────────────────────────────────────────────────────
+var cfg = null;
+var db  = null;
+var jobId = null;
+var lightboxUrls = [];
+var lightboxIdx  = 0;
 
-  function getConfig() {
-    try { return JSON.parse(localStorage.getItem(FB_CFG_KEY)); } catch { return null; }
-  }
+function getJobId() {
+  return new URLSearchParams(window.location.search).get('job');
+}
 
-  function jobIdFromURL() {
-    return new URLSearchParams(window.location.search).get('job');
-  }
-
-  // ── Fetch portal data from Firebase REST ──────────────────────────────────
-  async function fetchPortal(jobId) {
-    var cfg = getConfig();
-    if (!cfg || !cfg.databaseURL) throw new Error('NO_CONFIG');
-    var url = cfg.databaseURL.replace(/\/$/, '') + '/hwfs-os/portal/' + jobId + '.json';
-    var res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
-    if (!data) throw new Error('NOT_FOUND');
-    return data;
-  }
-
-  // ── Fetch messages from Firebase REST ─────────────────────────────────────
-  async function fetchMessages(jobId) {
-    var cfg = getConfig();
-    if (!cfg || !cfg.databaseURL) return [];
+function getConfig() {
+  // 1. Try URL param (base64 encoded — included when ERP copies the portal link)
+  var cfgParam = new URLSearchParams(window.location.search).get('cfg');
+  if (cfgParam) {
     try {
-      var url = cfg.databaseURL.replace(/\/$/, '') + '/hwfs-os/messages/' + jobId + '.json';
-      var res = await fetch(url);
-      if (!res.ok) return [];
-      var data = await res.json();
-      if (!data) return [];
-      return Object.values(data).sort((a, b) => (a.ts || '').localeCompare(b.ts || ''));
-    } catch { return []; }
+      var decoded = JSON.parse(atob(cfgParam));
+      // Save to localStorage so future visits work without the param
+      try { localStorage.setItem('hwfs-fb-config', JSON.stringify(decoded)); } catch(e){}
+      return decoded;
+    } catch(e) {}
+  }
+  // 2. Try localStorage (set by ERP on same device)
+  try { return JSON.parse(localStorage.getItem('hwfs-fb-config')); } catch(e) { return null; }
+}
+
+// ── Firebase init ──────────────────────────────────────────────────────────
+function initFirebase(config) {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(config);
+    db = firebase.database();
+    return true;
+  } catch(e) {
+    console.error('Firebase init failed:', e);
+    return false;
+  }
+}
+
+// ── Formatters ─────────────────────────────────────────────────────────────
+function fmt(n)      { return '$' + Number(n||0).toLocaleString('en-US', {minimumFractionDigits:0,maximumFractionDigits:0}); }
+function fmtDate(d)  { if (!d) return '—'; try { return new Date(d+'T12:00:00').toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric',year:'numeric'}); } catch{return d;} }
+function fmtShort(d) { if (!d) return '—'; try { return new Date(d).toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric'}); } catch{return d;} }
+function timeAgo(ts) { if (!ts) return ''; var d=Math.floor((Date.now()-new Date(ts))/60000); if(d<1)return'just now'; if(d<60)return d+'m ago'; if(d<1440)return Math.floor(d/60)+'h ago'; return Math.floor(d/1440)+'d ago'; }
+function esc(s)      { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+// ── Lightbox ───────────────────────────────────────────────────────────────
+function openLightbox(urls, idx) {
+  lightboxUrls = Array.isArray(urls) ? urls : [urls];
+  lightboxIdx  = idx || 0;
+  document.getElementById('lightbox-img').src = lightboxUrls[lightboxIdx];
+  document.getElementById('lightbox').classList.add('open');
+}
+function lightboxStep(dir) {
+  lightboxIdx = (lightboxIdx + dir + lightboxUrls.length) % lightboxUrls.length;
+  document.getElementById('lightbox-img').src = lightboxUrls[lightboxIdx];
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+
+// ── Render static page frame ───────────────────────────────────────────────
+function renderFrame(job) {
+  var photos     = Array.isArray(job.photos) ? job.photos.filter(Boolean) : [];
+  var monthlyRate = (job.wkRate || 0) * 4.33;
+  var html = '';
+
+  // Hero
+  html += '<div class="hero">';
+  html += '<div class="hero-header">';
+  html += '<div><div class="hero-title">' + esc(job.propertyName) + '</div><div class="hero-sub">' + esc(job.client) + ' · ' + esc(job.tier) + ' Service</div></div>';
+  html += '<div class="hero-badge">Active Contract</div>';
+  html += '</div>';
+  html += '<div class="hero-body">';
+  html += '<div class="stat-cell"><div class="stat-label">Service Tier</div><div class="stat-value">' + esc(job.tier) + '</div></div>';
+  html += '<div class="stat-cell"><div class="stat-label">Frequency</div><div class="stat-value">' + (job.freq||1) + 'x / week</div></div>';
+  html += '<div class="stat-cell"><div class="stat-label">Monthly Rate</div><div class="stat-value">' + fmt(monthlyRate) + '</div></div>';
+  html += '<div class="stat-cell"><div class="stat-label">Start Date</div><div class="stat-value">' + (job.start||'—') + '</div></div>';
+  html += '</div></div>';
+
+  // Grid: crew + schedule
+  html += '<div class="grid2">';
+
+  // Crew card
+  html += '<div class="card">';
+  html += '<div class="card-header">Your Crew Lead</div>';
+  if (job.crewLead) {
+    html += '<div class="crew-name">' + esc(job.crewLead) + '</div>';
+    html += '<div class="crew-role">Crew Lead · HuronWest Facility Services</div>';
+    html += '<div class="crew-contact">';
+    if (job.crewPhone) html += '<a href="tel:' + esc(job.crewPhone) + '"><div class="contact-icon">📞</div>' + esc(job.crewPhone) + '</a>';
+    if (job.crewEmail) html += '<a href="mailto:' + esc(job.crewEmail) + '"><div class="contact-icon">✉</div>' + esc(job.crewEmail) + '</a>';
+    html += '</div>';
+  } else {
+    html += '<div style="color:var(--bark-lt);font-size:13px;">Crew information coming soon.</div>';
+  }
+  html += '</div>';
+
+  // Schedule card
+  html += '<div class="card">';
+  html += '<div class="card-header">Service Schedule</div>';
+  if (job.nextService) {
+    html += '<div style="font-size:11px;color:var(--bark-lt);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Next Service</div>';
+    html += '<div class="next-service-date">' + fmtDate(job.nextService) + '</div>';
+  }
+  html += '<div style="margin-top:16px;">';
+  html += '<div class="schedule-row"><span>Visits per week</span><span>' + (job.freq||1) + 'x</span></div>';
+  html += '<div class="schedule-row"><span>Sq footage serviced</span><span>' + (job.sf ? Number(job.sf).toLocaleString()+' sf' : '—') + '</span></div>';
+  if (job.billingNotes) html += '<div class="schedule-row"><span>Billing</span><span style="font-family:Outfit,sans-serif;font-size:13px;">' + esc(job.billingNotes) + '</span></div>';
+  html += '</div></div>';
+
+  html += '</div>'; // grid2
+
+  // Notes
+  if (job.clientNotes) {
+    html += '<div class="card"><div class="card-header">Property Notes</div>';
+    html += '<div class="notes-box">📋 ' + esc(job.clientNotes) + '</div></div>';
   }
 
-  // ── Send message to Firebase REST ─────────────────────────────────────────
-  async function sendMessage(jobId, name, text) {
-    var cfg = getConfig();
-    if (!cfg || !cfg.databaseURL) throw new Error('NO_CONFIG');
-    var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    var payload = { id: id, jobId: jobId, from: 'client', name: name, text: text, ts: new Date().toISOString(), read: false };
-    var url = cfg.databaseURL.replace(/\/$/, '') + '/hwfs-os/messages/' + jobId + '/' + id + '.json';
-    var res = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return payload;
+  // Service history placeholder (filled by real-time listener)
+  html += '<div class="card" id="visits-card">';
+  html += '<div class="card-header"><span>Service History</span><span class="card-header-ct" id="visits-ct"></span></div>';
+  html += '<div id="visits-body"><div class="no-visits">Loading service history…</div></div>';
+  html += '</div>';
+
+  // Property photos (manually set by ERP — reference/promo photos)
+  if (photos.length > 0) {
+    html += '<div class="card"><div class="card-header">Property Photos (' + photos.length + ')</div>';
+    html += '<div class="photo-grid">';
+    photos.forEach(function(url, i) {
+      html += '<div class="photo-item" onclick="openLightbox(' + JSON.stringify(photos) + ',' + i + ')">';
+      html += '<img src="' + esc(url) + '" alt="Photo ' + (i+1) + '" loading="lazy" onerror="this.parentNode.style.display=\'none\'">';
+      html += '</div>';
+    });
+    html += '</div></div>';
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
-  function fmt(n) { return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
-  function fmtDate(d) { if (!d) return '—'; try { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); } catch { return d; } }
-  function timeAgo(ts) { if (!ts) return ''; var d = Math.floor((Date.now() - new Date(ts)) / 60000); if (d < 1) return 'just now'; if (d < 60) return d + 'm ago'; if (d < 1440) return Math.floor(d/60) + 'h ago'; return Math.floor(d/1440) + 'd ago'; }
+  // Messages placeholder (filled by real-time listener)
+  html += '<div class="card" id="msg-card">';
+  html += '<div class="card-header">Messages</div>';
+  html += '<div id="msg-thread" class="msg-thread"></div>';
+  html += '<div id="msg-form">';
+  html += '<input class="name-input" id="msg-name" type="text" placeholder="Your name" />';
+  html += '<textarea class="msg-input" id="msg-text" placeholder="Type your message to HuronWest…"></textarea>';
+  html += '<button class="send-btn" id="send-btn" onclick="doSend()">Send Message</button>';
+  html += '</div></div>';
 
-  function renderMessages(msgs, jobId) {
-    var html = '';
-    if (msgs.length > 0) {
-      html += '<div class="msg-list">';
-      msgs.forEach(function(m) {
-        var fromHW = m.from === 'hw';
-        html += '<div class="msg-bubble ' + (fromHW ? 'msg-from-hw' : 'msg-from-client') + '">';
-        html += '<div class="msg-meta">' + (fromHW ? 'HuronWest' : (m.name || 'You')) + ' · ' + timeAgo(m.ts) + '</div>';
-        html += '<div class="msg-text">' + escHtml(m.text) + '</div>';
-        if (m.reply) {
-          html += '<div style="margin-top:10px;padding:10px;background:rgba(255,255,255,0.12);border-radius:3px;">';
-          html += '<div style="font-size:11px;opacity:0.7;margin-bottom:3px;">HuronWest replied · ' + timeAgo(m.reply.ts) + '</div>';
-          html += '<div>' + escHtml(m.reply.text) + '</div></div>';
+  document.getElementById('app').innerHTML = html;
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+
+  // Restore saved name
+  var savedName = localStorage.getItem('hwfs-portal-name');
+  if (savedName) document.getElementById('msg-name').value = savedName;
+}
+
+// ── Update visits section (called by real-time listener) ──────────────────
+function updateVisits(snap) {
+  var body = document.getElementById('visits-body');
+  var ct   = document.getElementById('visits-ct');
+  if (!body) return;
+
+  var data   = snap.val();
+  var visits = data ? Object.values(data) : [];
+  visits.sort(function(a,b){ return (b.ts||'').localeCompare(a.ts||''); });
+
+  if (ct) ct.textContent = visits.length ? visits.length + ' visit' + (visits.length!==1?'s':'') : '';
+
+  if (!visits.length) {
+    body.innerHTML = '<div class="no-visits">No service visits recorded yet.</div>';
+    return;
+  }
+
+  var html = '';
+  visits.forEach(function(v) {
+    var vPhotos = Array.isArray(v.photos) ? v.photos.filter(Boolean) : [];
+    html += '<div class="visit-item">';
+    html += '<div class="visit-hdr">';
+    html += '<div class="visit-date">' + fmtShort(v.ts) + '</div>';
+    html += '<div class="visit-crew">' + esc(v.crewLead||'Crew') + '</div>';
+    html += '</div>';
+    if (v.note) html += '<div class="visit-note">' + esc(v.note) + '</div>';
+    if (vPhotos.length) {
+      html += '<div class="visit-photos">';
+      var show = vPhotos.slice(0, 4);
+      var rest = vPhotos.length - 4;
+      show.forEach(function(url, i) {
+        if (i === 3 && rest > 0) {
+          html += '<div class="more-photos" onclick="openLightbox(' + JSON.stringify(vPhotos) + ',3)">+' + (rest+1) + '</div>';
+        } else {
+          html += '<div class="visit-photo" onclick="openLightbox(' + JSON.stringify(vPhotos) + ',' + i + ')">';
+          html += '<img src="' + esc(url) + '" loading="lazy" onerror="this.parentNode.style.display=\'none\'">';
+          html += '</div>';
         }
-        html += '</div>';
       });
       html += '</div>';
     }
-    return html;
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+
+// ── Update message thread (called by real-time listener) ──────────────────
+function updateMessages(snap) {
+  var thread = document.getElementById('msg-thread');
+  if (!thread) return;
+
+  var data = snap.val();
+  var msgs = data ? Object.values(data) : [];
+  msgs.sort(function(a,b){ return (a.ts||'').localeCompare(b.ts||''); });
+
+  if (!msgs.length) {
+    thread.innerHTML = '<div class="empty-msgs">No messages yet. Send one below!</div>';
+    return;
   }
 
-  function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
-
-  function render(job, msgs) {
-    var photos = Array.isArray(job.photos) ? job.photos.filter(Boolean) : [];
-    var monthlyRate = (job.wkRate || 0) * 4.33;
-
-    var html = '';
-
-    // Hero
-    html += '<div class="hero">';
-    html += '<div class="hero-header">';
-    html += '<div><div class="hero-title">' + escHtml(job.propertyName) + '</div><div class="hero-sub">' + escHtml(job.client) + ' · ' + escHtml(job.tier) + ' Service</div></div>';
-    html += '<div class="hero-badge">Active Contract</div>';
-    html += '</div>';
-    html += '<div class="hero-body">';
-    html += '<div class="stat-cell"><div class="stat-label">Service Tier</div><div class="stat-value">' + escHtml(job.tier) + '</div></div>';
-    html += '<div class="stat-cell"><div class="stat-label">Frequency</div><div class="stat-value">' + (job.freq || 1) + 'x / week</div></div>';
-    html += '<div class="stat-cell"><div class="stat-label">Monthly Rate</div><div class="stat-value">' + fmt(monthlyRate) + '</div></div>';
-    html += '<div class="stat-cell"><div class="stat-label">Start Date</div><div class="stat-value">' + (job.start || '—') + '</div></div>';
-    html += '</div></div>';
-
-    // Grid row 1: crew + schedule
-    html += '<div class="grid2">';
-
-    // Crew card
-    html += '<div class="card">';
-    html += '<div class="card-header">Your Crew Lead</div>';
-    if (job.crewLead) {
-      html += '<div class="crew-name">' + escHtml(job.crewLead) + '</div>';
-      html += '<div class="crew-role">Crew Lead · HuronWest Facility Services</div>';
-      html += '<div class="crew-contact">';
-      if (job.crewPhone) html += '<a href="tel:' + job.crewPhone + '"><div class="contact-icon">📞</div>' + escHtml(job.crewPhone) + '</a>';
-      if (job.crewEmail) html += '<a href="mailto:' + job.crewEmail + '"><div class="contact-icon">✉</div>' + escHtml(job.crewEmail) + '</a>';
-      html += '</div>';
-    } else {
-      html += '<div style="color:var(--bark-lt);font-size:13px;">Crew information not yet published.</div>';
+  var html = '';
+  msgs.forEach(function(m) {
+    var fromHW = m.from === 'hw';
+    html += '<div class="msg-bubble ' + (fromHW ? 'msg-from-hw' : 'msg-from-client') + '">';
+    html += '<div class="msg-meta">' + esc(fromHW ? 'HuronWest' : (m.name||'You')) + ' · ' + timeAgo(m.ts) + '</div>';
+    html += '<div>' + esc(m.text) + '</div>';
+    if (m.reply) {
+      html += '<div class="msg-reply">';
+      html += '<div class="msg-reply-meta">HuronWest replied · ' + timeAgo(m.reply.ts) + '</div>';
+      html += '<div>' + esc(m.reply.text) + '</div></div>';
     }
     html += '</div>';
+  });
+  thread.innerHTML = html;
+  // Auto-scroll to latest
+  thread.scrollTop = thread.scrollHeight;
+}
 
-    // Schedule card
-    html += '<div class="card">';
-    html += '<div class="card-header">Service Schedule</div>';
-    if (job.nextService) {
-      html += '<div style="font-size:11px;color:var(--bark-lt);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Next Service</div>';
-      html += '<div class="next-service-date">' + fmtDate(job.nextService) + '</div>';
-    }
-    html += '<div style="margin-top:16px;">';
-    html += '<div class="schedule-row"><span>Visits per week</span><span>' + (job.freq || 1) + 'x</span></div>';
-    html += '<div class="schedule-row"><span>Sq footage serviced</span><span>' + (job.sf ? Number(job.sf).toLocaleString() + ' sf' : '—') + '</span></div>';
-    if (job.billingNotes) html += '<div class="schedule-row"><span>Billing</span><span style="font-family:Outfit,sans-serif;font-size:13px;">' + escHtml(job.billingNotes) + '</span></div>';
-    html += '</div></div>';
+// ── Send message ───────────────────────────────────────────────────────────
+function doSend() {
+  var nameEl = document.getElementById('msg-name');
+  var textEl = document.getElementById('msg-text');
+  var btn    = document.getElementById('send-btn');
+  var name   = (nameEl.value||'').trim();
+  var text   = (textEl.value||'').trim();
+  if (!name) { nameEl.focus(); showToast('Please enter your name.', true); return; }
+  if (!text) { textEl.focus(); showToast('Please type a message.', true); return; }
 
-    html += '</div>'; // grid2
+  localStorage.setItem('hwfs-portal-name', name);
 
-    // Notes
-    if (job.clientNotes) {
-      html += '<div class="card">';
-      html += '<div class="card-header">Property Notes</div>';
-      html += '<div class="notes-box">📋 ' + escHtml(job.clientNotes) + '</div>';
-      html += '</div>';
-    }
+  btn.disabled = true; btn.textContent = 'Sending…';
+  var id  = 'msg' + Date.now() + Math.random().toString(36).slice(2,5);
+  var msg = { id:id, jobId:jobId, from:'client', name:name, text:text, ts:new Date().toISOString(), read:false };
 
-    // Photos
-    if (photos.length > 0) {
-      html += '<div class="card">';
-      html += '<div class="card-header">Service Photos (' + photos.length + ')</div>';
-      html += '<div class="photo-grid">';
-      photos.forEach(function(url, i) {
-        html += '<div class="photo-item" onclick="openLightbox(' + JSON.stringify(url) + ')">';
-        html += '<img src="' + escHtml(url) + '" alt="Service photo ' + (i+1) + '" loading="lazy" onerror="this.parentNode.style.display=\'none\'">';
-        html += '</div>';
-      });
-      html += '</div></div>';
-    }
-
-    // Messages
-    html += '<div class="card" id="msg-section">';
-    html += '<div class="card-header">Messages</div>';
-    html += renderMessages(msgs, job.id);
-    html += '<div>';
-    html += '<input class="name-input" id="msg-name" type="text" placeholder="Your name" />';
-    html += '<textarea class="msg-input" id="msg-text" placeholder="Type your message to HuronWest…"></textarea>';
-    html += '<button class="send-btn" id="send-btn" onclick="doSend(\'' + job.id + '\')">Send Message</button>';
-    html += '</div></div>';
-
-    document.getElementById('app').innerHTML = html;
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('loading').style.display = 'none';
-  }
-
-  // ── Send handler ──────────────────────────────────────────────────────────
-  async function doSend(jobId) {
-    var nameEl = document.getElementById('msg-name');
-    var textEl = document.getElementById('msg-text');
-    var btn    = document.getElementById('send-btn');
-    var name   = (nameEl.value || '').trim();
-    var text   = (textEl.value || '').trim();
-    if (!name) { nameEl.focus(); showToast('Please enter your name.', true); return; }
-    if (!text) { textEl.focus(); showToast('Please type a message.', true); return; }
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-    try {
-      await sendMessage(jobId, name, text);
+  db.ref('hwfs-os/messages/' + jobId + '/' + id).set(msg)
+    .then(function() {
       textEl.value = '';
       showToast('Message sent! We\'ll respond shortly.');
-      // Refresh messages
-      var msgs = await fetchMessages(jobId);
-      document.getElementById('msg-section').querySelector('.msg-list')?.remove();
-      var msgHtml = renderMessages(msgs, jobId);
-      var form = document.getElementById('msg-section').querySelector('div:last-child');
-      form.insertAdjacentHTML('beforebegin', msgHtml);
-    } catch(e) {
-      showToast('Send failed — please try again.', true);
-    }
-    btn.disabled = false;
-    btn.textContent = 'Send Message';
+    })
+    .catch(function(e) { showToast('Send failed — try again.', true); })
+    .finally(function() { btn.disabled = false; btn.textContent = 'Send Message'; });
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, error) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = error ? '#C62828' : '#3A7D44';
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(function(){ t.classList.remove('show'); }, 3500);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+(async function init() {
+  jobId = getJobId();
+  if (!jobId) {
+    document.getElementById('loading').innerHTML = '<div class="container"><div class="error-box">No job ID in URL. This link may be invalid.</div></div>';
+    return;
   }
 
-  // ── Toast ─────────────────────────────────────────────────────────────────
-  function showToast(msg, error) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.style.background = error ? '#C62828' : '#3A7D44';
-    t.classList.add('show');
-    setTimeout(function() { t.classList.remove('show'); }, 3500);
+  cfg = getConfig();
+  if (!cfg || !cfg.databaseURL) {
+    document.getElementById('loading').innerHTML =
+      '<div class="loading"><div class="loading-title">Setup Required</div>' +
+      '<div class="loading-sub" style="max-width:400px;margin:0 auto">Open the <a href="/" style="color:var(--leaf)">HuronWest ERP</a>, go to Settings → Firebase Sync, and connect Firebase. Then return to this page.</div></div>';
+    return;
   }
 
-  // ── Lightbox ──────────────────────────────────────────────────────────────
-  function openLightbox(url) { document.getElementById('lightbox-img').src = url; document.getElementById('lightbox').classList.add('open'); }
-  function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
-  document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+  if (!initFirebase(cfg)) {
+    document.getElementById('loading').innerHTML = '<div class="container"><div class="error-box">Firebase initialization failed. Please contact HuronWest.</div></div>';
+    return;
+  }
 
-  // ── Init ──────────────────────────────────────────────────────────────────
-  (async function init() {
-    var jobId = jobIdFromURL();
-    if (!jobId) {
-      document.getElementById('loading').innerHTML = '<div class="container"><div class="error-box">No job ID in URL. This link may be invalid.</div></div>';
-      return;
-    }
+  // Load portal data (once)
+  var snap = await db.ref('hwfs-os/portal/' + jobId).once('value');
+  var job  = snap.val();
 
-    var cfg = getConfig();
-    if (!cfg) {
-      // Try to get config from ERP if on same domain
-      document.getElementById('loading').innerHTML = '<div class="loading"><div class="loading-title">Setup Required</div><div class="loading-sub" style="max-width:400px;margin:0 auto">Open the <a href="/" style="color:var(--leaf)">HuronWest ERP</a>, go to Settings → Firebase Sync, and connect Firebase. Then return to this page.</div></div>';
-      return;
-    }
+  if (!job) {
+    document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">Portal not found. This link may be expired or invalid.</div></div>';
+    return;
+  }
+  if (!job.portalEnabled) {
+    document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">This portal is not currently active. Please contact HuronWest directly.</div></div>';
+    return;
+  }
 
-    try {
-      var job = await fetchPortal(jobId);
-      if (!job.portalEnabled) {
-        document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">This portal is not currently active. Please contact HuronWest directly.</div></div>';
-        return;
-      }
-      var msgs = await fetchMessages(jobId);
-      render(job, msgs);
-    } catch(e) {
-      if (e.message === 'NOT_FOUND') {
-        document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">Portal not found. This link may be expired or invalid.</div></div>';
-      } else {
-        document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">Unable to load portal: ' + e.message + '</div></div>';
-      }
-    }
-  })();
+  // Render static frame
+  renderFrame(job);
+
+  // Attach real-time listeners — updates happen automatically
+  db.ref('hwfs-os/visits/'   + jobId).on('value', updateVisits,   function(e){ console.warn('visits error', e); });
+  db.ref('hwfs-os/messages/' + jobId).on('value', updateMessages, function(e){ console.warn('messages error', e); });
+})();
 </script>
 </body>
 </html>

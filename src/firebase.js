@@ -19,6 +19,7 @@ const DB_PATH       = 'hwfs-os/data';
 const INCOMING_PATH = 'hwfs-os/incoming';
 const PORTAL_PATH   = 'hwfs-os/portal';
 const MESSAGES_PATH = 'hwfs-os/messages';
+const VISITS_PATH   = 'hwfs-os/visits';
 
 let _db      = null;
 let _ref     = null;
@@ -27,6 +28,8 @@ let _incomingRef   = null;
 let _incomingUnsub = null;
 let _messagesRef   = null;
 let _messagesUnsub = null;
+let _visitsRef     = null;
+let _visitsUnsub   = null;
 
 /** Save config to localStorage for persistence */
 export function saveFirebaseConfig(configObj) {
@@ -55,6 +58,7 @@ export function connectFirebase(config) {
     _ref         = ref(_db, DB_PATH);
     _incomingRef = ref(_db, INCOMING_PATH);
     _messagesRef = ref(_db, MESSAGES_PATH);
+    _visitsRef   = ref(_db, VISITS_PATH);
     saveFirebaseConfig(config);
     return { ok: true };
   } catch (e) {
@@ -146,6 +150,25 @@ export function sendReply(jobId, msgId, replyText, userId) {
     .catch(e => console.warn('sendReply failed:', e));
 }
 
+/** Subscribe to all service visit records across all jobs */
+export function subscribeVisits(onVisits) {
+  if (!_visitsRef) return () => {};
+  if (_visitsUnsub) _visitsUnsub();
+
+  const unsub = onValue(_visitsRef, snap => {
+    const val = snap.val();
+    if (!val) { onVisits([]); return; }
+    // Flatten: { jobId: { visitId: visit } } → flat array sorted newest first
+    const visits = Object.entries(val).flatMap(([jobId, jobVisits]) =>
+      jobVisits ? Object.values(jobVisits).map(v => ({ ...v, jobId })) : []
+    );
+    onVisits(visits.sort((a, b) => (b.ts || '').localeCompare(a.ts || '')));
+  }, err => console.warn('Firebase visits read error:', err));
+
+  _visitsUnsub = () => { try { off(_visitsRef); } catch(e) {/***/} };
+  return _visitsUnsub;
+}
+
 /** Push local data to Firebase (debounced in App) */
 export function pushFirebase(data) {
   if (!_ref) return Promise.resolve();
@@ -157,9 +180,11 @@ export function disconnect() {
   if (_unsubscribe)   { _unsubscribe();   _unsubscribe   = null; }
   if (_incomingUnsub) { _incomingUnsub(); _incomingUnsub = null; }
   if (_messagesUnsub) { _messagesUnsub(); _messagesUnsub = null; }
+  if (_visitsUnsub)   { _visitsUnsub();   _visitsUnsub   = null; }
   _ref         = null;
   _incomingRef = null;
   _messagesRef = null;
+  _visitsRef   = null;
   _db          = null;
 }
 

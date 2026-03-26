@@ -39,7 +39,7 @@ import CfgTab    from './tabs/CfgTab';
 
 import {
   loadFirebaseConfig, connectFirebase, subscribeFirebase, subscribeIncoming,
-  subscribeMessages, pushFirebase, disconnect as fbDisconnect, isConnected,
+  subscribeMessages, subscribeVisits, pushFirebase, disconnect as fbDisconnect, isConnected,
 } from './firebase';
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
@@ -55,9 +55,10 @@ export default function App() {
   const [data,     setData]     = useState(DEF);
   const [ok,       setOk]       = useState(false);
   const [sideOpen, setSideOpen] = useState(false);
-  const [fbStatus,       setFbStatus]      = useState('idle'); // 'idle' | 'connected' | 'error'
-  const [incomingDocs,   setIncomingDocs]  = useState([]);
+  const [fbStatus,       setFbStatus]       = useState('idle'); // 'idle' | 'connected' | 'error'
+  const [incomingDocs,   setIncomingDocs]   = useState([]);
   const [clientMessages, setClientMessages] = useState([]);
+  const [visits,         setVisits]         = useState([]);
 
   const mergeRemote = remote => setData(() => ({
     ...DEF, ...remote,
@@ -98,6 +99,7 @@ export default function App() {
         subscribeFirebase(mergeRemote);
         subscribeIncoming(docs => setIncomingDocs(docs));
         subscribeMessages(msgs => setClientMessages(msgs));
+        subscribeVisits(vs => setVisits(vs));
       } else {
         setFbStatus('error');
       }
@@ -468,14 +470,14 @@ export default function App() {
             {tab === "invoices" && <InvoicesTab data={data} setData={setData} />}
             {tab === "crm"     && <CRMTab   data={data} upd={upd} setData={setData} E={E} />}
             {tab === "equip"   && <EquipTab data={data} upd={upd} setData={setData} E={E} />}
-            {tab === "jobs"    && <JobsTab  data={data} upd={upd} setData={setData} E={E} />}
+            {tab === "jobs"    && <JobsTab  data={data} upd={upd} setData={setData} E={E} visits={visits} />}
             {tab === "labor"   && <LaborTab data={data} upd={upd} E={E} />}
             {tab === "inv"     && <InvTab   data={data} upd={upd} updA={updA} E={E} />}
             {tab === "spec"    && <SpecTab  data={data} upd={upd} E={E} />}
             {tab === "eq"      && <EqTab    data={data} upd={upd} E={E} />}
             {tab === "comp"    && <CompTab  data={data} upd={upd} />}
             {tab === "actions" && <ActTab   data={data} upd={upd} setData={setData} />}
-            {tab === "cfg"     && <CfgTab   data={data} updS={updS} updA={updA} setData={setData} fbStatus={fbStatus} setFbStatus={setFbStatus} mergeRemote={mergeRemote} onIncoming={docs => setIncomingDocs(docs)} onMessages={msgs => setClientMessages(msgs)} />}
+            {tab === "cfg"     && <CfgTab   data={data} updS={updS} updA={updA} setData={setData} fbStatus={fbStatus} setFbStatus={setFbStatus} mergeRemote={mergeRemote} onIncoming={docs => setIncomingDocs(docs)} onMessages={msgs => setClientMessages(msgs)} onVisits={vs => setVisits(vs)} />}
           </div>
         </div>
       </div>

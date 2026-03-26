@@ -8,12 +8,14 @@ import { publishPortal, isConnected } from '../firebase';
 const DF = { name: "", client: "Thomson AAM", type: "Small Condo", tier: "Basic", sf: "", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), active: true, pipe: false };
 
 const PORTAL_BASE = window.location.origin + "/portal.html";
+const WORKER_BASE = window.location.origin + "/worker.html";
 
-export default function JobsTab({ data, upd, setData, E }) {
+export default function JobsTab({ data, upd, setData, E, visits = [] }) {
   const { T, ss, mono, font } = useApp();
   const [f, setF]         = useState(DF);
   const [expanded, setExpanded] = useState(null);
   const [copied,   setCopied]   = useState(null);
+  const [copiedW,  setCopiedW]  = useState(null);
   const [publishing, setPublishing] = useState(null);
 
   const save = nd => { try { localStorage.setItem(SK, JSON.stringify(nd)); } catch(e) { console.warn(e); } };
@@ -36,11 +38,26 @@ export default function JobsTab({ data, upd, setData, E }) {
     });
   };
 
+  const buildLink = (base, jobId) => {
+    let url = base + "?job=" + jobId;
+    try {
+      const raw = localStorage.getItem('hwfs-fb-config');
+      if (raw) url += "&cfg=" + btoa(raw);
+    } catch(e) {}
+    return url;
+  };
+
   const copyLink = (j) => {
-    const url = PORTAL_BASE + "?job=" + j.id;
-    navigator.clipboard.writeText(url).then(() => {
+    navigator.clipboard.writeText(buildLink(PORTAL_BASE, j.id)).then(() => {
       setCopied(j.id);
       setTimeout(() => setCopied(null), 2000);
+    });
+  };
+
+  const copyWorkerLink = (j) => {
+    navigator.clipboard.writeText(buildLink(WORKER_BASE, j.id)).then(() => {
+      setCopiedW(j.id);
+      setTimeout(() => setCopiedW(null), 2000);
     });
   };
 
@@ -221,15 +238,15 @@ export default function JobsTab({ data, upd, setData, E }) {
                             </div>
 
                             {/* Portal link & publish */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 14, borderTop: "1px solid " + T.border }}>
-                              <div style={{ flex: 1, background: T.card, border: "1px solid " + T.border, borderRadius: 4, padding: "8px 12px", fontFamily: mono, fontSize: 11, color: T.ts, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 14, borderTop: "1px solid " + T.border, flexWrap: "wrap" }}>
+                              <div style={{ flex: 1, minWidth: 180, background: T.card, border: "1px solid " + T.border, borderRadius: 4, padding: "8px 12px", fontFamily: mono, fontSize: 11, color: T.ts, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                 {PORTAL_BASE}?job={j.id}
                               </div>
-                              <button
-                                style={{ ...ss.btnG, padding: "9px 16px", fontSize: 12, whiteSpace: "nowrap" }}
-                                onClick={() => copyLink(j)}
-                              >
-                                {copied === j.id ? "✓ Copied!" : "Copy Link"}
+                              <button style={{ ...ss.btnG, padding: "9px 16px", fontSize: 12, whiteSpace: "nowrap" }} onClick={() => copyLink(j)}>
+                                {copied === j.id ? "✓ Copied!" : "📋 Client Link"}
+                              </button>
+                              <button style={{ ...ss.btnG, padding: "9px 16px", fontSize: 12, whiteSpace: "nowrap" }} onClick={() => copyWorkerLink(j)}>
+                                {copiedW === j.id ? "✓ Copied!" : "📷 Worker Link"}
                               </button>
                               <button
                                 style={{ ...ss.btn, padding: "9px 20px", fontSize: 12, whiteSpace: "nowrap", opacity: publishing === j.id ? .6 : 1 }}
@@ -242,6 +259,36 @@ export default function JobsTab({ data, upd, setData, E }) {
                                 <span style={{ fontSize: 11, color: T.td2, whiteSpace: "nowrap" }}>Last published {new Date(j.publishedAt).toLocaleDateString()}</span>
                               )}
                             </div>
+
+                            {/* Visit history */}
+                            {(() => {
+                              const jVisits = visits.filter(v => v.jobId === j.id);
+                              return jVisits.length > 0 ? (
+                                <div style={{ paddingTop: 18, marginTop: 6, borderTop: "1px solid " + T.border }}>
+                                  <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 12 }}>
+                                    Recent Visits ({jVisits.length})
+                                  </div>
+                                  {jVisits.slice(0, 5).map(v => (
+                                    <div key={v.id} style={{ display: "flex", gap: 14, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid " + T.border2 }}>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                          <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{new Date(v.ts).toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" })}</span>
+                                          <span style={{ fontSize: 11, color: T.td2 }}>{v.crewLead} · {v.photoCount || (v.photos||[]).length} photos</span>
+                                        </div>
+                                        {v.note && <div style={{ fontSize: 12, color: T.ts, lineHeight: 1.5, marginBottom: 6 }}>{v.note}</div>}
+                                        {(v.photos||[]).length > 0 && (
+                                          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                                            {(v.photos||[]).slice(0,6).map((url, i) => (
+                                              <img key={i} src={url} style={{ width: 56, height: 56, borderRadius: 4, objectFit: "cover", cursor: "pointer", border: "1px solid " + T.border }} onClick={() => window.open(url, "_blank")} />
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null;
+                            })()}
                           </div>
                         </td>
                       </tr>

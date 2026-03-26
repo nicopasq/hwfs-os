@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1117">
+<title>HuronWest — Service Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green:      #3A7D44;
+    --green-lt:   #4CAF62;
+    --green-pale: rgba(58,125,68,0.12);
+    --bg:         #0f1117;
+    --card:       #161b24;
+    --card2:      #1a2130;
+    --border:     #222b3a;
+    --text:       #e8eaf0;
+    --muted:      #8892a0;
+    --red:        #e05252;
+    --red-pale:   rgba(224,82,82,0.12);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ── Header ── */
+  .hdr {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .hex {
+    width: 36px; height: 36px;
+    background: var(--green);
+    clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 13px;
+    font-family: 'DM Serif Display', serif;
+    flex-shrink: 0;
+  }
+  .hdr-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .hdr-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  /* ── Layout ── */
+  .main { padding: 18px 16px 120px; max-width: 560px; margin: 0 auto; }
+
+  /* ── Job card ── */
+  .job-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+  .job-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); margin-bottom: 4px; }
+  .job-meta { font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+
+  /* ── Section card ── */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .sec-title {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.3px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sec-title-count { color: var(--green-lt); font-size: 11px; }
+
+  /* ── Inputs ── */
+  .lbl { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: block; }
+  .inp {
+    width: 100%; background: var(--card2);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 15px;
+    padding: 12px 14px; outline: none; transition: border-color .15s;
+  }
+  .inp:focus { border-color: var(--green); }
+  textarea.inp { resize: vertical; min-height: 96px; line-height: 1.55; }
+
+  /* ── Photo grid ── */
+  .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .photo-thumb {
+    aspect-ratio: 1; border-radius: 8px; overflow: hidden;
+    position: relative; background: var(--card2);
+    border: 1px solid var(--border);
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-rm {
+    position: absolute; top: 5px; right: 5px;
+    width: 24px; height: 24px;
+    background: rgba(0,0,0,0.72); border: none; border-radius: 50%;
+    color: #fff; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .add-photos-btn {
+    width: 100%; background: var(--card2);
+    border: 2px dashed var(--border); border-radius: 10px;
+    color: var(--green-lt); font-size: 15px; font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    padding: 18px 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: border-color .15s, background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .add-photos-btn:active { background: #1e2a38; border-color: var(--green); }
+
+  /* ── Fixed submit bar ── */
+  .submit-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding: 14px 16px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    background: rgba(15,17,23,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    z-index: 40;
+  }
+  .submit-btn {
+    width: 100%; background: var(--green); color: #fff;
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700; font-family: 'Inter', sans-serif;
+    padding: 17px; cursor: pointer; letter-spacing: 0.3px;
+    transition: background .15s, opacity .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .submit-btn:active:not(:disabled) { background: #2e6335; }
+
+  /* ── Upload progress ── */
+  .upload-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .upload-row:last-child { border-bottom: none; }
+  .upload-thumb { width: 46px; height: 46px; border-radius: 7px; object-fit: cover; flex-shrink: 0; }
+  .upload-name  { flex: 1; font-size: 13px; color: var(--text); }
+  .upload-pct   { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; min-width: 52px; text-align: right; }
+  .upload-pct.done { color: var(--green-lt); }
+  .upload-pct.err  { color: var(--red); }
+
+  .prog-wrap { height: 4px; background: var(--card2); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+  .prog-bar  { height: 100%; background: var(--green); border-radius: 2px; transition: width .2s; }
+
+  /* ── State screens ── */
+  .state-screen {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 72vh;
+    padding: 40px 24px; text-align: center;
+  }
+  .spinner {
+    width: 42px; height: 42px;
+    border: 3px solid var(--border); border-top-color: var(--green);
+    border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Success screen ── */
+  .success-icon {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--green-pale); border: 2px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; margin-bottom: 22px;
+  }
+  .success-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); margin-bottom: 10px; }
+  .success-sub   { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 300px; }
+  .another-btn {
+    margin-top: 30px; background: transparent;
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-size: 14px; font-weight: 600;
+    font-family: 'Inter', sans-serif; padding: 14px 28px; cursor: pointer;
+  }
+
+  /* ── Job selector ── */
+  .job-btn {
+    width: 100%; background: var(--card);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-size: 15px; font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    padding: 16px 18px; cursor: pointer; margin-bottom: 10px;
+    text-align: left; display: flex; align-items: center; gap: 14px;
+    transition: border-color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .job-btn:active { border-color: var(--green); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 110px; left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 18px;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    opacity: 0; transition: opacity .25s, transform .25s;
+    pointer-events: none; z-index: 200; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.ok   { border-color: var(--green); color: var(--green-lt); }
+  #toast.err  { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hex">HW</div>
+  <div>
+    <div class="hdr-title">HuronWest Facility Services</div>
+    <div class="hdr-sub" id="hdr-sub">Service Report</div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="s-loading" class="state-screen">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:var(--muted)">Loading…</div>
+</div>
+
+<!-- No config / setup -->
+<div id="s-setup" class="state-screen" style="display:none">
+  <div style="font-size:46px;margin-bottom:18px">⚙️</div>
+  <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:10px">First-Time Setup</div>
+  <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:24px;max-width:340px">
+    Paste the Firebase config JSON from your manager to get started. You only need to do this once.
+  </div>
+  <div style="width:100%;max-width:480px;padding:0 4px">
+    <textarea id="setup-txt" class="inp" style="height:160px;font-size:12px;font-family:monospace" placeholder='{"apiKey":"...","databaseURL":"...","storageBucket":"..."}'></textarea>
+    <button onclick="doSetup()" style="width:100%;margin-top:10px;background:var(--green);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;font-family:Inter,sans-serif;padding:16px;cursor:pointer">Connect & Continue</button>
+  </div>
+</div>
+
+<!-- Job selector (no ?job= in URL) -->
+<div id="s-jobs" style="display:none">
+  <div class="main">
+    <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px;padding-top:8px">Select Property</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Which property are you reporting on today?</div>
+    <div id="job-list"></div>
+  </div>
+</div>
+
+<!-- Main form -->
+<div id="s-form" style="display:none">
+  <div class="main">
+
+    <!-- Job info -->
+    <div class="job-card">
+      <div class="job-name" id="f-name">—</div>
+      <div class="job-meta">
+        <span>📅 <span id="f-date"></span></span>
+        <span>🏢 <span id="f-client"></span></span>
+        <span>⭐ <span id="f-tier"></span></span>
+      </div>
+    </div>
+
+    <!-- Crew name -->
+    <div class="section">
+      <div class="sec-title">Crew Info</div>
+      <label class="lbl">Your Name</label>
+      <input id="crew-name" class="inp" type="text" placeholder="First + Last" autocomplete="name" inputmode="text" />
+    </div>
+
+    <!-- Photos -->
+    <div class="section">
+      <div class="sec-title">
+        <span>Photos</span>
+        <span class="sec-title-count" id="photo-ct"></span>
+      </div>
+      <div id="photo-grid" class="photo-grid"></div>
+      <button class="add-photos-btn" onclick="pickPhotos()">
+        <span style="font-size:24px">📷</span>
+        <span>Tap to Add Photos</span>
+      </button>
+      <input type="file" id="file-in" accept="image/*" multiple style="display:none" onchange="onFiles(this)">
+    </div>
+
+    <!-- Notes -->
+    <div class="section">
+      <div class="sec-title">Service Notes</div>
+      <label class="lbl">What was completed today?</label>
+      <textarea id="notes" class="inp" placeholder="e.g. All areas cleaned and sanitized. Restocked paper towels on floors 2–4. Noted scuff marks near elevator lobby — will address next visit."></textarea>
+    </div>
+
+  </div>
+
+  <div class="submit-bar">
+    <button id="sub-btn" class="submit-btn" onclick="submit()">⇪ Submit Service Report</button>
+  </div>
+</div>
+
+<!-- Uploading -->
+<div id="s-uploading" style="display:none">
+  <div class="main">
+    <div style="text-align:center;padding:24px 0 20px">
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px">Uploading…</div>
+      <div style="font-size:13px;color:var(--muted)">Keep this page open until complete</div>
+    </div>
+    <div class="section">
+      <div class="sec-title">Upload Progress</div>
+      <div id="upload-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Success -->
+<div id="s-success" class="state-screen" style="display:none">
+  <div class="success-icon">✓</div>
+  <div class="success-title">Report Submitted!</div>
+  <div class="success-sub" id="s-sub-text">Photos and notes sent to HuronWest.</div>
+  <button class="another-btn" onclick="resetForm()">Submit Another Report</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Globals ────────────────────────────────────────────────────────────────
+var cfg      = null;
+var db       = null;
+var stor     = null;
+var jobId    = null;
+var jobData  = null;
+var photos   = []; // { file, url }
+
+// ── Screen management ──────────────────────────────────────────────────────
+var screens = ['s-loading','s-setup','s-jobs','s-form','s-uploading','s-success'];
+function show(id) {
+  screens.forEach(function(s) {
+    var el = document.getElementById(s);
+    if (el) el.style.display = 'none';
+  });
+  var el = document.getElementById(id);
+  if (el) el.style.display = '';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+(function init() {
+  show('s-loading');
+
+  var params = new URLSearchParams(window.location.search);
+  jobId = params.get('job') || null;
+
+  // Config from URL param (base64 encoded) — saves to localStorage
+  var cfgParam = params.get('cfg');
+  if (cfgParam) {
+    try {
+      cfg = JSON.parse(atob(cfgParam));
+      localStorage.setItem('hwfs-fb-config', JSON.stringify(cfg));
+    } catch(e) { cfg = null; }
+  }
+
+  // Config from localStorage
+  if (!cfg) {
+    try { cfg = JSON.parse(localStorage.getItem('hwfs-fb-config')); } catch(e) { cfg = null; }
+  }
+
+  if (!cfg || !cfg.databaseURL || !cfg.storageBucket) {
+    show('s-setup');
+    return;
+  }
+
+  initFirebase();
+})();
+
+function initFirebase() {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    db   = firebase.database();
+    stor = firebase.storage();
+  } catch(e) {
+    toast('Firebase error: ' + e.message, 'err');
+    show('s-setup');
+    return;
+  }
+
+  // Restore crew name
+  var saved = localStorage.getItem('hwfs-crew-name');
+  if (saved) document.getElementById('crew-name').value = saved;
+
+  if (jobId) {
+    loadJob(jobId);
+  } else {
+    loadJobList();
+  }
+}
+
+// ── Load job ───────────────────────────────────────────────────────────────
+function loadJob(id) {
+  db.ref('hwfs-os/portal/' + id).once('value').then(function(snap) {
+    jobData = snap.val();
+    if (!jobData) {
+      toast('Job not found — check your link', 'err');
+      loadJobList();
+      return;
+    }
+    renderForm();
+  }).catch(function(e) {
+    toast('Error: ' + e.message, 'err');
+    show('s-setup');
+  });
+}
+
+function loadJobList() {
+  show('s-jobs');
+  db.ref('hwfs-os/portal').once('value').then(function(snap) {
+    var jobs = snap.val();
+    var list = document.getElementById('job-list');
+    if (!jobs) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0">No active jobs found.<br>Ask your manager to publish a job first.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    Object.values(jobs).filter(function(j) { return j.portalEnabled !== false; }).forEach(function(j) {
+      var btn = document.createElement('button');
+      btn.className = 'job-btn';
+      btn.innerHTML = '<span style="font-size:26px">🏢</span><div><div>' + esc(j.propertyName || j.id) + '</div><div style="font-size:12px;color:var(--muted);font-weight:400;margin-top:2px">' + esc(j.client || '') + ' · ' + esc(j.tier || '') + '</div></div>';
+      btn.onclick = function() { jobId = j.id; jobData = j; renderForm(); };
+      list.appendChild(btn);
+    });
+  }).catch(function(e) {
+    toast('Error loading jobs: ' + e.message, 'err');
+  });
+}
+
+function renderForm() {
+  document.getElementById('f-name').textContent   = jobData.propertyName || '—';
+  document.getElementById('f-client').textContent = jobData.client || '—';
+  document.getElementById('f-tier').textContent   = jobData.tier || '—';
+  document.getElementById('f-date').textContent   = new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+  document.getElementById('hdr-sub').textContent  = jobData.propertyName || 'Service Report';
+  show('s-form');
+}
+
+// ── Photo selection ────────────────────────────────────────────────────────
+function pickPhotos() { document.getElementById('file-in').click(); }
+
+function onFiles(input) {
+  Array.from(input.files).forEach(function(f) {
+    photos.push({ file: f, url: URL.createObjectURL(f) });
+  });
+  renderGrid();
+  input.value = '';
+}
+
+function rmPhoto(i) {
+  URL.revokeObjectURL(photos[i].url);
+  photos.splice(i, 1);
+  renderGrid();
+}
+
+function renderGrid() {
+  var grid = document.getElementById('photo-grid');
+  var ct   = document.getElementById('photo-ct');
+  ct.textContent = photos.length ? '(' + photos.length + ')' : '';
+  grid.innerHTML = '';
+  photos.forEach(function(p, i) {
+    var d = document.createElement('div');
+    d.className = 'photo-thumb';
+    d.innerHTML = '<img src="' + p.url + '" alt="Photo ' + (i+1) + '"><button class="photo-rm" onclick="rmPhoto(' + i + ')">✕</button>';
+    grid.appendChild(d);
+  });
+}
+
+// ── Image compression ──────────────────────────────────────────────────────
+function compress(file) {
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var MAX = 1400;
+        var w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        c.toBlob(function(b) { resolve(b); }, 'image/jpeg', 0.82);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Submit ─────────────────────────────────────────────────────────────────
+async function submit() {
+  var crew  = (document.getElementById('crew-name').value || '').trim();
+  var notes = (document.getElementById('notes').value || '').trim();
+
+  if (!crew)           { toast('Enter your name first', 'err'); document.getElementById('crew-name').focus(); return; }
+  if (!photos.length)  { toast('Add at least one photo', 'err'); return; }
+
+  localStorage.setItem('hwfs-crew-name', crew);
+
+  var visitId = 'v' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+
+  show('s-uploading');
+
+  // Build upload rows UI
+  var ul = document.getElementById('upload-list');
+  ul.innerHTML = '';
+  var statusEls = photos.map(function(p, i) {
+    var row = document.createElement('div');
+    row.className = 'upload-row';
+    row.innerHTML =
+      '<img src="' + p.url + '" class="upload-thumb">' +
+      '<div style="flex:1"><div class="upload-name">Photo ' + (i+1) + '</div>' +
+      '<div class="prog-wrap"><div class="prog-bar" id="pb-' + i + '" style="width:0%"></div></div></div>' +
+      '<div class="upload-pct" id="ps-' + i + '">Waiting</div>';
+    ul.appendChild(row);
+    return { pct: document.getElementById('pb-'+i), lbl: document.getElementById('ps-'+i) };
+  });
+
+  var urls = [];
+  for (var i = 0; i < photos.length; i++) {
+    var s = statusEls[i];
+    s.lbl.textContent = 'Compressing…';
+    try {
+      var blob = await compress(photos[i].file);
+      s.lbl.textContent = '0%';
+      var path = 'visits/' + jobId + '/' + visitId + '/' + i + '_' + Date.now() + '.jpg';
+      var ref  = stor.ref(path);
+      await new Promise(function(resolve, reject) {
+        var task = ref.put(blob, { contentType: 'image/jpeg' });
+        task.on('state_changed',
+          function(snap) {
+            var p = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
+            s.pct.style.width = p + '%';
+            s.lbl.textContent = p + '%';
+          },
+          reject,
+          resolve
+        );
+      });
+      var dl = await ref.getDownloadURL();
+      urls.push(dl);
+      s.lbl.textContent = '✓ Done';
+      s.lbl.className = 'upload-pct done';
+      s.pct.style.width = '100%';
+    } catch(e) {
+      s.lbl.textContent = '✕ Failed';
+      s.lbl.className = 'upload-pct err';
+      console.error('Photo ' + i + ' failed:', e);
+    }
+  }
+
+  if (!urls.length) {
+    toast('All uploads failed — check connection', 'err');
+    show('s-form');
+    return;
+  }
+
+  try {
+    var visit = {
+      id:         visitId,
+      jobId:      jobId,
+      ts:         new Date().toISOString(),
+      crewLead:   crew,
+      note:       notes,
+      photos:     urls,
+      photoCount: urls.length,
+    };
+    await db.ref('hwfs-os/visits/' + jobId + '/' + visitId).set(visit);
+    document.getElementById('s-sub-text').textContent =
+      urls.length + ' photo' + (urls.length !== 1 ? 's' : '') + ' submitted for ' + (jobData && jobData.propertyName ? jobData.propertyName : 'this property') + '.';
+    show('s-success');
+  } catch(e) {
+    toast('Failed to save report: ' + e.message, 'err');
+    show('s-form');
+  }
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+function resetForm() {
+  photos.forEach(function(p) { URL.revokeObjectURL(p.url); });
+  photos = [];
+  renderGrid();
+  document.getElementById('notes').value = '';
+  show('s-form');
+}
+
+// ── Setup ──────────────────────────────────────────────────────────────────
+function doSetup() {
+  try {
+    var raw = (document.getElementById('setup-txt').value || '').trim();
+    cfg = JSON.parse(raw);
+    if (!cfg.databaseURL) throw new Error('Missing databaseURL');
+    if (!cfg.storageBucket) throw new Error('Missing storageBucket');
+    localStorage.setItem('hwfs-fb-config', JSON.stringify(cfg));
+    initFirebase();
+  } catch(e) {
+    toast('Invalid config: ' + e.message, 'err');
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type || '');
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.className = 'toast'; }, 3200);
+}
+</script>
+</body>
+</html>
