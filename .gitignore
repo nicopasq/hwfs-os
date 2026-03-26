@@ -3,6 +3,9 @@ dist/
 .env
 .env.local
 
+# Firebase Functions
+functions/node_modules/
+
 # Electron build output
 electron/node_modules/
 electron/dist/

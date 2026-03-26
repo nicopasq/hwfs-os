@@ -46,28 +46,59 @@ function KpiCard({ label, value, sub, color, icon, trend, onClick }) {
 
 // ── Bar chart ─────────────────────────────────────────────────────────────────
 function BarChart({ data: proj, T }) {
-  const H = 140, W = 26, gap = 10;
+  const H = 140, W = 26, gap = 10, LP = 48;
   const maxRev = Math.max(...proj.map(p => p.rev), 1);
   const maxE   = Math.max(...proj.map(p => Math.abs(p.ebitda)), 1);
-  const totalW = proj.length * (W + gap);
+  const totalW = LP + proj.length * (W + gap);
+  const fmtK = v => {
+    const abs = Math.abs(v);
+    const str = abs >= 1000 ? (abs / 1000).toFixed(1) + 'k' : Math.round(abs).toString();
+    return (v < 0 ? '-$' : '$') + str;
+  };
+  const yTicks = [0, 0.5, 1.0];
   return (
-    <svg width="100%" viewBox={`0 0 ${totalW} ${H + 34}`} style={{ overflow: "visible", display: "block" }}>
-      {proj.map((p, i) => {
-        const x   = i * (W + gap);
-        const rh  = (p.rev / maxRev) * H;
-        const eh  = Math.max(3, (Math.abs(p.ebitda) / maxE) * (H * 0.7));
-        const pos = p.ebitda >= 0;
-        // Alternating stripe rows
+    <svg width="100%" viewBox={`0 0 ${totalW} ${H + 46}`} style={{ overflow: "visible", display: "block" }}>
+      {/* Y-axis scale lines + revenue labels */}
+      {yTicks.map(t => {
+        const y = H - t * H;
         return (
-          <g key={i}>
-            {i % 2 === 0 && <rect x={x - gap / 2} y={0} width={W + gap} height={H} fill="#F0F4F1" opacity={0.6} />}
-            <rect x={x} y={H - rh} width={W} height={rh} fill="#3A7D44" opacity={0.12} rx={2} />
-            <rect x={x + 5} y={pos ? H - eh : H} width={W - 10} height={eh} fill={pos ? "#2E7D32" : "#C62828"} opacity={0.8} rx={2} />
-            <text x={x + W / 2} y={H + 16} textAnchor="middle" fill="#7A8B85" fontSize={9} fontFamily="Outfit,sans-serif">M{p.m}</text>
+          <g key={t}>
+            <line x1={LP} y1={y} x2={totalW} y2={y}
+              stroke={t === 0 ? "#D5E5DC" : "#EAF0EA"} strokeWidth={1}
+              strokeDasharray={t === 0 ? undefined : "3,3"} />
+            <text x={LP - 5} y={y + 3} textAnchor="end" fill="#9aab9e"
+              fontSize={8} fontFamily="'JetBrains Mono',monospace">
+              {fmtK(t * maxRev)}
+            </text>
           </g>
         );
       })}
-      <line x1={0} y1={H} x2={totalW} y2={H} stroke="#D5E5DC" strokeWidth={1} />
+
+      {proj.map((p, i) => {
+        const x   = LP + i * (W + gap);
+        const rh  = (p.rev / maxRev) * H;
+        const eh  = Math.max(3, (Math.abs(p.ebitda) / maxE) * (H * 0.7));
+        const pos = p.ebitda >= 0;
+        return (
+          <g key={i}>
+            {i % 2 === 0 && <rect x={x - gap / 2} y={0} width={W + gap} height={H} fill="#F0F4F1" opacity={0.6} />}
+            {/* Revenue bar (faint background) */}
+            <rect x={x} y={H - rh} width={W} height={rh} fill="#3A7D44" opacity={0.12} rx={2} />
+            {/* EBITDA bar */}
+            <rect x={x + 5} y={pos ? H - eh : H} width={W - 10} height={eh}
+              fill={pos ? "#2E7D32" : "#C62828"} opacity={0.85} rx={2} />
+            {/* Month label */}
+            <text x={x + W / 2} y={H + 14} textAnchor="middle"
+              fill="#7A8B85" fontSize={9} fontFamily="Outfit,sans-serif">M{p.m}</text>
+            {/* EBITDA dollar value */}
+            <text x={x + W / 2} y={H + 30} textAnchor="middle"
+              fill={pos ? "#2E7D32" : "#C62828"} fontSize={7.5}
+              fontFamily="'JetBrains Mono',monospace" fontWeight="600">
+              {fmtK(p.ebitda)}
+            </text>
+          </g>
+        );
+      })}
     </svg>
   );
 }
