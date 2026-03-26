@@ -35,8 +35,8 @@ export default function LoginScreen() {
 
   const inp = {
     width: '100%', padding: '13px 16px',
-    background: '#1a2130', border: '1px solid #2a3548',
-    borderRadius: 6, color: '#e8eaf0',
+    background: '#fff', border: '1px solid #d0d5dd',
+    borderRadius: 6, color: '#000',
     fontFamily: font, fontSize: 15, outline: 'none',
     transition: 'border-color .15s', boxSizing: 'border-box',
   };
@@ -70,17 +70,17 @@ export default function LoginScreen() {
 
         {/* Login card */}
         <form onSubmit={handleSubmit} style={{
-          background: '#161b24', border: '1px solid #222b3a',
+          background: '#fff', border: '1px solid #e2e8f0',
           borderRadius: 8, padding: '32px 28px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
         }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8892a0', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 20 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#4a5568', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 20 }}>
             Sign In to Your Account
           </div>
 
           {/* Email */}
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8892a0', marginBottom: 6 }}>Email</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Email</label>
             <input
               type="email"
               style={inp}
@@ -90,13 +90,13 @@ export default function LoginScreen() {
               autoComplete="email"
               disabled={loading}
               onFocus={e => e.target.style.borderColor = '#3A7D44'}
-              onBlur={e  => e.target.style.borderColor = '#2a3548'}
+              onBlur={e  => e.target.style.borderColor = '#d0d5dd'}
             />
           </div>
 
           {/* Password */}
           <div style={{ marginBottom: 22 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8892a0', marginBottom: 6 }}>Password</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Password</label>
             <input
               type="password"
               style={inp}
@@ -106,7 +106,7 @@ export default function LoginScreen() {
               autoComplete="current-password"
               disabled={loading}
               onFocus={e => e.target.style.borderColor = '#3A7D44'}
-              onBlur={e  => e.target.style.borderColor = '#2a3548'}
+              onBlur={e  => e.target.style.borderColor = '#d0d5dd'}
             />
           </div>
 
