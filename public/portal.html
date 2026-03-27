@@ -276,18 +276,19 @@ function getJobId() {
   return new URLSearchParams(window.location.search).get('job');
 }
 
-function getConfig() {
-  // 1. Try URL param (base64 encoded — included when ERP copies the portal link)
-  var cfgParam = new URLSearchParams(window.location.search).get('cfg');
-  if (cfgParam) {
-    try {
-      var decoded = JSON.parse(atob(cfgParam));
-      // Save to localStorage so future visits work without the param
-      try { localStorage.setItem('hwfs-fb-config', JSON.stringify(decoded)); } catch(e){}
-      return decoded;
-    } catch(e) {}
-  }
-  // 2. Try localStorage (set by ERP on same device)
+async function getConfig() {
+  // 1. Try fetching from server (Vercel env vars — works for any visitor)
+  try {
+    var res = await fetch('/api/cfg');
+    if (res.ok) {
+      var data = await res.json();
+      if (data && data.apiKey) {
+        try { localStorage.setItem('hwfs-fb-config', JSON.stringify(data)); } catch(e) {}
+        return data;
+      }
+    }
+  } catch(e) {}
+  // 2. Fall back to localStorage (e.g. offline or API not configured yet)
   try { return JSON.parse(localStorage.getItem('hwfs-fb-config')); } catch(e) { return null; }
 }
 
@@ -596,7 +597,7 @@ function showToast(msg, error) {
     return;
   }
 
-  cfg = getConfig();
+  cfg = await getConfig();
   if (!cfg || !cfg.databaseURL) {
     document.getElementById('loading').innerHTML =
       '<div class="loading"><div class="loading-title">Setup Required</div>' +

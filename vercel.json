@@ -3,6 +3,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "routes": [
+    { "src": "/portal/([^/]+)", "dest": "/portal.html?job=$1" },
+    { "src": "/worker/([^/]+)", "dest": "/worker.html?job=$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]

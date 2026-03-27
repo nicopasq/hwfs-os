@@ -7,8 +7,8 @@ import { publishPortal, isConnected } from '../firebase';
 
 const DF = { name: "", client: "", type: "Small Condo", tier: "Basic", sf: "", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), active: true, pipe: false };
 
-const PORTAL_BASE = window.location.origin + "/portal.html";
-const WORKER_BASE = window.location.origin + "/worker.html";
+const PORTAL_BASE = window.location.origin + "/portal";
+const WORKER_BASE = window.location.origin + "/worker";
 
 export default function JobsTab({ data, upd, setData, E, visits = [] }) {
   const { T, ss, mono, font } = useApp();
@@ -38,14 +38,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
     });
   };
 
-  const buildLink = (base, jobId) => {
-    let url = base + "?job=" + jobId;
-    try {
-      const raw = localStorage.getItem('hwfs-fb-config');
-      if (raw) url += "&cfg=" + btoa(raw);
-    } catch(e) {}
-    return url;
-  };
+  const buildLink = (base, jobId) => base + "/" + jobId;
 
   const copyLink = (j) => {
     navigator.clipboard.writeText(buildLink(PORTAL_BASE, j.id)).then(() => {

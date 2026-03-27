@@ -222,15 +222,22 @@ function show(id) {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
-(function init() {
+(async function init() {
   show('s-loading');
   var params = new URLSearchParams(window.location.search);
   jobId = params.get('job') || null;
 
-  var cfgParam = params.get('cfg');
-  if (cfgParam) {
-    try { cfg = JSON.parse(atob(cfgParam)); localStorage.setItem('hwfs-fb-config', JSON.stringify(cfg)); } catch(e) {}
-  }
+  // Fetch config from server (Vercel env vars), fall back to localStorage
+  try {
+    var res = await fetch('/api/cfg');
+    if (res.ok) {
+      var data = await res.json();
+      if (data && data.apiKey) {
+        cfg = data;
+        try { localStorage.setItem('hwfs-fb-config', JSON.stringify(cfg)); } catch(e) {}
+      }
+    }
+  } catch(e) {}
   if (!cfg) {
     try { cfg = JSON.parse(localStorage.getItem('hwfs-fb-config')); } catch(e) {}
   }
