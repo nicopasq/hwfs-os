@@ -3,7 +3,7 @@ import { useApp } from '../context';
 import { fmtF, pct, uid, td } from '../utils';
 import { F, Tog, Badge } from '../components/ui';
 import { TIERS, TK, SK } from '../constants';
-import { publishPortal, isConnected } from '../firebase';
+import { publishPortal, deletePortal, isConnected } from '../firebase';
 
 const DF = { name: "", client: "", type: "Small Condo", tier: "Basic", sf: "", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), active: true, pipe: false };
 
@@ -28,14 +28,13 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
     setF(DF);
   };
 
-  const rm = id => upd("jobs", data.jobs.filter(j => j.id !== id));
+  const rm = id => {
+    deletePortal(id).catch(() => {});
+    upd("jobs", data.jobs.filter(j => j.id !== id));
+  };
 
   const updJ = (id, patch) => {
-    setData(prev => {
-      const nd = { ...prev, jobs: prev.jobs.map(j => j.id === id ? { ...j, ...patch } : j) };
-      save(nd);
-      return nd;
-    });
+    upd("jobs", data.jobs.map(j => j.id === id ? { ...j, ...patch } : j));
   };
 
   const buildLink = (base, jobId) => base + "/" + jobId;
@@ -80,7 +79,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
     try {
       await publishPortal(j.id, portalData);
       updJ(j.id, { publishedAt: portalData.publishedAt });
-      alert("Portal published! Share this link:\n" + PORTAL_BASE + "?job=" + j.id);
+      alert("Portal published! Share this link:\n" + PORTAL_BASE + "/" + j.id);
     } catch(e) {
       alert("Publish failed: " + e.message);
     }
@@ -248,7 +247,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                             {/* Portal link & publish */}
                             <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 14, borderTop: "1px solid " + T.border, flexWrap: "wrap" }}>
                               <div style={{ flex: 1, minWidth: 180, background: T.card, border: "1px solid " + T.border, borderRadius: 4, padding: "8px 12px", fontFamily: mono, fontSize: 11, color: T.ts, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {PORTAL_BASE}?job={j.id}
+                                {PORTAL_BASE}/{j.id}
                               </div>
                               <button style={{ ...ss.btnG, padding: "9px 16px", fontSize: 12, whiteSpace: "nowrap" }} onClick={() => copyLink(j)}>
                                 {copied === j.id ? "✓ Copied!" : "📋 Client Link"}

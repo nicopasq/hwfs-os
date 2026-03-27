@@ -119,6 +119,13 @@ export function publishPortal(jobId, portalData) {
     .catch(e => { console.warn('publishPortal failed:', e); throw e; });
 }
 
+/** Remove a job's portal entry from Firebase (called when job is deleted) */
+export function deletePortal(jobId) {
+  if (!_db) return Promise.resolve();
+  return remove(ref(_db, PORTAL_PATH + '/' + jobId))
+    .catch(e => console.warn('deletePortal failed:', e));
+}
+
 /** Subscribe to all client messages across all jobs */
 export function subscribeMessages(onMessages) {
   if (!_messagesRef) return () => {};
