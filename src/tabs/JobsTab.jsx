@@ -22,15 +22,28 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
 
   const ap = (sf, freq, tier) => { const r = TIERS[tier]?.rate || .10; return sf ? Math.round(+sf * r * (+freq || 1)) : ""; };
 
+  const audit = (action, detail) => {
+    setData(prev => {
+      const entry = { id: uid(), ts: new Date().toISOString(), user: prev.userId || 'Director', action, detail };
+      const nd = { ...prev, activityLog: [entry, ...(prev.activityLog || []).slice(0, 99)] };
+      try { localStorage.setItem(SK, JSON.stringify(nd)); } catch(e) {}
+      return nd;
+    });
+  };
+
   const add = () => {
     if (!f.name || !f.wkRate) return;
-    upd("jobs", [...data.jobs, { ...f, id: uid(), sf: +f.sf, wkRate: +f.wkRate, freq: +f.freq, hrsVis: +f.hrsVis, mSup: +f.mSup }]);
+    const newJob = { ...f, id: uid(), sf: +f.sf, wkRate: +f.wkRate, freq: +f.freq, hrsVis: +f.hrsVis, mSup: +f.mSup };
+    upd("jobs", [...data.jobs, newJob]);
+    audit('Contract added', `${f.name} — ${f.client} · $${f.wkRate}/wk`);
     setF(DF);
   };
 
   const rm = id => {
+    const job = data.jobs.find(j => j.id === id);
     deletePortal(id).catch(() => {});
     upd("jobs", data.jobs.filter(j => j.id !== id));
+    if (job) audit('Contract deleted', `${job.name} — ${job.client}`);
   };
 
   const updJ = (id, patch) => {
@@ -79,6 +92,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
     try {
       await publishPortal(j.id, portalData);
       updJ(j.id, { publishedAt: portalData.publishedAt });
+      audit('Portal published', `${j.name} — ${j.client} · ${PORTAL_BASE}/${j.id}`);
       alert("Portal published! Share this link:\n" + PORTAL_BASE + "/" + j.id);
     } catch(e) {
       alert("Publish failed: " + e.message);
