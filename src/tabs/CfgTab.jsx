@@ -179,6 +179,52 @@ export default function CfgTab({ data, updS, updA, setData, fbStatus, setFbStatu
           })}
         </tbody></table>
       </div>
+
+      {/* ── Audit Log ─────────────────────────────────────────────────────── */}
+      <div style={ss.card}>
+        <div style={ss.ch}>
+          <span>Audit Log ({(data.activityLog || []).length})</span>
+          {(data.activityLog || []).length > 0 && (
+            <button style={ss.btnD} onClick={() => {
+              if (!window.confirm('Clear the entire audit log?')) return;
+              setData(prev => {
+                const nd = { ...prev, activityLog: [] };
+                try { localStorage.setItem(SK, JSON.stringify(nd)); } catch(e) {}
+                return nd;
+              });
+            }}>Clear Log</button>
+          )}
+        </div>
+        {(data.activityLog || []).length === 0 ? (
+          <div style={{ padding: '20px 0', textAlign: 'center', color: T.td2, fontSize: 13 }}>
+            No activity logged yet. Actions like approving expenses, creating contracts from documents, and sending replies are recorded here.
+          </div>
+        ) : (
+          <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+            <table style={ss.tbl}>
+              <thead>
+                <tr>
+                  {['When', 'User', 'Action', 'Detail'].map((h, i) =>
+                    <th key={i} style={ss.th}>{h}</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {(data.activityLog || []).slice(0, 100).map(entry => (
+                  <tr key={entry.id}>
+                    <td style={{ ...ss.td, fontSize: 11, color: T.td2, whiteSpace: 'nowrap' }}>
+                      {entry.ts ? new Date(entry.ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}
+                    </td>
+                    <td style={{ ...ss.td, fontWeight: 600 }}>{entry.user || '—'}</td>
+                    <td style={ss.td}>{entry.action}</td>
+                    <td style={{ ...ss.td, color: T.td2, fontSize: 12 }}>{entry.detail || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </>
   );
 }
