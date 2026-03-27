@@ -225,7 +225,10 @@ function show(id) {
 (async function init() {
   show('s-loading');
   var params = new URLSearchParams(window.location.search);
-  jobId = params.get('job') || null;
+  jobId = params.get('job') || (function() {
+    var m = window.location.pathname.match(/\/worker\/([^\/\?]+)/);
+    return m ? m[1] : null;
+  })() || null;
 
   // Fetch config from server (Vercel env vars), fall back to localStorage
   try {

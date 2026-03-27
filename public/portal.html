@@ -273,7 +273,12 @@ var lightboxIdx  = 0;
 var _lbSets = [];
 
 function getJobId() {
-  return new URLSearchParams(window.location.search).get('job');
+  // Try query string (?job=...)
+  var fromQuery = new URLSearchParams(window.location.search).get('job');
+  if (fromQuery) return fromQuery;
+  // Try path-based URL (/portal/:jobId) — Vercel rewrites server-side so window.location still shows the path
+  var match = window.location.pathname.match(/\/portal\/([^\/\?]+)/);
+  return match ? match[1] : null;
 }
 
 async function getConfig() {
