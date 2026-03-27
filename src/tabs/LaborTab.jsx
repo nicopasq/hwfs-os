@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context';
 import { fmtF, uid, td } from '../utils';
 import { F, Tog, Badge } from '../components/ui';
+import SelectOrOther from '../components/SelectOrOther';
 
 const DF = { name: "", role: "Cleaner", rate: 16, hpw: 25, active: true, start: td(), ft: false, pri: 1 };
 
@@ -20,9 +21,12 @@ export default function LaborTab({ data, upd, E }) {
         <div style={ss.g5}>
           <F l="Name"><input style={ss.inp} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></F>
           <F l="Role">
-            <select style={ss.sel} value={f.role} onChange={e => setF({ ...f, role: e.target.value })}>
-              {["Cleaner", "Lead", "Supervisor", "Ops Director"].map(v => <option key={v}>{v}</option>)}
-            </select>
+            <SelectOrOther
+              options={["Cleaner", "Lead", "Supervisor", "Ops Director"]}
+              value={f.role}
+              onChange={v => setF({ ...f, role: v })}
+              style={ss.sel}
+            />
           </F>
           <F l="$/hr"><input type="number" style={ss.inp} value={f.rate} onChange={e => setF({ ...f, rate: e.target.value })} /></F>
           <F l="Hrs/wk"><input type="number" style={ss.inp} value={f.hpw} onChange={e => setF({ ...f, hpw: e.target.value })} /></F>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context';
 import { fmtF, uid, td } from '../utils';
 import { F, Badge } from '../components/ui';
+import SelectOrOther from '../components/SelectOrOther';
 import { SK } from '../constants';
 
 const STAGES = ["Lead", "Contact Made", "Walkthrough", "Proposal", "Trial", "Won", "Lost"];
@@ -115,9 +116,12 @@ export default function CRMTab({ data, upd, setData, E }) {
           <F l="Contact"><input style={ss.inp} value={f.contact} onChange={e => setF({ ...f, contact: e.target.value })} /></F>
           <F l="Phone"><input style={ss.inp} value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} /></F>
           <F l="Vertical">
-            <select style={ss.sel} value={f.vertical} onChange={e => setF({ ...f, vertical: e.target.value })}>
-              {["Dental", "Medical", "HOA/PM", "Office", "Industrial", "Other"].map(v => <option key={v}>{v}</option>)}
-            </select>
+            <SelectOrOther
+              options={["Dental", "Medical", "HOA/PM", "Office", "Industrial"]}
+              value={f.vertical}
+              onChange={v => setF({ ...f, vertical: v })}
+              style={ss.sel}
+            />
           </F>
           <F l="Est $/wk"><input type="number" style={ss.inp} value={f.estWkRate} onChange={e => setF({ ...f, estWkRate: e.target.value })} /></F>
         </div>
@@ -211,9 +215,12 @@ export default function CRMTab({ data, upd, setData, E }) {
           <div style={ss.g2}>
             <F l="Date"><input type="date" style={ss.inp} value={oF.date} onChange={e => setOF({ ...oF, date: e.target.value })} /></F>
             <F l="Type">
-              <select style={ss.sel} value={oF.type} onChange={e => setOF({ ...oF, type: e.target.value })}>
-                {["Walk-in", "Call", "LinkedIn", "Email", "Referral Ask", "Site Walk", "LSA Callback", "Proposal", "Follow-up"].map(v => <option key={v}>{v}</option>)}
-              </select>
+              <SelectOrOther
+                options={["Walk-in", "Call", "LinkedIn", "Email", "Referral Ask", "Site Walk", "LSA Callback", "Proposal", "Follow-up"]}
+                value={oF.type}
+                onChange={v => setOF({ ...oF, type: v })}
+                style={ss.sel}
+              />
             </F>
           </div>
           <F l="Notes"><input style={ss.inp} value={oF.notes} onChange={e => setOF({ ...oF, notes: e.target.value })} onKeyDown={e => e.key === "Enter" && addO()} /></F>

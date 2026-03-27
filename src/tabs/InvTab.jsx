@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context';
 import { fmtF, uid } from '../utils';
 import { F, Badge } from '../components/ui';
+import SelectOrOther from '../components/SelectOrOther';
 
 const DF = { name: "", cat: "Chemical", uc: "", qty: "", usePW: "", reorderAt: 2 };
 
@@ -30,9 +31,12 @@ export default function InvTab({ data, upd, updA, E }) {
         <div style={ss.g4}>
           <F l="Product"><input style={ss.inp} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></F>
           <F l="Cat">
-            <select style={ss.sel} value={f.cat} onChange={e => setF({ ...f, cat: e.target.value })}>
-              {["Chemical", "Paper", "Equipment", "Microfiber", "Trash", "PPE"].map(v => <option key={v}>{v}</option>)}
-            </select>
+            <SelectOrOther
+              options={["Chemical", "Paper", "Equipment", "Microfiber", "Trash", "PPE"]}
+              value={f.cat}
+              onChange={v => setF({ ...f, cat: v })}
+              style={ss.sel}
+            />
           </F>
           <F l="Unit $"><input type="number" step=".01" style={ss.inp} value={f.uc} onChange={e => setF({ ...f, uc: e.target.value })} /></F>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>

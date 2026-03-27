@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context';
 import { fmtF, uid, td } from '../utils';
 import { F, Badge } from '../components/ui';
+import SelectOrOther from '../components/SelectOrOther';
 
 const DF = { date: td(), client: "", type: "Floor Wax", sf: "", price: "", weeks: 4, done: false };
 
@@ -30,9 +31,12 @@ export default function SpecTab({ data, upd, E }) {
         <div style={ss.g5}>
           <F l="Client"><input style={ss.inp} value={f.client} onChange={e => setF({ ...f, client: e.target.value })} /></F>
           <F l="Type">
-            <select style={ss.sel} value={f.type} onChange={e => setF({ ...f, type: e.target.value })}>
-              {["Floor Wax", "Carpet Extract", "Post-Construction", "Emergency", "Pressure Wash", "Deep Clean"].map(v => <option key={v}>{v}</option>)}
-            </select>
+            <SelectOrOther
+              options={["Floor Wax", "Carpet Extract", "Post-Construction", "Emergency", "Pressure Wash", "Deep Clean"]}
+              value={f.type}
+              onChange={v => setF({ ...f, type: v })}
+              style={ss.sel}
+            />
           </F>
           <F l="SF"><input type="number" style={ss.inp} value={f.sf} onChange={e => setF({ ...f, sf: e.target.value })} /></F>
           <F l="Price"><input type="number" style={ss.inp} value={f.price} onChange={e => setF({ ...f, price: e.target.value })} /></F>

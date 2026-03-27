@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useApp } from '../context';
 import { fmtF, uid, td } from '../utils';
 import { F, Tog, Badge } from '../components/ui';
+import SelectOrOther from '../components/SelectOrOther';
 import { SK } from '../constants';
 
 const CATS  = ["Equipment", "Supplies", "Insurance", "Software", "Vehicle", "Legal", "Marketing", "Misc"];
@@ -54,9 +55,12 @@ export default function EquipTab({ data, upd, setData, E }) {
           <F l="Description"><input style={ss.inp} value={f.desc} onChange={e => setF({ ...f, desc: e.target.value })} /></F>
           <F l="Amount"><input type="number" style={ss.inp} value={f.amt} onChange={e => setF({ ...f, amt: e.target.value })} /></F>
           <F l="Category">
-            <select style={ss.sel} value={f.cat} onChange={e => setF({ ...f, cat: e.target.value })}>
-              {CATS.map(v => <option key={v}>{v}</option>)}
-            </select>
+            <SelectOrOther
+              options={CATS}
+              value={f.cat}
+              onChange={v => setF({ ...f, cat: v })}
+              style={ss.sel}
+            />
           </F>
           <F l="Paid By">
             <select style={ss.sel} value={f.by} onChange={e => setF({ ...f, by: e.target.value })}>
@@ -121,10 +125,12 @@ export default function EquipTab({ data, upd, setData, E }) {
                       onChange={ev => updField(e.id, "amt", +ev.target.value)} />
                   </td>
                   <td style={ss.td}>
-                    <select style={{ ...ss.sel, padding: "2px 4px", fontSize: 10 }} value={e.cat || "Misc"}
-                      onChange={ev => updField(e.id, "cat", ev.target.value)}>
-                      {CATS.map(v => <option key={v}>{v}</option>)}
-                    </select>
+                    <SelectOrOther
+                      options={CATS}
+                      value={e.cat || "Misc"}
+                      onChange={v => updField(e.id, "cat", v)}
+                      style={{ ...ss.sel, padding: "2px 4px", fontSize: 10 }}
+                    />
                   </td>
                   <td style={ss.td}>
                     <select style={{ ...ss.sel, padding: "2px 4px", fontSize: 10 }} value={e.by || "HWE"}

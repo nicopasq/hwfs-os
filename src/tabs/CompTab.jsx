@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context';
 import { uid, td } from '../utils';
 import { F, Badge } from '../components/ui';
+import SelectOrOther from '../components/SelectOrOther';
 
 const CTS = ["OSHA BBP/HazCom", "CMI Basic", "CIMS-GB", "CPR", "Drug Screen", "BG Check"];
 
@@ -44,9 +45,12 @@ export default function CompTab({ data, upd }) {
             </select>
           </F>
           <F l="Cert">
-            <select style={ss.sel} value={f.cert} onChange={e => setF({ ...f, cert: e.target.value })}>
-              {CTS.map(c => <option key={c}>{c}</option>)}
-            </select>
+            <SelectOrOther
+              options={CTS}
+              value={f.cert}
+              onChange={v => setF({ ...f, cert: v })}
+              style={ss.sel}
+            />
           </F>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
             <F l="Date"><input type="date" style={ss.inp} value={f.date} onChange={e => setF({ ...f, date: e.target.value })} /></F>
