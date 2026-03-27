@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { useApp } from '../context';
 import { fmtF, fmt, pct, td } from '../utils';
 
@@ -89,7 +90,7 @@ function BarChart({ data: proj, T }) {
               fill={pos ? "#2E7D32" : "#C62828"} opacity={0.85} rx={2} />
             {/* Month label */}
             <text x={x + W / 2} y={H + 14} textAnchor="middle"
-              fill="#7A8B85" fontSize={9} fontFamily="Outfit,sans-serif">M{p.m}</text>
+              fill="#7A8B85" fontSize={9} fontFamily="Outfit,sans-serif">{p.label || ('M' + p.m)}</text>
             {/* EBITDA dollar value */}
             <text x={x + W / 2} y={H + 30} textAnchor="middle"
               fill={pos ? "#2E7D32" : "#C62828"} fontSize={7.5}
@@ -166,6 +167,27 @@ function StatCell({ label, value, color, T, mono }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function DashTab({ data, E }) {
   const { T, ss, nav, mono, serif } = useApp();
+  const [chartMode, setChartMode] = useState('forecast');
+
+  const actualsData = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, i) => {
+      const d     = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+      const moStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      const rev   = (data.invoices || [])
+        .filter(inv => inv.status === 'Paid' && (inv.date || '').startsWith(moStr))
+        .reduce((s, inv) => s + (+inv.amount || 0), 0);
+      const exp   = (data.expenses || [])
+        .filter(e => (e.date || '').startsWith(moStr))
+        .reduce((s, e) => s + (+e.amt || 0), 0);
+      return { m: i + 1, label: d.toLocaleString('en-US', { month: 'short' }), rev, gp: rev, sga: exp, ebitda: rev - exp };
+    });
+  }, [data.invoices, data.expenses]);
+
+  const chartData = chartMode === 'actuals' ? actualsData : E.proj12;
+  const actualTotRev    = actualsData.reduce((s, m) => s + m.rev, 0);
+  const actualTotEbitda = actualsData.reduce((s, m) => s + m.ebitda, 0);
+  const actualEbitdaMgn = actualTotRev > 0 ? actualTotEbitda / actualTotRev : 0;
 
   const ebitdaMargin = E.totalWR > 0 ? E.ebitdaW / E.totalWR : 0;
   const grossMargin  = E.totalWR > 0 ? (E.gpW + E.specRevW) / E.totalWR : 0;
@@ -272,10 +294,22 @@ export default function DashTab({ data, E }) {
         <div style={{ ...ss.card, marginBottom: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>12-Month Projection</div>
-              <div style={{ fontSize: 13, color: T.td2, marginTop: 3 }}>Revenue vs EBITDA run-rate</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>
+                {chartMode === 'forecast' ? '12-Month Projection' : '12-Month Actuals'}
+              </div>
+              <div style={{ fontSize: 13, color: T.td2, marginTop: 3 }}>
+                {chartMode === 'forecast' ? 'Revenue vs EBITDA run-rate' : 'Paid invoices vs expenses by month'}
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+              <div style={{ display: "flex", border: "1px solid " + T.border, borderRadius: 4, overflow: "hidden" }}>
+                {[['forecast', 'Forecast'], ['actuals', 'Actuals']].map(([mode, lbl]) => (
+                  <button key={mode} onClick={() => setChartMode(mode)} style={{
+                    padding: "5px 13px", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: chartMode === mode ? 700 : 400,
+                    background: chartMode === mode ? T.accent : T.card, color: chartMode === mode ? "#fff" : T.td2,
+                  }}>{lbl}</button>
+                ))}
+              </div>
               {[["Revenue", "#3A7D44", "0.12"], ["EBITDA", "#2E7D32", "0.8"]].map(([l, c, o]) => (
                 <span key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: T.td2 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 1, background: c, opacity: +o, display: "inline-block" }} />{l}
@@ -283,14 +317,19 @@ export default function DashTab({ data, E }) {
               ))}
             </div>
           </div>
-          <BarChart data={E.proj12} T={T} />
+          <BarChart data={chartData} T={T} />
           <div style={{ display: "flex", paddingTop: 16, borderTop: "1px solid " + T.border2, marginTop: 12 }}>
-            {[
-              ["Yr Revenue",    fmtF(E.totalWR * 52),  T.green],
-              ["Yr EBITDA",     fmtF(E.ebitdaW * 52),  E.ebitdaW >= 0 ? T.accent : T.red],
-              ["Gross Margin",  pct(grossMargin),        T.ts],
-              ["EBITDA Margin", pct(ebitdaMargin),       T.ts],
-            ].map(([l, v, c]) => (
+            {(chartMode === 'forecast' ? [
+              ["Proj Revenue",   fmtF(E.totalWR * 52),  T.green],
+              ["Proj EBITDA",    fmtF(E.ebitdaW * 52),  E.ebitdaW >= 0 ? T.accent : T.red],
+              ["Gross Margin",   pct(grossMargin),        T.ts],
+              ["EBITDA Margin",  pct(ebitdaMargin),       T.ts],
+            ] : [
+              ["YTD Revenue",    fmtF(actualTotRev),      T.green],
+              ["YTD EBITDA",     fmtF(actualTotEbitda),   actualTotEbitda >= 0 ? T.accent : T.red],
+              ["EBITDA Margin",  pct(actualEbitdaMgn),    T.ts],
+              ["Paid Invoices",  (data.invoices || []).filter(i => i.status === 'Paid').length + " invoices", T.ts],
+            ]).map(([l, v, c]) => (
               <div key={l} style={{ flex: 1 }}>
                 <div style={{ fontSize: 10, color: T.td2, textTransform: "uppercase", letterSpacing: "1px" }}>{l}</div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: c, marginTop: 3, fontFamily: mono }}>{v}</div>

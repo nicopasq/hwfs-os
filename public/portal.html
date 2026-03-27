@@ -551,6 +551,8 @@ function updateMessages(snap) {
       html += '<div class="msg-reply">';
       html += '<div class="msg-reply-meta">HuronWest replied · ' + timeAgo(m.reply.ts) + '</div>';
       html += '<div>' + esc(m.reply.text) + '</div></div>';
+    } else if (m.read) {
+      html += '<div style="font-size:11px;color:var(--bark-lt);margin-top:6px;text-align:right">✓ Seen by HuronWest</div>';
     }
     html += '</div>';
   });
