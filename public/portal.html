@@ -271,6 +271,8 @@ var lightboxUrls = [];
 var lightboxIdx  = 0;
 // Photo sets for lightbox — populated when visits render, avoids JSON in onclick
 var _lbSets = [];
+var _visitsCache = [];  // stored for PDF download
+var _portalJobName = '';
 
 function getJobId() {
   // Try query string (?job=...)
@@ -340,6 +342,7 @@ document.getElementById('lightbox').addEventListener('click', function(e) { if (
 
 // ── Render static page frame ───────────────────────────────────────────────
 function renderFrame(job) {
+  _portalJobName = job.propertyName || job.name || 'Property';
   var photos     = Array.isArray(job.photos) ? job.photos.filter(Boolean) : [];
   var monthlyRate = (job.wkRate || 0) * 4.33;
   var html = '';
@@ -398,7 +401,10 @@ function renderFrame(job) {
 
   // Service history placeholder (filled by real-time listener)
   html += '<div class="card" id="visits-card">';
-  html += '<div class="card-header"><span>Service History</span><span class="card-header-ct" id="visits-ct"></span></div>';
+  html += '<div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">';
+  html += '<span>Service History <span class="card-header-ct" id="visits-ct"></span></span>';
+  html += '<button onclick="downloadServiceHistory()" id="dl-visits-btn" style="display:none;background:var(--leaf);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;">⬇ Download PDF</button>';
+  html += '</div>';
   html += '<div id="visits-body"><div class="no-visits">Loading service history…</div></div>';
   html += '</div>';
 
@@ -444,8 +450,12 @@ function updateVisits(snap) {
   var data   = snap.val();
   var visits = data ? Object.values(data) : [];
   visits.sort(function(a,b){ return (b.ts||'').localeCompare(a.ts||''); });
+  _visitsCache = visits;
 
   if (ct) ct.textContent = visits.length ? visits.length + ' visit' + (visits.length!==1?'s':'') : '';
+
+  var dlBtn = document.getElementById('dl-visits-btn');
+  if (dlBtn) dlBtn.style.display = visits.length ? 'inline-block' : 'none';
 
   if (!visits.length) {
     body.innerHTML = '<div class="no-visits">No service visits recorded yet. Check back after the next cleaning.</div>';
@@ -525,6 +535,90 @@ function updateVisits(snap) {
     html += '</div>'; // visit-item
   });
   body.innerHTML = html;
+}
+
+// ── Download service history as printable PDF ─────────────────────────────
+function downloadServiceHistory() {
+  if (!_visitsCache.length) return;
+  var w = window.open('', '_blank');
+  if (!w) { alert('Pop-up blocked — please allow pop-ups for this site.'); return; }
+
+  var css = [
+    '*{margin:0;padding:0;box-sizing:border-box}',
+    'body{font-family:Outfit,Helvetica,Arial,sans-serif;color:#1A3C34;padding:40px 48px;max-width:900px;margin:0 auto}',
+    'h1{font-size:22px;font-weight:700;margin-bottom:4px}',
+    'h2{font-size:11px;color:#7A8B85;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:24px}',
+    '.meta{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #D5E5DC;padding-bottom:12px;margin-bottom:24px}',
+    '.meta-right{text-align:right;font-size:12px;color:#7A8B85}',
+    '.visit{border:1px solid #D5E5DC;border-radius:8px;padding:16px 20px;margin-bottom:14px;page-break-inside:avoid}',
+    '.visit-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}',
+    '.visit-date{font-size:14px;font-weight:700;color:#1A3C34}',
+    '.visit-crew{font-size:12px;color:#3E4A47}',
+    '.section{margin:8px 0 4px;padding-left:12px;border-left:3px solid #A8D5BA}',
+    '.section-title{font-size:12px;font-weight:700;color:#3A7D44;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px}',
+    '.note{font-size:13px;color:#3E4A47;margin:4px 0}',
+    '.photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}',
+    '.photos img{width:100px;height:75px;object-fit:cover;border-radius:4px;border:1px solid #D5E5DC}',
+    '.footer{margin-top:32px;padding-top:16px;border-top:1px solid #D5E5DC;font-size:11px;color:#7A8B85;text-align:center}',
+    '@media print{body{padding:20px 24px}.visit{break-inside:avoid}}',
+  ].join('\n');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Service History — ' + esc(_portalJobName) + '</title>';
+  html += '<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">';
+  html += '<style>' + css + '</style></head><body>';
+
+  html += '<div class="meta">';
+  html += '<div><h1>' + esc(_portalJobName) + '</h1><h2>Service History Report</h2></div>';
+  html += '<div class="meta-right">Generated ' + new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}) + '<br>' + _visitsCache.length + ' visit' + (_visitsCache.length!==1?'s':'') + ' on record</div>';
+  html += '</div>';
+
+  _visitsCache.forEach(function(v) {
+    var d = v.ts ? new Date(v.ts) : null;
+    var dateStr = d ? d.toLocaleDateString('en-US', {weekday:'short',year:'numeric',month:'short',day:'numeric'}) : 'Unknown date';
+    var timeStr = d ? d.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'}) : '';
+
+    html += '<div class="visit">';
+    html += '<div class="visit-head">';
+    html += '<div class="visit-date">' + esc(dateStr) + (timeStr ? ' · ' + esc(timeStr) : '') + '</div>';
+    html += '<div class="visit-crew">Crew: ' + esc(v.crewLead||'—') + '</div>';
+    html += '</div>';
+
+    if (v.sections && Object.keys(v.sections).length) {
+      Object.entries(v.sections).forEach(function(entry) {
+        var secName = entry[0], secData = entry[1];
+        var secPhotos = Array.isArray(secData.photos) ? secData.photos.filter(Boolean) : [];
+        if (!secPhotos.length && !secData.note) return;
+        html += '<div class="section">';
+        html += '<div class="section-title">' + esc(secName) + '</div>';
+        if (secData.note) html += '<div class="note">' + esc(secData.note) + '</div>';
+        if (secPhotos.length) {
+          html += '<div class="photos">';
+          secPhotos.forEach(function(url) { html += '<img src="' + esc(url) + '" onerror="this.style.display=\'none\'">'; });
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+    } else {
+      if (v.note) html += '<div class="note">' + esc(v.note) + '</div>';
+      var flat = Array.isArray(v.photos) ? v.photos.filter(Boolean) : [];
+      if (flat.length) {
+        html += '<div class="photos">';
+        flat.forEach(function(url) { html += '<img src="' + esc(url) + '" onerror="this.style.display=\'none\'">'; });
+        html += '</div>';
+      }
+    }
+
+    if (v.note && v.sections) html += '<div class="note" style="margin-top:8px;font-style:italic;">General: ' + esc(v.note) + '</div>';
+    html += '</div>';
+  });
+
+  html += '<div class="footer">HuronWest Facility Services LLC · Service History Report · ' + esc(_portalJobName) + '</div>';
+  html += '</body></html>';
+
+  w.document.write(html);
+  w.document.close();
+  // Auto-trigger print dialog after images load
+  w.onload = function() { w.print(); };
 }
 
 // ── Update message thread (called by real-time listener) ──────────────────

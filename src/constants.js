@@ -14,6 +14,7 @@ export const TK = Object.keys(TIERS);
 export const TABS = [
   { id: "dash",    l: "Dashboard",     i: "⬡" },
   { id: "crm",     l: "CRM & Pipeline",i: "⊙" },
+  { id: "schedule",l: "Schedule",      i: "☰" },
   { id: "equip",   l: "Expenses",      i: "⚙" },
   { id: "jobs",    l: "Contracts",     i: "◈" },
   { id: "labor",   l: "Workforce",     i: "◎" },

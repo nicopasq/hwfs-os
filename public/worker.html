@@ -482,6 +482,8 @@ async function submit() {
   }
 
   // Build sections payload (only sections with photos or notes)
+  // Firebase keys can't contain . # $ / [ ] — sanitize section names
+  function safeFbKey(s) { return s.replace(/[.#$/\[\]]/g, '_'); }
   var sectionsPayload = {};
   var allUrls         = [];
   var sectionCount    = 0;
@@ -489,7 +491,7 @@ async function submit() {
     var urls = uploadedUrls[name] || [];
     var note = sections[name].note || '';
     if (urls.length || note) {
-      sectionsPayload[name] = { photos: urls, note: note };
+      sectionsPayload[safeFbKey(name)] = { photos: urls, note: note };
       urls.forEach(function(u) { allUrls.push(u); });
       if (urls.length) sectionCount++;
     }

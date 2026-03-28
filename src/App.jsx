@@ -36,6 +36,7 @@ import EqTab     from './tabs/EqTab';
 import CompTab   from './tabs/CompTab';
 import ActTab    from './tabs/ActTab';
 import CfgTab    from './tabs/CfgTab';
+import ScheduleTab from './tabs/ScheduleTab';
 
 import {
   loadFirebaseConfig, connectFirebase, subscribeFirebase, subscribeIncoming,
@@ -103,11 +104,10 @@ export default function App() {
       }
     } catch (e) { console.warn("Failed to load saved data:", e); }
 
-    // Auto-connect Firebase if a config was previously saved
-    const fbCfg = loadFirebaseConfig();
+    // Auto-connect Firebase — try saved config, then fetch from /api/cfg
     let unsubAuth = () => {};
-    if (fbCfg) {
-      const result = connectFirebase(fbCfg);
+    const doConnect = (cfg) => {
+      const result = connectFirebase(cfg);
       if (result.ok) {
         setFbStatus('connected');
         setFbConfigured(true);
@@ -118,10 +118,19 @@ export default function App() {
         unsubAuth = onAuthChanged(user => setAuthUser(user || null));
       } else {
         setFbStatus('error');
-        setAuthUser(null); // no auth gate if Firebase failed
+        setAuthUser(null);
       }
+    };
+
+    const fbCfg = loadFirebaseConfig();
+    if (fbCfg) {
+      doConnect(fbCfg);
     } else {
-      setAuthUser(null); // no Firebase configured — skip auth
+      // No saved config — try to fetch from server
+      fetch('/api/cfg').then(r => r.ok ? r.json() : null).then(cfg => {
+        if (cfg && cfg.apiKey) doConnect(cfg);
+        else setAuthUser(null);
+      }).catch(() => setAuthUser(null));
     }
 
     setOk(true);
@@ -439,11 +448,11 @@ export default function App() {
 
           {/* Nav items */}
           <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
-            {/* ── Top-level: Dashboard, CRM ── */}
-            {["dash", "crm"].map(id => {
+            {/* ── Top-level: Dashboard, CRM, Schedule ── */}
+            {["dash", "crm", "schedule"].map(id => {
               const t = TABS.find(x => x.id === id); if (!t) return null;
               const isActive = tab === t.id;
-              const ct = id === "crm" ? data.prospects.length : 0;
+              const ct = id === "crm" ? data.prospects.length : id === "schedule" ? data.jobs.filter(j => j.active && !j.pipe).length : 0;
               return (
                 <button key={id} onClick={() => setTab(id)}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
@@ -593,6 +602,7 @@ export default function App() {
             {tab === "inbox"    && <InboxTab    data={data} upd={upd} setData={setData} E={E} incomingDocs={incomingDocs} clientMessages={clientMessages} />}
             {tab === "invoices" && <InvoicesTab data={data} setData={setData} />}
             {tab === "crm"     && <CRMTab   data={data} upd={upd} setData={setData} E={E} />}
+            {tab === "schedule" && <ScheduleTab data={data} upd={upd} />}
             {tab === "equip"   && <EquipTab data={data} upd={upd} setData={setData} E={E} />}
             {tab === "jobs"    && <JobsTab  data={data} upd={upd} setData={setData} E={E} visits={visits} />}
             {tab === "labor"   && <LaborTab data={data} upd={upd} E={E} />}
