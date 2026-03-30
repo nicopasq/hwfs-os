@@ -35,7 +35,7 @@ export default function ScheduleTab({ data, upd, setData }) {
   const recurringEvents = useMemo(() => {
     const result = [];
     const wStart = startOfWeek(view === 'week' ? anchor : startOfMonth(anchor));
-    const range = view === 'week' ? 7 : 42; // 6 weeks covers any month view
+    const range = view === 'week' ? 7 : 42;
     for (let i = 0; i < range; i++) {
       const d = addDays(wStart, i);
       const dow = d.getDay();
@@ -49,12 +49,13 @@ export default function ScheduleTab({ data, upd, setData }) {
             id: '_svc_' + j.id + '_' + dateStr(d),
             date: dateStr(d),
             title: j.name,
-            time: '08:00',
+            time: j.serviceTime || '18:00',
             duration: (j.hrsVis || 1) * 60,
             color: EVENT_COLORS[ji % EVENT_COLORS.length],
             notes: j.client || '',
             jobId: j.id,
             auto: true,
+            category: 'service',
           });
         }
       });
@@ -62,7 +63,58 @@ export default function ScheduleTab({ data, upd, setData }) {
     return result;
   }, [activeJobs, anchor, view, data.jobs]);
 
-  const allEvents = useMemo(() => [...recurringEvents, ...events], [recurringEvents, events]);
+  // ── Linked events from other tabs ────────────────────────────────────
+  const linkedEvents = useMemo(() => {
+    const result = [];
+
+    // CRM follow-ups
+    (data.prospects || []).forEach(p => {
+      if (p.followUp && p.stage !== 'Won' && p.stage !== 'Lost') {
+        result.push({
+          id: '_fu_' + p.id, date: p.followUp, title: 'Follow-up: ' + p.name,
+          time: '09:00', duration: 30, color: '#f0c040', notes: p.stage + (p.contact ? ' · ' + p.contact : ''),
+          auto: true, category: 'follow-up',
+        });
+      }
+    });
+
+    // Task due dates
+    (data.actions || []).forEach(a => {
+      if (a.due && !a.done) {
+        result.push({
+          id: '_task_' + a.id, date: a.due, title: a.text,
+          time: '08:00', duration: 30, color: a.priority === 'Critical' ? '#ef5350' : a.priority === 'High' ? '#FF7043' : '#42A5F5',
+          notes: a.priority + ' · ' + (a.assignee || ''), auto: true, category: 'task',
+        });
+      }
+    });
+
+    // Specialty jobs
+    (data.specJobs || []).forEach(s => {
+      if (s.date && !s.done) {
+        result.push({
+          id: '_spec_' + s.id, date: s.date, title: (s.type || 'Specialty') + ': ' + (s.client || ''),
+          time: '10:00', duration: 120, color: '#9070f0', notes: s.sf ? s.sf + ' SF' : '',
+          auto: true, category: 'specialty',
+        });
+      }
+    });
+
+    // Contract start dates (upcoming only)
+    data.jobs.forEach(j => {
+      if (j.start && j.start >= todayStr) {
+        result.push({
+          id: '_start_' + j.id, date: j.start, title: 'Contract Start: ' + j.name,
+          time: '08:00', duration: 60, color: '#26a69a', notes: j.client || '',
+          auto: true, category: 'start',
+        });
+      }
+    });
+
+    return result;
+  }, [data.prospects, data.actions, data.specJobs, data.jobs, todayStr]);
+
+  const allEvents = useMemo(() => [...recurringEvents, ...linkedEvents, ...events], [recurringEvents, linkedEvents, events]);
 
   const eventsForDate = (ds) => allEvents.filter(e => e.date === ds);
 
@@ -148,7 +200,7 @@ export default function ScheduleTab({ data, upd, setData }) {
     >
       {!compact && <span style={{ fontWeight: 600, marginRight: 4, color: evt.color, fontSize: 10 }}>{evt.time}</span>}
       <span style={{ fontWeight: 600 }}>{evt.title}</span>
-      {evt.auto && <span style={{ fontSize: 9, color: T.td2, marginLeft: 4 }}>auto</span>}
+      {evt.category && <span style={{ fontSize: 8, color: T.td2, marginLeft: 4, textTransform: "uppercase" }}>{evt.category === 'service' ? '' : evt.category}</span>}
     </div>
   );
 
@@ -307,7 +359,7 @@ export default function ScheduleTab({ data, upd, setData }) {
                 {evt.notes && <div style={{ fontSize: 11, color: T.td2 }}>{evt.notes}</div>}
               </div>
               <div style={{ fontSize: 11, color: T.td2 }}>{evt.duration}min</div>
-              {evt.auto && <span style={{ fontSize: 9, color: T.td2, background: T.border + "40", padding: "2px 6px", borderRadius: 8 }}>auto</span>}
+              {evt.category && <span style={{ fontSize: 9, color: evt.color, background: evt.color + "18", padding: "2px 6px", borderRadius: 8, fontWeight: 600, textTransform: "uppercase" }}>{evt.category}</span>}
             </div>
           ));
         })()}

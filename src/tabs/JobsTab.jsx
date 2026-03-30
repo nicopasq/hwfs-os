@@ -5,7 +5,7 @@ import { F, Tog, Badge } from '../components/ui';
 import { TIERS, TK, SK } from '../constants';
 import { publishPortal, deletePortal, isConnected } from '../firebase';
 
-const DF = { name: "", client: "", type: "Small Condo", tier: "Basic", sf: "", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), active: true, pipe: false };
+const DF = { name: "", client: "", type: "Small Condo", tier: "Basic", sf: "", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), serviceTime: "18:00", active: true, pipe: false };
 
 const PORTAL_BASE = window.location.origin + "/portal";
 const WORKER_BASE = window.location.origin + "/worker";
@@ -116,9 +116,10 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
           <F l="SF"><input type="number" style={ss.inp} value={f.sf} onChange={e => setF({ ...f, sf: e.target.value, wkRate: ap(e.target.value, f.freq, f.tier) || f.wkRate })} /></F>
           <F l="$/wk"><input type="number" style={ss.inp} value={f.wkRate} onChange={e => setF({ ...f, wkRate: e.target.value })} /></F>
         </div>
-        <div style={ss.g5}>
+        <div style={ss.g6}>
           <F l="Freq/wk"><input type="number" style={ss.inp} value={f.freq} onChange={e => setF({ ...f, freq: e.target.value })} /></F>
           <F l="Hrs/visit"><input type="number" step=".5" style={ss.inp} value={f.hrsVis} onChange={e => setF({ ...f, hrsVis: e.target.value })} /></F>
+          <F l="Service Time"><input type="time" style={ss.inp} value={f.serviceTime} onChange={e => setF({ ...f, serviceTime: e.target.value })} /></F>
           <F l="Supply $/mo"><input type="number" style={ss.inp} value={f.mSup} onChange={e => setF({ ...f, mSup: e.target.value })} /></F>
           <F l="Start"><input type="date" style={ss.inp} value={f.start} onChange={e => setF({ ...f, start: e.target.value })} /></F>
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
@@ -234,6 +235,9 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                                 <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>Schedule & Billing</div>
                                 <F l="Next Service Date">
                                   <input type="date" style={ss.inp} value={j.nextService || ""} onChange={e => updJ(j.id, { nextService: e.target.value })} />
+                                </F>
+                                <F l="Service Time">
+                                  <input type="time" style={ss.inp} value={j.serviceTime || "18:00"} onChange={e => updJ(j.id, { serviceTime: e.target.value })} />
                                 </F>
                                 <F l="Billing Notes (shown to client)">
                                   <input style={ss.inp} value={j.billingNotes || ""} onChange={e => updJ(j.id, { billingNotes: e.target.value })} placeholder="e.g. Net 30, invoiced 1st of month" />
