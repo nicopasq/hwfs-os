@@ -6,7 +6,7 @@
  *  - doDigest: now passed as a prop to MenuBar (was missing → ReferenceError)
  *  - Empty catch blocks: now log console.warn instead of silently swallowing errors
  */
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useLayoutEffect } from 'react';
 
 import { AppContext }     from './context';
 import { SK, TABS, DA, DS, DSGA, DEF, dk, lt, font, serif, TIERS, TK } from './constants';
@@ -73,6 +73,15 @@ export default function App() {
     try { const r = localStorage.getItem('hwfs-nav-groups'); if (r) return JSON.parse(r); } catch {}
     return { ops: false, fin: false, stmt: false };
   });
+
+  // ── Mobile detection ──────────────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const mergeRemote = remote => setData(() => ({
     ...DEF, ...remote,
@@ -182,32 +191,34 @@ export default function App() {
   const mono = "'JetBrains Mono','Fira Code',monospace";
   const ss = useMemo(() => ({
     // ── Inputs ──────────────────────────────────────────────────────────────
-    inp:  { width: "100%", padding: "10px 14px", background: T.inp, border: "1px solid " + T.inpB, borderRadius: 4, color: T.text, fontSize: 14, fontFamily: font, boxSizing: "border-box", outline: "none", transition: "border-color .15s, box-shadow .15s, background .15s" },
-    sel:  { width: "100%", padding: "10px 14px", background: T.inp, border: "1px solid " + T.inpB, borderRadius: 4, color: T.text, fontSize: 14, fontFamily: font, boxSizing: "border-box", transition: "border-color .15s" },
+    inp:  { width: "100%", padding: isMobile ? "10px 12px" : "10px 14px", background: T.inp, border: "1px solid " + T.inpB, borderRadius: 4, color: T.text, fontSize: isMobile ? 16 : 14, fontFamily: font, boxSizing: "border-box", outline: "none", transition: "border-color .15s, box-shadow .15s, background .15s" },
+    sel:  { width: "100%", padding: isMobile ? "10px 12px" : "10px 14px", background: T.inp, border: "1px solid " + T.inpB, borderRadius: 4, color: T.text, fontSize: isMobile ? 16 : 14, fontFamily: font, boxSizing: "border-box", transition: "border-color .15s" },
     // ── Buttons ─────────────────────────────────────────────────────────────
     btn:  { padding: "10px 20px", background: T.accent, color: "#fff", border: "none", borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: font, textTransform: "uppercase", letterSpacing: "1px", transition: "background .15s" },
     btnD: { padding: "8px 16px", background: "transparent", color: T.red, border: "1px solid " + T.red + "44", borderRadius: 4, fontSize: 13, cursor: "pointer", fontFamily: font, fontWeight: 600, transition: "background .15s" },
     btnG: { padding: "8px 16px", background: "transparent", color: T.accent, border: "1px solid " + T.border, borderRadius: 4, fontSize: 13, cursor: "pointer", fontFamily: font, fontWeight: 500, transition: "background .15s, border-color .15s" },
     // ── Cards ────────────────────────────────────────────────────────────────
-    card: { background: T.card, border: "1px solid " + T.border2, borderRadius: 4, padding: 24, marginBottom: 12, boxShadow: T.shadow || "none" },
+    card: { background: T.card, border: "1px solid " + T.border2, borderRadius: 4, padding: isMobile ? 14 : 24, marginBottom: 12, boxShadow: T.shadow || "none" },
     ch:   { fontSize: 10, fontWeight: 600, color: T.td2, marginBottom: 14, textTransform: "uppercase", letterSpacing: "1.5px", display: "flex", alignItems: "center", justifyContent: "space-between" },
     // ── Tables ───────────────────────────────────────────────────────────────
-    tbl:  { width: "100%", borderCollapse: "collapse", fontSize: 13, fontFamily: font },
-    th:   { textAlign: "left",  padding: "12px 16px", background: T.side, color: "#fff", fontSize: 10, textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 700 },
-    thR:  { textAlign: "right", padding: "12px 16px", background: T.side, color: "#fff", fontSize: 10, textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 700 },
-    td:   { padding: "10px 16px", borderBottom: "1px solid " + T.border2, fontSize: 13, color: T.ts },
-    tdR:  { padding: "10px 16px", borderBottom: "1px solid " + T.border2, textAlign: "right", fontSize: 13, fontVariantNumeric: "tabular-nums", color: T.ts, fontFamily: mono },
+    tbl:  { width: "100%", borderCollapse: "collapse", fontSize: isMobile ? 12 : 13, fontFamily: font },
+    th:   { textAlign: "left",  padding: isMobile ? "10px 10px" : "12px 16px", background: T.side, color: "#fff", fontSize: 10, textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 700 },
+    thR:  { textAlign: "right", padding: isMobile ? "10px 10px" : "12px 16px", background: T.side, color: "#fff", fontSize: 10, textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 700 },
+    td:   { padding: isMobile ? "8px 10px" : "10px 16px", borderBottom: "1px solid " + T.border2, fontSize: isMobile ? 12 : 13, color: T.ts },
+    tdR:  { padding: isMobile ? "8px 10px" : "10px 16px", borderBottom: "1px solid " + T.border2, textAlign: "right", fontSize: isMobile ? 12 : 13, fontVariantNumeric: "tabular-nums", color: T.ts, fontFamily: mono },
     // ── Labels & tags ────────────────────────────────────────────────────────
     lbl:  { fontSize: 12, color: T.ts, fontWeight: 600, marginBottom: 4, display: "block" },
     tag:  c => ({ display: "inline-block", padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, background: c + "18", color: c, textTransform: "uppercase", letterSpacing: "0.5px" }),
     // ── Grids ────────────────────────────────────────────────────────────────
-    g2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
-    g3: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 },
-    g4: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 },
-    g5: { display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16 },
-    g6: { display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 16 },
-    g7: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 16 },
-  }), [T]);
+    g2: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 10 : 16 },
+    g3: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 10 : 16 },
+    g4: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap: isMobile ? 10 : 16 },
+    g5: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap: isMobile ? 10 : 16 },
+    g6: { display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(6,1fr)", gap: isMobile ? 10 : 16 },
+    g7: { display: "grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(7,1fr)", gap: isMobile ? 10 : 16 },
+    // ── Table wrapper (horizontal scroll on mobile) ──────────────────────────
+    tblWrap: isMobile ? { overflowX: "auto", WebkitOverflowScrolling: "touch", margin: "0 -4px", padding: "0 4px" } : {},
+  }), [T, isMobile]);
 
   // ── Financial engine ──────────────────────────────────────────────────────
   const E = useMemo(() => {
@@ -416,9 +427,14 @@ export default function App() {
 
   if (fbConfigured && authUser === null) return <LoginScreen />;
 
-  const sW = sideOpen ? 240 : 64;
+  const sW = isMobile ? 0 : (sideOpen ? 240 : 64);
+  const sideVis = isMobile ? mobileMenuOpen : true;
+  const sideExpanded = isMobile ? true : sideOpen; // always expanded on mobile drawer
 
-  const contextValue = { T, ss, font, serif, mono: "'JetBrains Mono','Fira Code',monospace", nav };
+  // Close mobile menu when tab changes
+  const selectTab = (id) => { setTab(id); setMobileMenuOpen(false); };
+
+  const contextValue = { T, ss, font, serif, mono: "'JetBrains Mono','Fira Code',monospace", nav, isMobile };
 
   // ── Shared tab props ────────────────────────────────────────────────────────
   const tabProps = { data, upd, updS, updA, setData, save, E, fbStatus, setFbStatus, mergeRemote };
@@ -427,22 +443,36 @@ export default function App() {
     <AppContext.Provider value={contextValue}>
       <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: font, fontSize: 14, display: "flex" }}>
 
+        {/* ── MOBILE OVERLAY ───────────────────────────────────────────── */}
+        {isMobile && mobileMenuOpen && (
+          <div onClick={() => setMobileMenuOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 299 }} />
+        )}
+
         {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
         <div
-          onMouseEnter={() => setSideOpen(true)}
-          onMouseLeave={() => setSideOpen(false)}
-          style={{ width: sW, minHeight: "100vh", background: "#1A3C34", transition: "width .2s", overflow: "hidden", flexShrink: 0, display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", zIndex: 200 }}
+          onMouseEnter={() => !isMobile && setSideOpen(true)}
+          onMouseLeave={() => !isMobile && setSideOpen(false)}
+          style={{
+            ...(isMobile
+              ? { position: "fixed", top: 0, left: 0, width: 260, height: "100vh", transform: mobileMenuOpen ? "translateX(0)" : "translateX(-100%)", transition: "transform .25s ease", zIndex: 300 }
+              : { width: sW, minHeight: "100vh", position: "sticky", top: 0, height: "100vh", transition: "width .2s", zIndex: 200 }
+            ),
+            background: "#1A3C34", overflow: "hidden", flexShrink: 0, display: "flex", flexDirection: "column",
+          }}
         >
           {/* Logo */}
-          <div style={{ padding: sideOpen ? "20px" : "16px 0", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: sideOpen ? "flex-start" : "center", gap: 10, paddingLeft: sideOpen ? 20 : 0 }}>
-            <HexLogo size={sideOpen ? 26 : 22} color="#A8D5BA" />
-            {sideOpen && (
-              <div>
+          <div style={{ padding: sideExpanded ? "20px" : "16px 0", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: sideExpanded ? "flex-start" : "center", gap: 10, paddingLeft: sideExpanded ? 20 : 0 }}>
+            <HexLogo size={sideExpanded ? 26 : 22} color="#A8D5BA" />
+            {sideExpanded && (
+              <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", fontFamily: font, letterSpacing: "-0.3px" }}>
                   Huron<span style={{ color: "#A8D5BA" }}>West</span>
                 </div>
                 <div style={{ fontSize: 9, color: "#5B8C7E", textTransform: "uppercase", letterSpacing: "1.5px", marginTop: 1 }}>ERP v11</div>
               </div>
+            )}
+            {isMobile && (
+              <button onClick={() => setMobileMenuOpen(false)} style={{ background: "none", border: "none", color: "#9ab5ae", fontSize: 22, cursor: "pointer", padding: 4 }}>✕</button>
             )}
           </div>
 
@@ -454,13 +484,13 @@ export default function App() {
               const isActive = tab === t.id;
               const ct = id === "crm" ? data.prospects.length : id === "schedule" ? data.jobs.filter(j => j.active && !j.pipe).length : 0;
               return (
-                <button key={id} onClick={() => setTab(id)}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
+                <button key={id} onClick={() => selectTab(id)}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideExpanded ? "flex-start" : "center", paddingLeft: sideExpanded ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#224A40"; }}
                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                 >
                   <span style={{ fontSize: 15, width: 20, textAlign: "center", flexShrink: 0, color: isActive ? "#A8D5BA" : "#5B8C7E" }}>{t.i}</span>
-                  {sideOpen && <>
+                  {sideExpanded && <>
                     <span style={{ whiteSpace: "nowrap", flex: 1 }}>{t.l}</span>
                     {ct > 0 && <span style={{ background: "rgba(168,213,186,0.18)", color: "#A8D5BA", borderRadius: 8, fontSize: 9, fontWeight: 700, padding: "1px 6px", marginRight: 12 }}>{ct}</span>}
                   </>}
@@ -474,7 +504,7 @@ export default function App() {
               const groupTabs = g.tabs.map(id => TABS.find(x => x.id === id)).filter(Boolean);
               return (
                 <div key={g.key}>
-                  {sideOpen ? (
+                  {sideExpanded ? (
                     <button onClick={() => toggleGroup(g.key)}
                       style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: 30, background: "transparent", border: "none", borderLeft: "3px solid transparent", color: "#5B8C7E", fontFamily: font, fontSize: 10, fontWeight: 700, cursor: "pointer", paddingLeft: 20, paddingRight: 14, textTransform: "uppercase", letterSpacing: "1.2px", marginTop: 4, transition: "background .15s" }}
                       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
@@ -486,17 +516,17 @@ export default function App() {
                   ) : (
                     <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "5px 10px" }} />
                   )}
-                  {(isOpen || !sideOpen) && groupTabs.map(t => {
+                  {(isOpen || !sideExpanded) && groupTabs.map(t => {
                     const isActive = tab === t.id;
                     const ct = t.id === "jobs" ? data.jobs.length : t.id === "labor" ? data.workers.length : t.id === "inv" ? data.inventory.length : 0;
                     return (
-                      <button key={t.id} onClick={() => setTab(t.id)}
-                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 38, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 13, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 29 : 32) : 0, transition: "background .15s" }}
+                      <button key={t.id} onClick={() => selectTab(t.id)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 38, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 13, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideExpanded ? "flex-start" : "center", paddingLeft: sideExpanded ? (isActive ? 29 : 32) : 0, transition: "background .15s" }}
                         onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#224A40"; }}
                         onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                       >
                         <span style={{ fontSize: 13, width: 18, textAlign: "center", flexShrink: 0, color: isActive ? "#A8D5BA" : "#5B8C7E" }}>{t.i}</span>
-                        {sideOpen && <>
+                        {sideExpanded && <>
                           <span style={{ whiteSpace: "nowrap", flex: 1 }}>{t.l}</span>
                           {ct > 0 && <span style={{ background: "rgba(168,213,186,0.18)", color: "#A8D5BA", borderRadius: 8, fontSize: 9, fontWeight: 700, padding: "1px 6px", marginRight: 12 }}>{ct}</span>}
                         </>}
@@ -513,13 +543,13 @@ export default function App() {
               const isActive = tab === t.id;
               const ct = id === "inbox" ? (data.pending || []).length : data.actions.filter(a => !a.done).length;
               return (
-                <button key={id} onClick={() => setTab(id)}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
+                <button key={id} onClick={() => selectTab(id)}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideExpanded ? "flex-start" : "center", paddingLeft: sideExpanded ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#224A40"; }}
                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                 >
                   <span style={{ fontSize: 15, width: 20, textAlign: "center", flexShrink: 0, color: isActive ? "#A8D5BA" : "#5B8C7E" }}>{t.i}</span>
-                  {sideOpen && <>
+                  {sideExpanded && <>
                     <span style={{ whiteSpace: "nowrap", flex: 1 }}>{t.l}</span>
                     {ct > 0 && <span style={{ background: id === "inbox" ? "#C62828" : "rgba(168,213,186,0.18)", color: id === "inbox" ? "#fff" : "#A8D5BA", borderRadius: 8, fontSize: 9, fontWeight: 700, padding: "1px 6px", marginRight: 12 }}>{ct}</span>}
                   </>}
@@ -534,13 +564,13 @@ export default function App() {
               const t = TABS.find(x => x.id === "cfg");
               const isActive = tab === "cfg";
               return (
-                <button onClick={() => setTab("cfg")}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideOpen ? "flex-start" : "center", paddingLeft: sideOpen ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
+                <button onClick={() => selectTab("cfg")}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideExpanded ? "flex-start" : "center", paddingLeft: sideExpanded ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#224A40"; }}
                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                 >
                   <span style={{ fontSize: 15, width: 20, textAlign: "center", flexShrink: 0, color: isActive ? "#A8D5BA" : "#5B8C7E" }}>{t.i}</span>
-                  {sideOpen && <span style={{ whiteSpace: "nowrap" }}>{t.l}</span>}
+                  {sideExpanded && <span style={{ whiteSpace: "nowrap" }}>{t.l}</span>}
                 </button>
               );
             })()}
@@ -549,9 +579,9 @@ export default function App() {
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               >
-                {dark ? "☀" : "◑"}{sideOpen && (dark ? " Light Mode" : " Dark Mode")}
+                {dark ? "☀" : "◑"}{sideExpanded && (dark ? " Light Mode" : " Dark Mode")}
               </button>
-              {sideOpen && <div style={{ fontSize: 10, color: "#5B8C7E", textAlign: "center", marginTop: 8 }}>{data.userId}{data.lastSync && (" · synced " + new Date(data.lastSync).toLocaleDateString())}</div>}
+              {sideExpanded && <div style={{ fontSize: 10, color: "#5B8C7E", textAlign: "center", marginTop: 8 }}>{data.userId}{data.lastSync && (" · synced " + new Date(data.lastSync).toLocaleDateString())}</div>}
             </div>
           </div>
         </div>
@@ -560,25 +590,28 @@ export default function App() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
           {/* Header bar — forest dark */}
-          <div style={{ background: "#1A3C34", padding: "0 24px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100, flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <span style={{ fontSize: 14, fontWeight: 500, color: "#fff", fontFamily: font }}>Welcome, <strong>{data.userId}</strong></span>
-              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 16 }}>|</span>
-              <span style={{ fontWeight: 600, color: "#A8D5BA", fontFamily: font, fontSize: 14 }}>{TABS.find(t => t.id === tab)?.l}</span>
+          <div style={{ background: "#1A3C34", padding: isMobile ? "0 12px" : "0 24px", height: isMobile ? 48 : 52, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100, flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 10 : 16 }}>
+              {isMobile && (
+                <button onClick={() => setMobileMenuOpen(true)} style={{ background: "none", border: "none", color: "#A8D5BA", fontSize: 22, cursor: "pointer", padding: "4px 2px", lineHeight: 1 }}>☰</button>
+              )}
+              {!isMobile && <span style={{ fontSize: 14, fontWeight: 500, color: "#fff", fontFamily: font }}>Welcome, <strong>{data.userId}</strong></span>}
+              {!isMobile && <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 16 }}>|</span>}
+              <span style={{ fontWeight: 600, color: "#A8D5BA", fontFamily: font, fontSize: isMobile ? 13 : 14 }}>{TABS.find(t => t.id === tab)?.l}</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: font }}>{E.nj} active · {E.pipeN} pipeline</span>
-              <span style={{ fontSize: 13, color: "#A8D5BA", fontWeight: 600, fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{fmtF(E.wR)}/wk</span>
-              <span style={{ fontSize: 13, color: E.ebitdaW >= 0 ? "#A8D5BA" : "#ef9090", fontWeight: 600, fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{fmtF(E.ebitdaW)} EBITDA</span>
-              <MenuBar doExport={doExport} doImport={doImport} doPDF={doPDF} doDigest={doDigest} />
+            <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 16 }}>
+              {!isMobile && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: font }}>{E.nj} active · {E.pipeN} pipeline</span>}
+              <span style={{ fontSize: isMobile ? 11 : 13, color: "#A8D5BA", fontWeight: 600, fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{fmtF(E.wR)}/wk</span>
+              {!isMobile && <span style={{ fontSize: 13, color: E.ebitdaW >= 0 ? "#A8D5BA" : "#ef9090", fontWeight: 600, fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{fmtF(E.ebitdaW)} EBITDA</span>}
+              {!isMobile && <MenuBar doExport={doExport} doImport={doImport} doPDF={doPDF} doDigest={doDigest} />}
               {(data.pending || []).length > 0 && (
-                <button style={{ background: "rgba(245,127,23,0.18)", border: "1px solid rgba(245,127,23,0.4)", borderRadius: 4, padding: "4px 12px", cursor: "pointer", color: "#FFB74D", fontFamily: font, fontSize: 12, fontWeight: 500 }} onClick={() => setTab("inbox")}>
+                <button style={{ background: "rgba(245,127,23,0.18)", border: "1px solid rgba(245,127,23,0.4)", borderRadius: 4, padding: "4px 12px", cursor: "pointer", color: "#FFB74D", fontFamily: font, fontSize: 12, fontWeight: 500 }} onClick={() => selectTab("inbox")}>
                   {(data.pending || []).length} pending
                 </button>
               )}
               <NotifBell notifs={E.notifs || []} />
-              <Clock />
-              {authUser && (
+              {!isMobile && <Clock />}
+              {!isMobile && authUser && (
                 <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: font, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser.email}</span>
               )}
               <button
@@ -586,13 +619,13 @@ export default function App() {
                   try { await signOut(); } catch {}
                   setAuthUser(null);
                 }}
-                style={{ background: "rgba(198,40,40,0.15)", border: "1px solid rgba(198,40,40,0.35)", borderRadius: 4, padding: "4px 12px", cursor: "pointer", color: "#ef9090", fontFamily: font, fontSize: 12, fontWeight: 500 }}
+                style={{ background: "rgba(198,40,40,0.15)", border: "1px solid rgba(198,40,40,0.35)", borderRadius: 4, padding: "4px 12px", cursor: "pointer", color: "#ef9090", fontFamily: font, fontSize: isMobile ? 11 : 12, fontWeight: 500 }}
               >Sign Out</button>
             </div>
           </div>
 
           {/* Tab content */}
-          <div style={{ padding: "28px 32px", flex: 1, overflowY: "auto", background: T.bg }}>
+          <div style={{ padding: isMobile ? "14px 10px" : "28px 32px", flex: 1, overflowY: "auto", background: T.bg }}>
             {tab === "dash"    && <DashTab  data={data} E={E} />}
             {tab === "pnl"     && <PnlTab   data={data} E={E} />}
             {tab === "bs"      && <BsTab    data={data} E={E} />}
