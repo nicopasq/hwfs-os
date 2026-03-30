@@ -229,13 +229,67 @@
   #toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; background: var(--leaf); color: #fff; border-radius: 4px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-md); opacity: 0; transition: opacity .3s; z-index: 9999; pointer-events: none; }
   #toast.show { opacity: 1; }
 
+  /* ── Mobile ── */
   @media (max-width: 640px) {
-    .hero-body { grid-template-columns: 1fr 1fr; }
-    .grid2 { grid-template-columns: 1fr; }
-    .photo-grid { grid-template-columns: 1fr 1fr; }
-    .visit-photos { grid-template-columns: repeat(3, 1fr); }
-    .header { padding: 0 16px; }
-    .container { padding: 20px 14px; }
+    /* Layout */
+    .header { padding: 0 14px; height: 48px; }
+    .logo { font-size: 15px; }
+    .header-right { font-size: 11px; }
+    .container { padding: 14px 10px; }
+
+    /* Hero */
+    .hero-header { padding: 18px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
+    .hero-title { font-size: 20px; }
+    .hero-sub { font-size: 12px; }
+    .hero-badge { align-self: flex-start; font-size: 10px; padding: 4px 10px; }
+    .hero-body { grid-template-columns: 1fr 1fr; padding: 16px; gap: 14px; }
+    .stat-value { font-size: 14px; }
+
+    /* Cards */
+    .card { padding: 16px 14px; margin-bottom: 14px; }
+    .grid2 { grid-template-columns: 1fr; gap: 14px; }
+
+    /* Schedule */
+    .next-service-date { font-size: 24px; }
+
+    /* Photos */
+    .photo-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .visit-photos { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+
+    /* Visit timeline */
+    .visit-item { padding: 14px 0; }
+    .visit-hdr { flex-direction: column; gap: 6px; }
+    .visit-date { font-size: 14px; }
+    .visit-crew { align-self: flex-start; }
+
+    /* Messages — prevent iOS zoom on focus (requires 16px min) */
+    input.name-input { font-size: 16px; padding: 12px 14px; }
+    textarea.msg-input { font-size: 16px; min-height: 80px; padding: 12px 14px; }
+    .send-btn { width: 100%; padding: 14px; font-size: 14px; }
+    .msg-thread { max-height: 320px; }
+    .msg-bubble { padding: 10px 12px; font-size: 13px; }
+
+    /* Lightbox — bigger touch targets */
+    .lightbox img { max-width: 96vw; max-height: 80vh; border-radius: 2px; }
+    .lightbox-close { top: 12px; right: 14px; font-size: 36px; padding: 8px; }
+    .lightbox-prev, .lightbox-next { font-size: 36px; padding: 16px; }
+    .lightbox-prev { left: 4px; }
+    .lightbox-next { right: 4px; }
+
+    /* Toast */
+    #toast { left: 14px; right: 14px; bottom: 14px; text-align: center; }
+
+    /* Download button */
+    #dl-visits-btn { padding: 8px 12px !important; font-size: 11px !important; }
+  }
+
+  /* ── Small phones ── */
+  @media (max-width: 380px) {
+    .hero-body { grid-template-columns: 1fr; }
+    .visit-photos { grid-template-columns: repeat(2, 1fr); }
+    .photo-grid { grid-template-columns: 1fr; }
+    .container { padding: 10px 8px; }
+    .card { padding: 14px 10px; }
   }
 </style>
 </head>

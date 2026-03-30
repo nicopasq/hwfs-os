@@ -102,6 +102,15 @@
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   #toast.ok  { border-color: var(--green); color: var(--green-lt); }
   #toast.err { border-color: var(--red); color: var(--red); }
+
+  /* ── Small phones ── */
+  @media (max-width: 380px) {
+    .photo-grid { grid-template-columns: repeat(3, 1fr); }
+    .main { padding: 12px 10px 130px; }
+    .job-card { padding: 14px 14px; }
+    .section { padding: 14px 14px; }
+    .job-name { font-size: 18px; }
+  }
 </style>
 </head>
 <body>
