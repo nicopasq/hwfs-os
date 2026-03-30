@@ -15,6 +15,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
   const [f, setF]         = useState(DF);
   const [expanded, setExpanded] = useState(null);
   const [copied,   setCopied]   = useState(null);
+  const [editing,  setEditing]  = useState(null); // job id being edited
   const [copiedW,  setCopiedW]  = useState(null);
   const [publishing, setPublishing] = useState(null);
 
@@ -188,9 +189,50 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                         <td colSpan={11} style={{ padding: 0, background: T.bg2, borderBottom: "2px solid " + T.border }}>
                           <div style={{ padding: "20px 24px" }}>
 
+                            {/* ── Editable contract details ── */}
+                            <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span>Contract Details — {j.name}</span>
+                              {editing !== j.id ? (
+                                <button style={{ ...ss.btnG, padding: "4px 14px", fontSize: 11 }} onClick={() => {
+                                  if (window.confirm('Are you sure you want to edit this contract? Changes will take effect immediately across the schedule, portal, and financials.')) setEditing(j.id);
+                                }}>Edit Contract</button>
+                              ) : (
+                                <button style={{ ...ss.btn, padding: "4px 14px", fontSize: 11 }} onClick={() => {
+                                  setEditing(null);
+                                  audit('Contract edited', j.name + ' — ' + (j.client || ''));
+                                }}>Done Editing</button>
+                              )}
+                            </div>
+                            {editing === j.id && (
+                              <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid " + T.border }}>
+                                <div style={ss.g5}>
+                                  <F l="Property"><input style={ss.inp} value={j.name || ""} onChange={e => updJ(j.id, { name: e.target.value })} /></F>
+                                  <F l="Client"><input style={ss.inp} value={j.client || ""} onChange={e => updJ(j.id, { client: e.target.value })} /></F>
+                                  <F l="Tier">
+                                    <select style={ss.sel} value={j.tier || "Basic"} onChange={e => updJ(j.id, { tier: e.target.value })}>
+                                      {TK.map(t => <option key={t}>{t}</option>)}
+                                    </select>
+                                  </F>
+                                  <F l="Square Feet"><input type="number" style={ss.inp} value={j.sf || ""} onChange={e => updJ(j.id, { sf: +e.target.value })} /></F>
+                                  <F l="$/wk"><input type="number" style={ss.inp} value={j.wkRate || ""} onChange={e => updJ(j.id, { wkRate: +e.target.value })} /></F>
+                                </div>
+                                <div style={{ ...ss.g6, marginTop: 10 }}>
+                                  <F l="Freq/wk"><input type="number" style={ss.inp} value={j.freq || 1} onChange={e => updJ(j.id, { freq: +e.target.value })} /></F>
+                                  <F l="Hrs/visit"><input type="number" step=".5" style={ss.inp} value={j.hrsVis || ""} onChange={e => updJ(j.id, { hrsVis: +e.target.value })} /></F>
+                                  <F l="Service Time"><input type="time" style={ss.inp} value={j.serviceTime || "18:00"} onChange={e => updJ(j.id, { serviceTime: e.target.value })} /></F>
+                                  <F l="Supply $/mo"><input type="number" style={ss.inp} value={j.mSup || 65} onChange={e => updJ(j.id, { mSup: +e.target.value })} /></F>
+                                  <F l="Start"><input type="date" style={ss.inp} value={j.start || ""} onChange={e => updJ(j.id, { start: e.target.value })} /></F>
+                                  <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+                                    <F l="Active"><Tog v={j.active !== false} onChange={v => updJ(j.id, { active: v })} /></F>
+                                    <F l="Pipe"><Tog v={!!j.pipe} onChange={v => updJ(j.id, { pipe: v })} /></F>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
                             {/* Section header */}
                             <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                              <span>Client Portal Settings — {j.name}</span>
+                              <span>Client Portal Settings</span>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <span style={{ fontSize: 11, color: T.ts }}>Portal enabled</span>
                                 <Tog v={j.portalEnabled !== false} onChange={v => updJ(j.id, { portalEnabled: v })} />
