@@ -66,6 +66,7 @@ export const DSGA = {
 export const DEF = {
   expenses: [], jobs: [], workers: [], inventory: [], loans: [],
   actions: [], prospects: [], outreach: [], certs: [], specJobs: [], invoices: [],
+  calendarEvents: [],
   dark: false, userId: "Director", activityLog: [], lastSync: null, // light default
   pending: [], inbox: [], approvalThreshold: 500, requireDualApproval: true,
   postedExpenses: [], sgaN: { ...DSGA }, A: { ...DA }, S: { ...DS },

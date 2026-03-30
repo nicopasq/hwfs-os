@@ -635,7 +635,7 @@ export default function App() {
             {tab === "inbox"    && <InboxTab    data={data} upd={upd} setData={setData} E={E} incomingDocs={incomingDocs} clientMessages={clientMessages} />}
             {tab === "invoices" && <InvoicesTab data={data} setData={setData} />}
             {tab === "crm"     && <CRMTab   data={data} upd={upd} setData={setData} E={E} />}
-            {tab === "schedule" && <ScheduleTab data={data} upd={upd} />}
+            {tab === "schedule" && <ScheduleTab data={data} upd={upd} setData={setData} />}
             {tab === "equip"   && <EquipTab data={data} upd={upd} setData={setData} E={E} />}
             {tab === "jobs"    && <JobsTab  data={data} upd={upd} setData={setData} E={E} visits={visits} />}
             {tab === "labor"   && <LaborTab data={data} upd={upd} E={E} />}
