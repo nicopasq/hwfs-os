@@ -294,9 +294,8 @@ export default function DashTab({ data, E }) {
         />
       </div>
 
-      {/* ── Chart + Pipeline ────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: 20 }}>
-
+      {/* ── Chart ──────────────────────────────────────────────────────────── */}
+      <div>
         <div style={{ ...ss.card, marginBottom: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
             <div>
@@ -344,30 +343,6 @@ export default function DashTab({ data, E }) {
           </div>
         </div>
 
-        <div style={{ ...ss.card, marginBottom: 0, display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>CRM Pipeline</div>
-            <button style={ss.btnG} onClick={() => nav("crm")}
-              onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; e.currentTarget.style.borderColor = T.accent; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = T.border; }}
-            >View all →</button>
-          </div>
-          <PipelineBar prospects={data.prospects} T={T} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <StatCell label="Prospects"   value={E.prospTotal}    color={T.accent}  T={T} mono={mono} />
-            <StatCell label="Hot"         value={E.prospHot}      color={T.yellow}  T={T} mono={mono} />
-            <StatCell label="Won"         value={E.prospWon}      color={T.green}   T={T} mono={mono} />
-            <StatCell label="Outreach/Mo" value={E.outreachCount} color={E.outreachCount >= 80 ? T.green : T.yellow} T={T} mono={mono} />
-          </div>
-          {E.pipeRev > 0 && (
-            <div style={{ padding: "12px 16px", borderRadius: 4, border: "1px solid " + T.border, background: "#F7FAF8" }}>
-              <div style={{ fontSize: 10, color: T.td2, textTransform: "uppercase", letterSpacing: "1.2px" }}>Pipeline Value</div>
-              <div style={{ fontSize: 20, fontWeight: 600, color: T.accent, fontFamily: mono, marginTop: 4 }}>
-                {fmtF(E.pipeRev)}<span style={{ fontSize: 12, fontWeight: 400, fontFamily: "'Outfit',sans-serif" }}>/wk</span>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* ── P&L + Workforce + Tasks ──────────────────────────────────────────── */}

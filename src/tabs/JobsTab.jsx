@@ -5,7 +5,18 @@ import { F, Tog, Badge } from '../components/ui';
 import { TIERS, TK, SK } from '../constants';
 import { publishPortal, deletePortal, isConnected } from '../firebase';
 
-const DF = { name: "", client: "", type: "Small Condo", tier: "Basic", sf: "", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), serviceTime: "18:00", active: true, pipe: false };
+const FREQ_OPTIONS = [
+  { value: "daily",    label: "Daily (M–F)", freq: 5 },
+  { value: "3x_week",  label: "3x / week",   freq: 3 },
+  { value: "2x_week",  label: "2x / week",   freq: 2 },
+  { value: "weekly",   label: "Weekly",       freq: 1 },
+  { value: "biweekly", label: "Biweekly",     freq: 0.5 },
+  { value: "monthly",  label: "Monthly",      freq: 0.23 },
+];
+const freqNum = (sched) => (FREQ_OPTIONS.find(o => o.value === sched) || FREQ_OPTIONS[3]).freq;
+const freqLabel = (sched) => (FREQ_OPTIONS.find(o => o.value === sched) || { label: (sched || 1) + "x/wk" }).label;
+
+const DF = { name: "", client: "", type: "Small Condo", tier: "Basic", sf: "", schedule: "weekly", freq: 1, wkRate: "", hrsVis: "", mSup: 65, start: td(), serviceTime: "18:00", active: true, pipe: false };
 
 const PORTAL_BASE = window.location.origin + "/portal";
 const WORKER_BASE = window.location.origin + "/worker";
@@ -34,7 +45,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
 
   const add = () => {
     if (!f.name || !f.wkRate) return;
-    const newJob = { ...f, id: uid(), sf: +f.sf, wkRate: +f.wkRate, freq: +f.freq, hrsVis: +f.hrsVis, mSup: +f.mSup };
+    const newJob = { ...f, id: uid(), sf: +f.sf, wkRate: +f.wkRate, freq: freqNum(f.schedule), hrsVis: +f.hrsVis, mSup: +f.mSup };
     upd("jobs", [...data.jobs, newJob]);
     audit('Contract added', `${f.name} — ${f.client} · $${f.wkRate}/wk`);
     setF(DF);
@@ -122,7 +133,11 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
           <F l="$/wk"><input type="number" style={ss.inp} value={f.wkRate} onChange={e => setF({ ...f, wkRate: e.target.value })} /></F>
         </div>
         <div style={ss.g6}>
-          <F l="Freq/wk"><input type="number" style={ss.inp} value={f.freq} onChange={e => setF({ ...f, freq: e.target.value })} /></F>
+          <F l="Schedule">
+            <select style={ss.sel} value={f.schedule || "weekly"} onChange={e => { const s = e.target.value; setF({ ...f, schedule: s, freq: freqNum(s), wkRate: ap(f.sf, freqNum(s), f.tier) || f.wkRate }); }}>
+              {FREQ_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </F>
           <F l="Hrs/visit"><input type="number" step=".5" style={ss.inp} value={f.hrsVis} onChange={e => setF({ ...f, hrsVis: e.target.value })} /></F>
           <F l="Service Time"><input type="time" style={ss.inp} value={f.serviceTime} onChange={e => setF({ ...f, serviceTime: e.target.value })} /></F>
           <F l="Supply $/mo"><input type="number" style={ss.inp} value={f.mSup} onChange={e => setF({ ...f, mSup: e.target.value })} /></F>
@@ -141,7 +156,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
         <div style={{ overflowX: "auto" }}>
           <table style={ss.tbl}>
             <thead>
-              <tr>{["Property", "Client", "Tier", "SF", "Freq", "$/wk", "$/SF/yr", "Margin", "Status", "Portal", ""].map((h, i) =>
+              <tr>{["Property", "Client", "Tier", "SF", "Schedule", "$/wk", "$/SF/yr", "Margin", "Status", "Portal", ""].map((h, i) =>
                 <th key={i} style={[3, 5, 6, 7].includes(i) ? ss.thR : ss.th}>{h}</th>
               )}</tr>
             </thead>
@@ -169,7 +184,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                       <td style={ss.td}>{j.client}</td>
                       <td style={ss.td}><Badge c={tc.color || T.accent}>{j.tier || "Basic"}</Badge></td>
                       <td style={ss.tdR}>{j.sf ? j.sf.toLocaleString() : ""}</td>
-                      <td style={ss.td}>{j.freq}x</td>
+                      <td style={ss.td}>{freqLabel(j.schedule)}</td>
                       <td style={{ ...ss.tdR, fontWeight: 700 }}>{fmtF(j.wkRate)}</td>
                       <td style={ss.tdR}>{psfyr ? ("$" + psfyr.toFixed(2)) : ""}</td>
                       <td style={{ ...ss.tdR, fontWeight: 600, color: gm > .6 ? T.green : gm > .4 ? T.yellow : T.red }}>{pct(gm)}</td>
@@ -221,7 +236,11 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                                   <F l="$/wk"><input type="number" style={ss.inp} value={j.wkRate || ""} onChange={e => updJ(j.id, { wkRate: +e.target.value })} /></F>
                                 </div>
                                 <div style={{ ...ss.g6, marginTop: 10 }}>
-                                  <F l="Freq/wk"><input type="number" style={ss.inp} value={j.freq || 1} onChange={e => updJ(j.id, { freq: +e.target.value })} /></F>
+                                  <F l="Schedule">
+                                    <select style={ss.sel} value={j.schedule || "weekly"} onChange={e => { const s = e.target.value; updJ(j.id, { schedule: s, freq: freqNum(s) }); }}>
+                                      {FREQ_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                    </select>
+                                  </F>
                                   <F l="Hrs/visit"><input type="number" step=".5" style={ss.inp} value={j.hrsVis || ""} onChange={e => updJ(j.id, { hrsVis: +e.target.value })} /></F>
                                   <F l="Service Time"><input type="time" style={ss.inp} value={j.serviceTime || "18:00"} onChange={e => updJ(j.id, { serviceTime: e.target.value })} /></F>
                                   <F l="Supply $/mo"><input type="number" style={ss.inp} value={j.mSup || 65} onChange={e => updJ(j.id, { mSup: +e.target.value })} /></F>

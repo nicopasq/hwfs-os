@@ -7,7 +7,9 @@ const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAYS_LABEL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 6); // 6am – 7pm
 
-const AUTO_DAYS_MAP = { 1: [1], 2: [1, 4], 3: [1, 3, 5], 4: [1, 2, 4, 5], 5: [1, 2, 3, 4, 5], 6: [1, 2, 3, 4, 5, 6], 7: [0, 1, 2, 3, 4, 5, 6] };
+const MULTI_DAY_MAP = { "daily": [1,2,3,4,5], "5x_week": [1,2,3,4,5], "4x_week": [1,2,4,5], "3x_week": [1,3,5], "2x_week": [1,4] };
+// Legacy: numeric freq → days
+const AUTO_DAYS_MAP = { 5: [1,2,3,4,5], 4: [1,2,4,5], 3: [1,3,5], 2: [1,4] };
 
 const EVENT_COLORS = ['#3A7D44', '#4f8fff', '#9070f0', '#f0c040', '#FF7043', '#42A5F5', '#ef5350', '#26a69a'];
 
@@ -41,15 +43,37 @@ export default function ScheduleTab({ data, upd, setData }) {
     for (let i = 0; i < range; i++) {
       const d = addDays(wStart, i);
       const dow = d.getDay();
+      const ds = dateStr(d);
       activeJobs.forEach((j, ji) => {
-        const autoDays = AUTO_DAYS_MAP[j.freq] || [];
-        const svcDays = j.serviceDays
-          ? j.serviceDays.map(s => DAYS_SHORT.indexOf(s))
-          : autoDays;
-        if (svcDays.includes(dow)) {
+        const sched = j.schedule || 'weekly';
+        // Derive service day-of-week from start date (for weekly/biweekly/monthly)
+        const startDow = j.start ? new Date(j.start + 'T12:00:00').getDay() : 1;
+
+        let show = false;
+        if (MULTI_DAY_MAP[sched]) {
+          // Multi-day schedules: daily, 2x, 3x, etc.
+          show = (j.serviceDays ? j.serviceDays.map(s => DAYS_SHORT.indexOf(s)) : MULTI_DAY_MAP[sched]).includes(dow);
+        } else if (sched === 'weekly') {
+          show = dow === startDow;
+        } else if (sched === 'biweekly') {
+          if (dow === startDow && j.start) {
+            const startDate = new Date(j.start + 'T12:00:00');
+            const diffWeeks = Math.round((d - startDate) / (7 * 86400000));
+            show = diffWeeks >= 0 && diffWeeks % 2 === 0;
+          }
+        } else if (sched === 'monthly') {
+          const startDay = j.start ? new Date(j.start + 'T12:00:00').getDate() : 1;
+          show = d.getDate() === startDay;
+        } else {
+          // Legacy: numeric freq without schedule field
+          const autoDays = AUTO_DAYS_MAP[j.freq] || [startDow];
+          show = autoDays.includes(dow);
+        }
+
+        if (show) {
           result.push({
-            id: '_svc_' + j.id + '_' + dateStr(d),
-            date: dateStr(d),
+            id: '_svc_' + j.id + '_' + ds,
+            date: ds,
             title: j.name,
             time: j.serviceTime || '18:00',
             duration: (j.hrsVis || 1) * 60,
@@ -63,7 +87,7 @@ export default function ScheduleTab({ data, upd, setData }) {
       });
     }
     return result;
-  }, [activeJobs, anchor, view, data.jobs]);
+  }, [activeJobs, anchor, view]);
 
   // ── Linked events from other tabs ────────────────────────────────────
   const linkedEvents = useMemo(() => {
