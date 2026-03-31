@@ -296,14 +296,29 @@ function loadJobList() {
   }).catch(function(e) { toast('Error loading jobs: ' + e.message, 'err'); });
 }
 
-// ── Build sections from scopeItems ─────────────────────────────────────────
+// ── Build sections from scopeOfWork (structured) or scopeItems (legacy) ───
+var sectionTasks = {}; // { sectionName: [task, ...] } for display hints
 function initSections() {
   sections     = {};
   sectionOrder = [];
-  var items = Array.isArray(jobData.scopeItems) ? jobData.scopeItems : [];
-  items.forEach(function(item) {
-    if (item) { sections[item] = { photos: [], note: '' }; sectionOrder.push(item); }
-  });
+  sectionTasks = {};
+  var sow = Array.isArray(jobData.scopeOfWork) ? jobData.scopeOfWork : [];
+  if (sow.length) {
+    // New structured format
+    sow.forEach(function(a) {
+      if (a.area) {
+        sections[a.area] = { photos: [], note: '' };
+        sectionOrder.push(a.area);
+        sectionTasks[a.area] = Array.isArray(a.tasks) ? a.tasks.filter(Boolean) : [];
+      }
+    });
+  } else {
+    // Legacy flat array
+    var items = Array.isArray(jobData.scopeItems) ? jobData.scopeItems : [];
+    items.forEach(function(item) {
+      if (item) { sections[item] = { photos: [], note: '' }; sectionOrder.push(item); }
+    });
+  }
   // Always add Other/Additional at the end
   sections['Other / Additional'] = { photos: [], note: '' };
   sectionOrder.push('Other / Additional');
@@ -336,6 +351,13 @@ function renderScopeCards() {
     html += '<span>' + esc(name) + '</span>';
     html += '<span class="sec-badge" id="sec-badge-' + idx + '" style="display:none">✓ Photos added</span>';
     html += '</div>';
+    // Show task checklist hints if available
+    var tasks = sectionTasks[name];
+    if (tasks && tasks.length) {
+      html += '<div style="padding:4px 0 8px 28px;font-size:12px;color:var(--muted);line-height:1.8">';
+      tasks.forEach(function(t) { html += '<div>☐ ' + esc(t) + '</div>'; });
+      html += '</div>';
+    }
     html += '<div id="sec-grid-' + idx + '" class="photo-grid"></div>';
     html += '<button class="add-photos-btn" onclick="pickPhotos(' + idx + ')">📷 Add Photos for this section</button>';
     html += '<div style="margin-top:10px">';

@@ -86,7 +86,8 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
       billingNotes: j.billingNotes || "",
       clientNotes:  j.clientNotes  || "",
       photos:       (j.photos || "").split("\n").map(u => u.trim()).filter(Boolean),
-      scopeItems:   (j.scopeItems || "").split("\n").map(s => s.trim()).filter(Boolean),
+      scopeOfWork:  (j.scopeOfWork || []).filter(a => a.area.trim()),
+      scopeItems:   (j.scopeOfWork || []).filter(a => a.area.trim()).map(a => a.area.trim()),
       portalEnabled: j.portalEnabled !== false,
       publishedAt:  new Date().toISOString(),
     };
@@ -239,22 +240,61 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                               </div>
                             </div>
 
-                            {/* Scope of Work */}
+                            {/* Scope of Work — structured area + tasks */}
                             <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid " + T.border }}>
-                              <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>Scope of Work</div>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "flex-start" }}>
-                                <F l="Scope items — one per line (workers see these as sections)">
-                                  <textarea
-                                    style={{ ...ss.inp, height: 88, resize: "vertical", fontFamily: mono, fontSize: 12 }}
-                                    value={j.scopeItems || ""}
-                                    onChange={e => updJ(j.id, { scopeItems: e.target.value })}
-                                    placeholder={"Floor Cleaning\nWall Washing\nFurniture Dusting\nMopping\nRestroom Sanitizing"}
-                                  />
-                                </F>
-                                <div style={{ paddingTop: 20, fontSize: 11, color: T.td2, lineHeight: 1.6, maxWidth: 220 }}>
-                                  Workers select each section on the upload form and attach photos + notes per category.
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1px" }}>Scope of Work</div>
+                                <div style={{ fontSize: 11, color: T.td2, maxWidth: 280, textAlign: "right", lineHeight: 1.4 }}>
+                                  Workers see areas as upload sections. Clients see scope on their portal.
                                 </div>
                               </div>
+                              {(() => {
+                                const sow = j.scopeOfWork || [];
+                                const updScope = (next) => updJ(j.id, { scopeOfWork: next });
+                                return (
+                                  <>
+                                    {sow.map((area, ai) => (
+                                      <div key={ai} style={{ background: T.card, border: "1px solid " + T.border, borderRadius: 6, padding: 12, marginBottom: 8 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                                          <input
+                                            style={{ ...ss.inp, flex: 1, fontWeight: 600, fontSize: 13 }}
+                                            value={area.area}
+                                            onChange={e => updScope(sow.map((a, i) => i === ai ? { ...a, area: e.target.value } : a))}
+                                            placeholder="Area name (e.g. Restrooms)"
+                                          />
+                                          <button style={{ ...ss.btnD, fontSize: 14, padding: "2px 8px" }} onClick={() => updScope(sow.filter((_, i) => i !== ai))} title="Remove area">✕</button>
+                                        </div>
+                                        {(area.tasks || []).map((task, ti) => (
+                                          <div key={ti} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, paddingLeft: 12 }}>
+                                            <span style={{ color: T.td2, fontSize: 11 }}>•</span>
+                                            <input
+                                              style={{ ...ss.inp, flex: 1, fontSize: 12, padding: "4px 8px" }}
+                                              value={task}
+                                              onChange={e => {
+                                                const nt = [...area.tasks]; nt[ti] = e.target.value;
+                                                updScope(sow.map((a, i) => i === ai ? { ...a, tasks: nt } : a));
+                                              }}
+                                              placeholder="Task description"
+                                            />
+                                            <button style={{ background: "none", border: "none", color: T.td2, cursor: "pointer", fontSize: 12, padding: "2px 4px" }} onClick={() => {
+                                              const nt = area.tasks.filter((_, i) => i !== ti);
+                                              updScope(sow.map((a, i) => i === ai ? { ...a, tasks: nt } : a));
+                                            }}>✕</button>
+                                          </div>
+                                        ))}
+                                        <button
+                                          style={{ background: "none", border: "none", color: T.accent, cursor: "pointer", fontSize: 11, fontWeight: 600, padding: "4px 12px", marginTop: 4 }}
+                                          onClick={() => updScope(sow.map((a, i) => i === ai ? { ...a, tasks: [...(a.tasks || []), ""] } : a))}
+                                        >+ Add task</button>
+                                      </div>
+                                    ))}
+                                    <button
+                                      style={{ ...ss.btnG, padding: "6px 14px", fontSize: 11, marginTop: 4 }}
+                                      onClick={() => updScope([...sow, { area: "", tasks: [""] }])}
+                                    >+ Add Area</button>
+                                  </>
+                                );
+                              })()}
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>

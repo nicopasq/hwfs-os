@@ -148,6 +148,14 @@
   }
   .scope-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border-lt); }
   .scope-note { font-size: 12px; color: var(--bark); line-height: 1.5; margin-bottom: 8px; font-style: italic; }
+
+  /* Scope of Work table */
+  .sow-table { width: 100%; border-collapse: collapse; }
+  .sow-table th { text-align: left; font-size: 10px; font-weight: 700; color: var(--bark-lt); text-transform: uppercase; letter-spacing: 1.2px; padding: 8px 12px; border-bottom: 2px solid var(--border); }
+  .sow-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-lt); font-size: 13px; color: var(--forest); vertical-align: top; }
+  .sow-table tr:last-child td { border-bottom: none; }
+  .sow-area { font-weight: 600; white-space: nowrap; }
+  .sow-tasks { line-height: 1.7; color: var(--bark); }
   .visit-photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .visit-photo { aspect-ratio: 1; border-radius: 4px; overflow: hidden; cursor: zoom-in; background: var(--border-lt); position: relative; }
   .visit-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s; display: block; }
@@ -451,6 +459,19 @@ function renderFrame(job) {
   if (job.clientNotes) {
     html += '<div class="card"><div class="card-header">Property Notes</div>';
     html += '<div class="notes-box">📋 ' + esc(job.clientNotes) + '</div></div>';
+  }
+
+  // Scope of Work table
+  var sow = Array.isArray(job.scopeOfWork) ? job.scopeOfWork.filter(function(a) { return a.area; }) : [];
+  if (sow.length) {
+    html += '<div class="card"><div class="card-header">Scope of Work</div>';
+    html += '<table class="sow-table"><thead><tr><th>Area</th><th>Description</th></tr></thead><tbody>';
+    sow.forEach(function(a) {
+      var tasks = Array.isArray(a.tasks) ? a.tasks.filter(Boolean) : [];
+      html += '<tr><td class="sow-area">' + esc(a.area) + '</td>';
+      html += '<td class="sow-tasks">' + (tasks.length ? tasks.map(function(t) { return esc(t); }).join('<br>') : '—') + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
   }
 
   // Service history placeholder (filled by real-time listener)
