@@ -44,6 +44,9 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
     const job = data.jobs.find(j => j.id === id);
     deletePortal(id).catch(() => {});
     upd("jobs", data.jobs.filter(j => j.id !== id));
+    // Clean up any calendar events linked to this contract
+    const cleanCal = (data.calendarEvents || []).filter(e => e.jobId !== id);
+    if (cleanCal.length !== (data.calendarEvents || []).length) upd("calendarEvents", cleanCal);
     if (job) audit('Contract deleted', `${job.name} — ${job.client}`);
   };
 

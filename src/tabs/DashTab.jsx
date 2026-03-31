@@ -47,10 +47,14 @@ function KpiCard({ label, value, sub, color, icon, trend, onClick }) {
 
 // ── Bar chart ─────────────────────────────────────────────────────────────────
 function BarChart({ data: proj, T }) {
-  const H = 140, W = 26, gap = 10, LP = 48;
+  const HP = 120, NEG = 40, W = 26, gap = 10, LP = 48;
+  const H = HP; // positive zone height
   const maxRev = Math.max(...proj.map(p => p.rev), 1);
   const maxE   = Math.max(...proj.map(p => Math.abs(p.ebitda)), 1);
+  const hasNeg = proj.some(p => p.ebitda < 0);
+  const negZone = hasNeg ? NEG : 0;
   const totalW = LP + proj.length * (W + gap);
+  const totalH = H + negZone + 46;
   const fmtK = v => {
     const abs = Math.abs(v);
     const str = abs >= 1000 ? (abs / 1000).toFixed(1) + 'k' : Math.round(abs).toString();
@@ -58,7 +62,7 @@ function BarChart({ data: proj, T }) {
   };
   const yTicks = [0, 0.5, 1.0];
   return (
-    <svg width="100%" viewBox={`0 0 ${totalW} ${H + 46}`} style={{ overflow: "visible", display: "block" }}>
+    <svg width="100%" viewBox={`0 0 ${totalW} ${totalH}`} style={{ overflow: "hidden", display: "block" }}>
       {/* Y-axis scale lines + revenue labels */}
       {yTicks.map(t => {
         const y = H - t * H;
@@ -78,21 +82,23 @@ function BarChart({ data: proj, T }) {
       {proj.map((p, i) => {
         const x   = LP + i * (W + gap);
         const rh  = (p.rev / maxRev) * H;
-        const eh  = Math.max(3, (Math.abs(p.ebitda) / maxE) * (H * 0.7));
         const pos = p.ebitda >= 0;
+        const eh  = pos
+          ? Math.max(3, (p.ebitda / maxE) * (H * 0.7))
+          : Math.max(3, (Math.abs(p.ebitda) / maxE) * negZone);
         return (
           <g key={i}>
-            {i % 2 === 0 && <rect x={x - gap / 2} y={0} width={W + gap} height={H} fill="#F0F4F1" opacity={0.6} />}
+            {i % 2 === 0 && <rect x={x - gap / 2} y={0} width={W + gap} height={H + negZone} fill="#F0F4F1" opacity={0.6} />}
             {/* Revenue bar (faint background) */}
             <rect x={x} y={H - rh} width={W} height={rh} fill="#3A7D44" opacity={0.12} rx={2} />
             {/* EBITDA bar */}
             <rect x={x + 5} y={pos ? H - eh : H} width={W - 10} height={eh}
               fill={pos ? "#2E7D32" : "#C62828"} opacity={0.85} rx={2} />
             {/* Month label */}
-            <text x={x + W / 2} y={H + 14} textAnchor="middle"
+            <text x={x + W / 2} y={H + negZone + 14} textAnchor="middle"
               fill="#7A8B85" fontSize={9} fontFamily="Outfit,sans-serif">{p.label || ('M' + p.m)}</text>
             {/* EBITDA dollar value */}
-            <text x={x + W / 2} y={H + 30} textAnchor="middle"
+            <text x={x + W / 2} y={H + negZone + 30} textAnchor="middle"
               fill={pos ? "#2E7D32" : "#C62828"} fontSize={7.5}
               fontFamily="'JetBrains Mono',monospace" fontWeight="600">
               {fmtK(p.ebitda)}

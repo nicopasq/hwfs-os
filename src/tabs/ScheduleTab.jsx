@@ -29,7 +29,9 @@ export default function ScheduleTab({ data, upd, setData }) {
   const today = new Date();
   const todayStr = dateStr(today);
   const activeJobs = useMemo(() => data.jobs.filter(j => j.active && !j.pipe), [data.jobs]);
-  const events = data.calendarEvents || [];
+  const jobIds = useMemo(() => new Set(data.jobs.map(j => j.id)), [data.jobs]);
+  // Filter out custom events whose linked job was deleted
+  const events = useMemo(() => (data.calendarEvents || []).filter(e => !e.jobId || jobIds.has(e.jobId)), [data.calendarEvents, jobIds]);
 
   // ── Auto-generated recurring service events ──────────────────────────
   const recurringEvents = useMemo(() => {
