@@ -222,8 +222,8 @@ export default function App() {
 
   // ── Financial engine ──────────────────────────────────────────────────────
   const E = useMemo(() => {
-    const aj  = data.jobs.filter(j => j.active && !j.pipe);
-    const aw  = data.workers.filter(w => w.active);
+    const aj  = (data.jobs || []).filter(j => j.active && !j.pipe);
+    const aw  = (data.workers || []).filter(w => w.active);
     const wR  = aj.reduce((s, j) => s + (+j.wkRate || 0), 0);
     const mR  = wR * 4.33; const yR = wR * 52;
     const mhW = aj.reduce((s, j) => s + (+j.freq || 0) * (+j.hrsVis || 0), 0);
@@ -259,21 +259,21 @@ export default function App() {
     const ebitW   = ebitdaW - deprW;
     const taxW    = Math.max(0, ebitW * S.taxRate);
     const nopatW  = ebitW - taxW;
-    const stUp    = data.expenses.filter(e => e.su).reduce((s, e) => s + (+e.amt || 0), 0);
-    const capEx   = data.expenses.filter(e => e.cap).reduce((s, e) => s + (+e.amt || 0), 0);
-    const lOut    = data.loans.reduce((s, l) => s + (+l.prin || 0) - (+l.rep || 0), 0);
-    const lTot    = data.loans.reduce((s, l) => s + (+l.prin || 0), 0);
+    const stUp    = (data.expenses || []).filter(e => e.su).reduce((s, e) => s + (+e.amt || 0), 0);
+    const capEx   = (data.expenses || []).filter(e => e.cap).reduce((s, e) => s + (+e.amt || 0), 0);
+    const lOut    = (data.loans || []).reduce((s, l) => s + (+l.prin || 0) - (+l.rep || 0), 0);
+    const lTot    = (data.loans || []).reduce((s, l) => s + (+l.prin || 0), 0);
     const cap     = +S.capHWE + +S.capNico;
     const cash    = cap + lTot - stUp - capEx;
-    const invVal  = data.inventory.reduce((s, i) => s + (+i.uc || 0) * (+i.qty || 0), 0);
+    const invVal  = (data.inventory || []).reduce((s, i) => s + (+i.uc || 0) * (+i.qty || 0), 0);
     const estGalWk = mhW * A.galPerHr;
-    const pipeN   = data.jobs.filter(j => j.pipe).length;
-    const pipeRev = data.jobs.filter(j => j.pipe).reduce((s, j) => s + (+j.wkRate || 0), 0);
+    const pipeN   = (data.jobs || []).filter(j => j.pipe).length;
+    const pipeRev = (data.jobs || []).filter(j => j.pipe).reduce((s, j) => s + (+j.wkRate || 0), 0);
     const moStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
     const moOut   = (data.outreach || []).filter(o => o.date >= moStart);
-    const prospTotal = data.prospects.length;
-    const prospHot   = data.prospects.filter(p => p.stage === "Proposal" || p.stage === "Trial").length;
-    const prospWon   = data.prospects.filter(p => p.stage === "Won").length;
+    const prospTotal = (data.prospects || []).length;
+    const prospHot   = (data.prospects || []).filter(p => p.stage === "Proposal" || p.stage === "Trial").length;
+    const prospWon   = (data.prospects || []).filter(p => p.stage === "Won").length;
 
     // Nico vesting
     const startDate  = new Date(S.nicoStart || S.start);
@@ -316,12 +316,12 @@ export default function App() {
 
     // Notifications
     const notifs = [];
-    const overdueTasks = data.actions.filter(a => !a.done && a.due && a.due < td());
+    const overdueTasks = (data.actions || []).filter(a => !a.done && a.due && a.due < td());
     if (overdueTasks.length > 0) notifs.push({ type: "red",    msg: overdueTasks.length + " overdue task" + (overdueTasks.length > 1 ? "s" : "") });
     if (cash < S.reserve)        notifs.push({ type: "red",    msg: "Cash " + fmtF(cash) + " below $" + S.reserve.toLocaleString() + " reserve" });
     if (invVal > 0 && supW > 0 && invVal / supW < 3) notifs.push({ type: "yellow", msg: "Inventory cover under 3 weeks" });
     if (util > .92)              notifs.push({ type: "yellow", msg: "Utilization " + pct(util) + " — near max capacity" });
-    const staleProspects = data.prospects.filter(p => p.stage !== "Won" && p.stage !== "Lost" && p.date && (Date.now() - new Date(p.date)) > 30 * 864e5);
+    const staleProspects = (data.prospects || []).filter(p => p.stage !== "Won" && p.stage !== "Lost" && p.date && (Date.now() - new Date(p.date + 'T00:00:00')) > 30 * 864e5);
     if (staleProspects.length > 0) notifs.push({ type: "yellow", msg: staleProspects.length + " prospect" + (staleProspects.length > 1 ? "s" : "") + " stale (30+ days)" });
     const pendingCount = (data.pending || []).length;
     if (pendingCount > 0)        notifs.push({ type: "yellow", msg: pendingCount + " item" + (pendingCount > 1 ? "s" : "") + " awaiting approval" });
@@ -389,7 +389,7 @@ export default function App() {
   const doPDF = () => {
     const w = window.open("", "_blank"); if (!w) return; const d = td();
     const row = (l, wk, mo, yr, b) => `<tr style="background:${b ? "#f0f4ff" : "transparent"}"><td style="padding:5px 10px;border-bottom:1px solid #ddd;font-weight:${b ? 700 : 400}">${l}</td><td style="padding:5px 10px;border-bottom:1px solid #ddd;text-align:right;font-weight:${b ? 700 : 400}">${fmtF(wk)}</td><td style="padding:5px 10px;border-bottom:1px solid #ddd;text-align:right">${fmtF(mo)}</td><td style="padding:5px 10px;border-bottom:1px solid #ddd;text-align:right;font-weight:${b ? 700 : 400}">${fmtF(yr)}</td></tr>`;
-    const openTasks = data.actions.filter(a => !a.done);
+    const openTasks = (data.actions || []).filter(a => !a.done);
     const taskHtml = openTasks.slice(0, 10).map(a => `<tr><td style="padding:4px 10px;border-bottom:1px solid #eee;font-weight:${a.priority === "Critical" ? 700 : 400}">${a.text}</td><td style="padding:4px 10px;border-bottom:1px solid #eee;text-align:center">${a.priority}</td><td style="padding:4px 10px;border-bottom:1px solid #eee">${a.assignee}</td><td style="padding:4px 10px;border-bottom:1px solid #eee">${a.due || "—"}</td></tr>`).join("");
     w.document.write(`<!DOCTYPE html><html><head><title>HWFS Financial Update ${d}</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:#1a2030;padding:40px;max-width:860px;margin:0 auto}h1{font-size:20px;margin-bottom:4px}h2{font-size:14px;margin:18px 0 6px;border-bottom:2px solid #2060d0;padding-bottom:3px;text-transform:uppercase;letter-spacing:1px}table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:11px}th{text-align:left;padding:5px 10px;border-bottom:2px solid #333;font-size:9px;text-transform:uppercase;letter-spacing:.5px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}.m{text-align:center;border:1px solid #ddd;border-radius:6px;padding:10px}.m .v{font-size:18px;font-weight:700}.m .l{font-size:8px;text-transform:uppercase;color:#666;margin-top:2px}@media print{body{padding:20px}}</style></head><body><div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;border-bottom:3px solid #2060d0;padding-bottom:10px"><div><h1>⬡ HuronWest Facility Services</h1><div style="color:#666;font-size:11px">Financial Update — ${d}</div></div><div style="text-align:right"><div style="font-size:10px;color:#666">HWFS_FU_${d}</div><div style="font-size:10px;color:#666">${data.S.name}</div></div></div><div class="g3"><div class="m"><div class="v" style="color:#2060d0">${E.nj}</div><div class="l">Active Contracts</div></div><div class="m"><div class="v" style="color:#0a8a5a">${fmtF(E.totalWR)}/wk</div><div class="l">Revenue</div></div><div class="m"><div class="v" style="color:${E.ebitdaW >= 0 ? "#0a8a5a" : "#d03030"}">${fmtF(E.ebitdaW)}/wk</div><div class="l">EBITDA</div></div></div><h2>Income Statement</h2><table><thead><tr><th></th><th style="text-align:right">Weekly</th><th style="text-align:right">Monthly</th><th style="text-align:right">Annual</th></tr></thead><tbody>${row("Revenue", E.totalWR, E.totalWR * 4.33, E.totalWR * 52, true)}${row("COGS", E.cogsW, E.cogsW * 4.33, E.cogsW * 52)}${row("Gross Profit", E.gpW + E.specRevW, (E.gpW + E.specRevW) * 4.33, (E.gpW + E.specRevW) * 52, true)}${row("SG&A", E.sgaW, E.sgaW * 4.33, E.sgaW * 52)}${row("EBITDA", E.ebitdaW, E.ebitdaW * 4.33, E.ebitdaW * 52, true)}${row("NOPAT", E.nopatW, E.nopatW * 4.33, E.nopatW * 52, true)}</tbody></table>${openTasks.length > 0 ? `<h2>Open Tasks (${openTasks.length})</h2><table><thead><tr><th>Task</th><th style="text-align:center">Priority</th><th>Assigned</th><th>Due</th></tr></thead><tbody>${taskHtml}</tbody></table>` : ""}<div style="margin-top:24px;padding-top:10px;border-top:1px solid #ddd;font-size:9px;color:#999;text-align:center">Confidential — HuronWest Facility Services LLC — ${new Date().toLocaleDateString()}</div></body></html>`);
     w.document.close(); setTimeout(() => w.print(), 500);
@@ -399,7 +399,7 @@ export default function App() {
     const w = window.open("", "_blank"); if (!w) return; const d = td();
     const weekAgo     = new Date(Date.now() - 7 * 864e5).toISOString().split("T")[0];
     const recentAct   = (data.activityLog || []).filter(a => a.ts >= weekAgo);
-    const openTasks   = data.actions.filter(a => !a.done);
+    const openTasks   = (data.actions || []).filter(a => !a.done);
     const weekOutreach = (data.outreach || []).filter(o => o.date >= weekAgo);
     w.document.write(`<!DOCTYPE html><html><head><title>HWFS Weekly Digest ${d}</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:#1a2030;padding:40px;max-width:800px;margin:0 auto}h1{font-size:18px;margin-bottom:4px}h2{font-size:13px;margin:16px 0 6px;border-bottom:2px solid #2060d0;padding-bottom:3px;text-transform:uppercase;letter-spacing:1px}table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:11px}td,th{padding:4px 10px;border-bottom:1px solid #eee;text-align:left}th{font-size:9px;text-transform:uppercase;border-bottom:2px solid #333}.kpi{display:inline-block;text-align:center;border:1px solid #ddd;border-radius:6px;padding:10px 16px;margin:4px}.kpi .v{font-size:18px;font-weight:700}.kpi .l{font-size:8px;text-transform:uppercase;color:#666}@media print{body{padding:20px}}</style></head><body><div style="border-bottom:3px solid #2060d0;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end"><div><h1>⬡ HWFS Weekly Digest</h1><div style="color:#666">Week ending ${d}</div></div><div style="text-align:right;font-size:10px;color:#666">Generated ${new Date().toLocaleString()}</div></div><div style="margin-bottom:16px"><span class="kpi"><span class="v" style="color:#2060d0">${E.nj}</span><br/><span class="l">Contracts</span></span><span class="kpi"><span class="v" style="color:#0a8a5a">${fmtF(E.totalWR)}/wk</span><br/><span class="l">Revenue</span></span><span class="kpi"><span class="v" style="color:${E.ebitdaW >= 0 ? "#0a8a5a" : "#d03030"}">${fmtF(E.ebitdaW)}/wk</span><br/><span class="l">EBITDA</span></span><span class="kpi"><span class="v">${pct(E.util)}</span><br/><span class="l">Util</span></span><span class="kpi"><span class="v">${fmt(E.cash)}</span><br/><span class="l">Cash</span></span></div><h2>This Week's Activity (${recentAct.length} events)</h2><table><thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead><tbody>${recentAct.slice(0, 20).map(a => "<tr><td>" + new Date(a.ts).toLocaleDateString() + "</td><td style='font-weight:600'>" + a.user + "</td><td>" + a.action + (a.detail ? ": " + a.detail : "") + "</td></tr>").join("")}${recentAct.length === 0 ? "<tr><td colspan=3 style='color:#999'>No logged activity this week</td></tr>" : ""}</tbody></table><h2>Open Tasks (${openTasks.length})</h2><table><thead><tr><th>Task</th><th>Priority</th><th>Assigned</th><th>Due</th></tr></thead><tbody>${openTasks.slice(0, 15).map(a => "<tr><td" + (a.priority === "Critical" ? " style='font-weight:700;color:#d03030'" : "") + ">" + a.text + "</td><td>" + a.priority + "</td><td>" + a.assignee + "</td><td>" + (a.due || "—") + "</td></tr>").join("")}</tbody></table><div style="margin-top:20px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#999;text-align:center">Confidential — ${data.S.name} — Weekly Digest</div></body></html>`);
     w.document.close(); setTimeout(() => w.print(), 500);
@@ -482,7 +482,7 @@ export default function App() {
             {["dash", "crm", "schedule"].map(id => {
               const t = TABS.find(x => x.id === id); if (!t) return null;
               const isActive = tab === t.id;
-              const ct = id === "crm" ? data.prospects.length : id === "schedule" ? data.jobs.filter(j => j.active && !j.pipe).length : 0;
+              const ct = id === "crm" ? (data.prospects || []).length : id === "schedule" ? data.jobs.filter(j => j.active && !j.pipe).length : 0;
               return (
                 <button key={id} onClick={() => selectTab(id)}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideExpanded ? "flex-start" : "center", paddingLeft: sideExpanded ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
@@ -541,7 +541,7 @@ export default function App() {
             {["inbox", "actions"].map(id => {
               const t = TABS.find(x => x.id === id); if (!t) return null;
               const isActive = tab === t.id;
-              const ct = id === "inbox" ? (data.pending || []).length : data.actions.filter(a => !a.done).length;
+              const ct = id === "inbox" ? (data.pending || []).length : (data.actions || []).filter(a => !a.done).length;
               return (
                 <button key={id} onClick={() => selectTab(id)}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideExpanded ? "flex-start" : "center", paddingLeft: sideExpanded ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}

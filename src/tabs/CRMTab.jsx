@@ -41,13 +41,16 @@ export default function CRMTab({ data, upd, setData, E }) {
       client:  p.contact || p.name,
       tier:    "Basic",
       sf:      p.sf || 0,
+      schedule: "weekly",
       freq:    1,
       wkRate:  p.estWkRate || 0,
       hrsVis:  0,
       mSup:    65,
       start:   today,
+      serviceTime: "18:00",
       active:  true,
       pipe:    false,
+      scopeOfWork: [],
       notes:   "Converted from CRM — " + today,
     };
     setData(prev => {
@@ -63,7 +66,7 @@ export default function CRMTab({ data, upd, setData, E }) {
   };
 
   // ── Follow-up alerts ──────────────────────────────────────────────────────
-  const dueFollowUps = data.prospects.filter(p =>
+  const dueFollowUps = (data.prospects || []).filter(p =>
     p.followUp && p.followUp <= today && p.stage !== "Won" && p.stage !== "Lost"
   );
 
@@ -84,7 +87,7 @@ export default function CRMTab({ data, upd, setData, E }) {
               <div style={{ display: "flex", gap: 6 }}>
                 <button style={{ ...ss.btn, padding: "4px 12px", fontSize: 11, background: T.accent }} onClick={() => updP(p.id, "followUp", "")}>✓ Done</button>
                 <button style={{ ...ss.btnG, padding: "4px 12px", fontSize: 11 }} onClick={() => {
-                  const d = new Date(); d.setDate(d.getDate() + 3);
+                  const d = new Date(today + 'T12:00:00'); d.setDate(d.getDate() + 3);
                   updP(p.id, "followUp", d.toISOString().slice(0, 10));
                 }}>+3 days</button>
               </div>

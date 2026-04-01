@@ -198,7 +198,7 @@ export default function DashTab({ data, E }) {
   const ebitdaMargin = E.totalWR > 0 ? E.ebitdaW / E.totalWR : 0;
   const grossMargin  = E.totalWR > 0 ? (E.gpW + E.specRevW) / E.totalWR : 0;
   const today        = td();
-  const openTasks    = data.actions.filter(a => !a.done);
+  const openTasks    = (data.actions || []).filter(a => !a.done);
   const critTasks    = openTasks.filter(a => a.priority === "Critical" || a.priority === "High");
   const overdueTasks = openTasks.filter(a => a.due && a.due < today);
   const dueFollowUps = (data.prospects || []).filter(p => p.followUp && p.followUp <= today && p.stage !== "Won" && p.stage !== "Lost");

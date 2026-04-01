@@ -145,7 +145,7 @@ export default function InboxTab({ data, upd, setData, E, incomingDocs = [], cli
       active:  true,
       pipe:    false,
       notes:   'Imported from ' + doc.docType + ' on ' + new Date(doc.submittedAt).toLocaleDateString(),
-      hrsVis:  0, freq: 1, mSup: 0,
+      hrsVis:  0, schedule: "weekly", freq: 1, mSup: 0, serviceTime: "18:00", scopeOfWork: [],
     };
     setData(prev => {
       const nd = {

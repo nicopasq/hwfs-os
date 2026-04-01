@@ -90,6 +90,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
       client:       j.client,
       tier:         j.tier,
       sf:           j.sf,
+      schedule:     j.schedule || "weekly",
       freq:         j.freq,
       wkRate:       j.wkRate,
       start:        j.start,
