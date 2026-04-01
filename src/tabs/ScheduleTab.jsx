@@ -188,6 +188,26 @@ export default function ScheduleTab({ data, upd, setData }) {
     setShowAdd(null);
   };
 
+  // ── Drag-and-drop (custom events only) ─────────────────────────────
+  const [dragId, setDragId] = useState(null);
+  const onDragStart = (e, evt) => {
+    if (evt.auto) { e.preventDefault(); return; }
+    setDragId(evt.id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', evt.id);
+  };
+  const onDragOver = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
+  const onDrop = (e, targetDate) => {
+    e.preventDefault();
+    const evtId = dragId || e.dataTransfer.getData('text/plain');
+    if (!evtId) return;
+    setData(prev => {
+      const nd = { ...prev, calendarEvents: (prev.calendarEvents || []).map(ev => ev.id === evtId ? { ...ev, date: targetDate } : ev) };
+      save(nd); return nd;
+    });
+    setDragId(null);
+  };
+
   // ── Navigation ───────────────────────────────────────────────────────
   const goToday = () => setAnchor(new Date());
   const goPrev = () => setAnchor(prev => addDays(prev, view === 'week' ? -7 : -30));
@@ -215,12 +235,16 @@ export default function ScheduleTab({ data, upd, setData }) {
   const EventPill = ({ evt, compact }) => (
     <div
       onClick={(e) => { e.stopPropagation(); openEdit(evt); }}
+      draggable={!evt.auto}
+      onDragStart={(e) => onDragStart(e, evt)}
+      onDragEnd={() => setDragId(null)}
       style={{
         background: evt.color + "22", borderLeft: "3px solid " + evt.color,
         borderRadius: 3, padding: compact ? "2px 6px" : "4px 8px",
-        marginBottom: 2, cursor: evt.auto ? "default" : "pointer",
+        marginBottom: 2, cursor: evt.auto ? "default" : "grab",
         fontSize: compact ? 10 : 11, color: T.text, lineHeight: 1.3,
         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        opacity: dragId === evt.id ? 0.4 : 1,
       }}
       title={evt.title + (evt.notes ? '\n' + evt.notes : '')}
     >
@@ -305,6 +329,8 @@ export default function ScheduleTab({ data, upd, setData }) {
                     <div
                       key={i}
                       onClick={() => { setForm(f => ({ ...f, time: String(hr).padStart(2, '0') + ':00' })); openAdd(ds); }}
+                      onDragOver={onDragOver}
+                      onDrop={(e) => onDrop(e, ds)}
                       style={{
                         borderBottom: "1px solid " + T.border + "60",
                         borderRight: i < 6 ? "1px solid " + T.border + "40" : "none",
@@ -345,6 +371,8 @@ export default function ScheduleTab({ data, upd, setData }) {
                 <div
                   key={i}
                   onClick={() => openAdd(ds)}
+                  onDragOver={onDragOver}
+                  onDrop={(e) => onDrop(e, ds)}
                   style={{
                     minHeight: isMobile ? 52 : 90, padding: isMobile ? 3 : 6,
                     borderBottom: "1px solid " + T.border + "60",

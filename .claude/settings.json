@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/generate-icons.js)",
+      "Bash(node -e \":*)",
+      "Bash(node --check main.js)",
+      "Bash(node --check preload.js)"
+    ]
+  }
+}

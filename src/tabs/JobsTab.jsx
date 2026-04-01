@@ -29,6 +29,20 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
   const [editing,  setEditing]  = useState(null); // job id being edited
   const [copiedW,  setCopiedW]  = useState(null);
   const [publishing, setPublishing] = useState(null);
+  const [showTpl, setShowTpl]  = useState(false);
+
+  const templates = data.contractTemplates || [];
+  const saveTemplate = (j) => {
+    const name = prompt("Template name:", j.name + " Template");
+    if (!name) return;
+    const tpl = { id: uid(), name, tier: j.tier, schedule: j.schedule || "weekly", hrsVis: j.hrsVis || 0, mSup: j.mSup || 65, serviceTime: j.serviceTime || "18:00", scopeOfWork: j.scopeOfWork || [], type: j.type || "" };
+    upd("contractTemplates", [...templates, tpl]);
+  };
+  const applyTemplate = (tpl) => {
+    setF(prev => ({ ...prev, tier: tpl.tier, schedule: tpl.schedule, freq: freqNum(tpl.schedule), hrsVis: tpl.hrsVis, mSup: tpl.mSup, serviceTime: tpl.serviceTime, wkRate: ap(prev.sf, freqNum(tpl.schedule), tpl.tier) || prev.wkRate }));
+    setShowTpl(false);
+  };
+  const rmTemplate = (id) => upd("contractTemplates", templates.filter(t => t.id !== id));
 
   const save = nd => { try { localStorage.setItem(SK, JSON.stringify(nd)); } catch(e) { console.warn(e); } };
 
@@ -121,7 +135,35 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
     <>
       {/* ── Add contract ──────────────────────────────────────────────────── */}
       <div style={ss.card}>
-        <div style={ss.ch}><span>+ Contract</span><span style={{ fontSize: 10, color: T.td2 }}>Auto: SF × tier × freq</span></div>
+        <div style={ss.ch}>
+          <span>+ Contract</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 10, color: T.td2 }}>Auto: SF × tier × freq</span>
+            {templates.length > 0 && (
+              <div style={{ position: "relative" }}>
+                <button style={{ ...ss.btnG, padding: "3px 10px", fontSize: 11 }} onClick={() => setShowTpl(!showTpl)}>
+                  From Template ▾
+                </button>
+                {showTpl && (
+                  <div style={{ position: "absolute", right: 0, top: "100%", marginTop: 4, background: T.card, border: "1px solid " + T.border, borderRadius: 6, boxShadow: "0 8px 24px rgba(0,0,0,.15)", zIndex: 50, minWidth: 220, padding: 6 }}>
+                    {templates.map(tpl => (
+                      <div key={tpl.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 4, cursor: "pointer" }}
+                        onMouseEnter={e => e.currentTarget.style.background = T.mintPale}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                      >
+                        <div style={{ flex: 1 }} onClick={() => applyTemplate(tpl)}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{tpl.name}</div>
+                          <div style={{ fontSize: 11, color: T.td2 }}>{tpl.tier} · {freqLabel(tpl.schedule)} · {tpl.hrsVis}h</div>
+                        </div>
+                        <button style={{ background: "none", border: "none", color: T.td2, cursor: "pointer", fontSize: 11, padding: "2px 4px" }} onClick={() => rmTemplate(tpl.id)} title="Delete template">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
         <div style={ss.g5}>
           <F l="Property"><input style={ss.inp} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></F>
           <F l="Client"><input style={ss.inp} value={f.client} onChange={e => setF({ ...f, client: e.target.value })} placeholder="Client name" /></F>
@@ -213,9 +255,12 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                             <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                               <span>Contract Details — {j.name}</span>
                               {editing !== j.id ? (
-                                <button style={{ ...ss.btnG, padding: "4px 14px", fontSize: 11 }} onClick={() => {
-                                  if (window.confirm('Are you sure you want to edit this contract? Changes will take effect immediately across the schedule, portal, and financials.')) setEditing(j.id);
-                                }}>Edit Contract</button>
+                                <div style={{ display: "flex", gap: 6 }}>
+                                  <button style={{ ...ss.btnG, padding: "4px 14px", fontSize: 11 }} onClick={() => saveTemplate(j)}>Save Template</button>
+                                  <button style={{ ...ss.btnG, padding: "4px 14px", fontSize: 11 }} onClick={() => {
+                                    if (window.confirm('Are you sure you want to edit this contract? Changes will take effect immediately across the schedule, portal, and financials.')) setEditing(j.id);
+                                  }}>Edit Contract</button>
+                                </div>
                               ) : (
                                 <button style={{ ...ss.btn, padding: "4px 14px", fontSize: 11 }} onClick={() => {
                                   setEditing(null);

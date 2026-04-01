@@ -6,7 +6,7 @@
  *  - doDigest: now passed as a prop to MenuBar (was missing → ReferenceError)
  *  - Empty catch blocks: now log console.warn instead of silently swallowing errors
  */
-import { useState, useEffect, useCallback, useMemo, useLayoutEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, useLayoutEffect, useRef } from 'react';
 
 import { AppContext }     from './context';
 import { SK, TABS, DA, DS, DSGA, DEF, dk, lt, font, serif, TIERS, TK } from './constants';
@@ -51,6 +51,9 @@ function persist(data) {
   if (isConnected()) pushFirebase(data).catch(() => {});
 }
 
+// Tab shortcut order: Ctrl+1=dash, Ctrl+2=schedule, Ctrl+3=jobs, etc.
+const SHORTCUT_TABS = ['dash', 'schedule', 'jobs', 'crm', 'actions', 'invoices', 'labor', 'pnl', 'cfg'];
+
 const NAV_GROUPS = [
   { key: "ops",  label: "Operations", tabs: ["jobs", "labor", "inv", "spec", "comp"] },
   { key: "fin",  label: "Financials",  tabs: ["rev", "equip", "sga", "invoices"] },
@@ -73,6 +76,54 @@ export default function App() {
     try { const r = localStorage.getItem('hwfs-nav-groups'); if (r) return JSON.parse(r); } catch {}
     return { ops: false, fin: false, stmt: false };
   });
+
+  // ── Undo + save indicator ──────────────────────────────────────────────────
+  const [undoStack, setUndoStack] = useState([]); // [{data, label}]
+  const [saveFlash, setSaveFlash] = useState(false);
+  const saveTimer = useRef(null);
+  const pushUndo = useCallback((label) => {
+    setData(prev => {
+      setUndoStack(stack => [...stack.slice(-19), { data: prev, label }]);
+      return prev;
+    });
+  }, []);
+  const doUndo = useCallback(() => {
+    setUndoStack(stack => {
+      if (!stack.length) return stack;
+      const prev = stack[stack.length - 1];
+      setData(prev.data);
+      persist(prev.data);
+      return stack.slice(0, -1);
+    });
+  }, []);
+  const flashSave = useCallback(() => {
+    setSaveFlash(true);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => setSaveFlash(false), 1500);
+  }, []);
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      // Escape closes mobile menu
+      if (e.key === 'Escape') { setMobileMenuOpen(false); return; }
+      // Don't fire shortcuts when typing in inputs
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        if (e.key === 'Escape') e.target.blur();
+        return;
+      }
+      // Ctrl+1 through Ctrl+9 → switch tabs
+      if (e.ctrlKey && e.key >= '1' && e.key <= '9') {
+        const idx = parseInt(e.key) - 1;
+        if (SHORTCUT_TABS[idx]) { e.preventDefault(); setTab(SHORTCUT_TABS[idx]); setMobileMenuOpen(false); }
+      }
+      // Ctrl+Z → undo
+      if (e.ctrlKey && e.key === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [doUndo]);
 
   // ── Mobile detection ──────────────────────────────────────────────────────
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
@@ -167,8 +218,11 @@ export default function App() {
   const save = useCallback(nd => { setData(nd); persist(nd); }, []);
 
   const upd = useCallback((k, v) => {
-    setData(prev => { const nd = { ...prev, [k]: v }; persist(nd); return nd; });
-  }, []);
+    setData(prev => {
+      setUndoStack(stack => [...stack.slice(-19), { data: prev, label: 'Update ' + k }]);
+      const nd = { ...prev, [k]: v }; persist(nd); flashSave(); return nd;
+    });
+  }, [flashSave]);
 
   const updS = useCallback((k, v) => {
     setData(prev => { const nd = { ...prev, S: { ...prev.S, [k]: v } }; persist(nd); return nd; });
@@ -434,7 +488,7 @@ export default function App() {
   // Close mobile menu when tab changes
   const selectTab = (id) => { setTab(id); setMobileMenuOpen(false); };
 
-  const contextValue = { T, ss, font, serif, mono: "'JetBrains Mono','Fira Code',monospace", nav, isMobile };
+  const contextValue = { T, ss, font, serif, mono: "'JetBrains Mono','Fira Code',monospace", nav, isMobile, doUndo, undoLen: undoStack.length };
 
   // ── Shared tab props ────────────────────────────────────────────────────────
   const tabProps = { data, upd, updS, updA, setData, save, E, fbStatus, setFbStatus, mergeRemote };
@@ -603,6 +657,13 @@ export default function App() {
               {!isMobile && <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: font }}>{E.nj} active · {E.pipeN} pipeline</span>}
               <span style={{ fontSize: isMobile ? 11 : 13, color: "#A8D5BA", fontWeight: 600, fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{fmtF(E.wR)}/wk</span>
               {!isMobile && <span style={{ fontSize: 13, color: E.ebitdaW >= 0 ? "#A8D5BA" : "#ef9090", fontWeight: 600, fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{fmtF(E.ebitdaW)} EBITDA</span>}
+              {/* Save indicator + undo */}
+              {saveFlash && <span style={{ fontSize: 10, color: "#A8D5BA", fontWeight: 600, letterSpacing: "0.5px", transition: "opacity .3s", animation: "none" }}>Saved</span>}
+              {undoStack.length > 0 && (
+                <button onClick={doUndo} title="Undo (Ctrl+Z)" style={{ background: "rgba(168,213,186,0.12)", border: "1px solid rgba(168,213,186,0.25)", borderRadius: 4, padding: "3px 10px", cursor: "pointer", color: "#A8D5BA", fontFamily: font, fontSize: 11, fontWeight: 500 }}>
+                  Undo
+                </button>
+              )}
               {!isMobile && <MenuBar doExport={doExport} doImport={doImport} doPDF={doPDF} doDigest={doDigest} />}
               {(data.pending || []).length > 0 && (
                 <button style={{ background: "rgba(245,127,23,0.18)", border: "1px solid rgba(245,127,23,0.4)", borderRadius: 4, padding: "4px 12px", cursor: "pointer", color: "#FFB74D", fontFamily: font, fontSize: 12, fontWeight: 500 }} onClick={() => selectTab("inbox")}>

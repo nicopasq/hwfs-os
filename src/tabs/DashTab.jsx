@@ -9,7 +9,7 @@ function KpiCard({ label, value, sub, color, icon, trend, onClick }) {
     <div
       onClick={onClick}
       style={{
-        background: "#fff",
+        background: T.card,
         border: "1px solid " + T.border2,
         borderLeft: "3px solid " + color,
         borderRadius: 4,
@@ -69,9 +69,9 @@ function BarChart({ data: proj, T }) {
         return (
           <g key={t}>
             <line x1={LP} y1={y} x2={totalW} y2={y}
-              stroke={t === 0 ? "#D5E5DC" : "#EAF0EA"} strokeWidth={1}
+              stroke={t === 0 ? T.border : T.border2} strokeWidth={1}
               strokeDasharray={t === 0 ? undefined : "3,3"} />
-            <text x={LP - 5} y={y + 3} textAnchor="end" fill="#9aab9e"
+            <text x={LP - 5} y={y + 3} textAnchor="end" fill={T.td2}
               fontSize={8} fontFamily="'JetBrains Mono',monospace">
               {fmtK(t * maxRev)}
             </text>
@@ -88,7 +88,7 @@ function BarChart({ data: proj, T }) {
           : Math.max(3, (Math.abs(p.ebitda) / maxE) * negZone);
         return (
           <g key={i}>
-            {i % 2 === 0 && <rect x={x - gap / 2} y={0} width={W + gap} height={H + negZone} fill="#F0F4F1" opacity={0.6} />}
+            {i % 2 === 0 && <rect x={x - gap / 2} y={0} width={W + gap} height={H + negZone} fill={T.bg} opacity={0.6} />}
             {/* Revenue bar (faint background) */}
             <rect x={x} y={H - rh} width={W} height={rh} fill="#3A7D44" opacity={0.12} rx={2} />
             {/* EBITDA bar */}
@@ -96,7 +96,7 @@ function BarChart({ data: proj, T }) {
               fill={pos ? "#2E7D32" : "#C62828"} opacity={0.85} rx={2} />
             {/* Month label */}
             <text x={x + W / 2} y={H + negZone + 14} textAnchor="middle"
-              fill="#7A8B85" fontSize={9} fontFamily="Outfit,sans-serif">{p.label || ('M' + p.m)}</text>
+              fill={T.td2} fontSize={9} fontFamily="Outfit,sans-serif">{p.label || ('M' + p.m)}</text>
             {/* EBITDA dollar value */}
             <text x={x + W / 2} y={H + negZone + 30} textAnchor="middle"
               fill={pos ? "#2E7D32" : "#C62828"} fontSize={7.5}
@@ -126,7 +126,7 @@ function UtilRing({ util, T }) {
       />
       <text x={cx} y={cy - 4} textAnchor="middle" fill={color} fontSize={20} fontWeight={600}
         fontFamily="'JetBrains Mono','Fira Code',monospace">{(util * 100).toFixed(0)}%</text>
-      <text x={cx} y={cy + 14} textAnchor="middle" fill="#7A8B85" fontSize={9} fontFamily="Outfit,sans-serif">UTILIZATION</text>
+      <text x={cx} y={cy + 14} textAnchor="middle" fill={T.td2} fontSize={9} fontFamily="Outfit,sans-serif">UTILIZATION</text>
     </svg>
   );
 }
@@ -163,17 +163,53 @@ function PipelineBar({ prospects, T }) {
 // ── Small stat cell ───────────────────────────────────────────────────────────
 function StatCell({ label, value, color, T, mono }) {
   return (
-    <div style={{ padding: "10px 14px", background: "#F7FAF8", borderRadius: 4, border: "1px solid #E8EFE9" }}>
-      <div style={{ fontSize: 10, color: "#7A8B85", textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 5 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 600, color: color || "#1A3C34", fontFamily: mono }}>{value}</div>
+    <div style={{ padding: "10px 14px", background: T.card2, borderRadius: 4, border: "1px solid " + T.border2 }}>
+      <div style={{ fontSize: 10, color: T.td2, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 5 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 600, color: color || T.text, fontFamily: mono }}>{value}</div>
     </div>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+const DASH_SECTIONS = [
+  { key: "kpis",      label: "KPI Cards" },
+  { key: "alerts",    label: "Alert Banners" },
+  { key: "chart",     label: "12-Month Chart" },
+  { key: "pnl_wf_tasks", label: "P&L / Workforce / Tasks" },
+  { key: "activity",  label: "Activity & Equity" },
+];
+
+function loadDashLayout() {
+  try { const r = localStorage.getItem('hwfs-dash-layout'); if (r) return JSON.parse(r); } catch {}
+  return { hidden: [], order: DASH_SECTIONS.map(s => s.key) };
+}
+
 export default function DashTab({ data, E }) {
   const { T, ss, nav, mono, serif } = useApp();
   const [chartMode, setChartMode] = useState('forecast');
+  const [layout, setLayout] = useState(loadDashLayout);
+  const [showCfg, setShowCfg] = useState(false);
+  const toggleSection = (key) => {
+    setLayout(prev => {
+      const hidden = prev.hidden.includes(key) ? prev.hidden.filter(k => k !== key) : [...prev.hidden, key];
+      const next = { ...prev, hidden };
+      try { localStorage.setItem('hwfs-dash-layout', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  const moveSection = (key, dir) => {
+    setLayout(prev => {
+      const order = [...prev.order];
+      const idx = order.indexOf(key);
+      const swap = idx + dir;
+      if (swap < 0 || swap >= order.length) return prev;
+      [order[idx], order[swap]] = [order[swap], order[idx]];
+      const next = { ...prev, order };
+      try { localStorage.setItem('hwfs-dash-layout', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+  const vis = (key) => !layout.hidden.includes(key);
 
   const actualsData = useMemo(() => {
     const now = new Date();
@@ -205,34 +241,20 @@ export default function DashTab({ data, E }) {
   const overdueInvoices = (data.invoices || []).filter(i => i.status === "Overdue");
   const overdueInvoiceAmt = overdueInvoices.reduce((s, i) => s + i.amount, 0);
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+  // ── Section content for customizable layout ────────────────────────────────
+  const SEC = {};
 
-      {/* ── Page header ─────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-        <div>
-          <div style={{ fontSize: 28, color: "#1A3C34", fontFamily: "'DM Serif Display',Georgia,serif", lineHeight: 1.1 }}>
-            {data.S.name || "HuronWest Facility Services"}
-          </div>
-          <div style={{ fontSize: 13, color: "#7A8B85", marginTop: 4 }}>
-            {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 24 }}>
-          {[
-            ["Annual Revenue", fmtF(E.totalWR * 52), T.green],
-            ["EBITDA Margin",  pct(ebitdaMargin),     E.ebitdaW >= 0 ? T.accent : T.red],
-            ["Active Team",    E.nw + " workers",     T.ts],
-          ].map(([l, v, c]) => (
-            <div key={l} style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 10, color: T.td2, textTransform: "uppercase", letterSpacing: "1.2px" }}>{l}</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: c, fontFamily: mono, marginTop: 3 }}>{v}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+  SEC.kpis = (
+    <div key="kpis" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
+      <KpiCard label="Weekly Revenue" value={fmt(E.totalWR)} sub={fmtF(E.totalWR * 52) + " annualized"} color={T.green} icon="↑" onClick={() => nav("pnl")} />
+      <KpiCard label="EBITDA / Week" value={fmt(E.ebitdaW)} sub={pct(ebitdaMargin) + " margin · " + pct(grossMargin) + " gross"} color={E.ebitdaW >= 0 ? T.accent : T.red} icon={E.ebitdaW >= 0 ? "↗" : "↘"} onClick={() => nav("pnl")} />
+      <KpiCard label="Active Contracts" value={E.nj} sub={E.pipeN + " in pipeline · " + E.prospHot + " hot"} color={T.purple} icon="◈" onClick={() => nav("jobs")} />
+      <KpiCard label="Cash Position" value={fmt(E.cash)} sub={E.cash >= data.S.reserve ? "Above reserve" : "Below reserve ⚠"} color={E.cash >= data.S.reserve ? T.green : T.red} icon="⬡" onClick={() => nav("bs")} />
+    </div>
+  );
 
-      {/* ── Alert banners ───────────────────────────────────────────────────── */}
+  SEC.alerts = (
+    <div key="alerts">
       {(dueFollowUps.length > 0 || overdueInvoices.length > 0) && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {dueFollowUps.length > 0 && (
@@ -257,265 +279,305 @@ export default function DashTab({ data, E }) {
           )}
         </div>
       )}
+    </div>
+  );
 
-      {/* ── KPI row ─────────────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
-        <KpiCard
-          label="Weekly Revenue"
-          value={fmt(E.totalWR)}
-          sub={fmtF(E.totalWR * 52) + " annualized"}
-          color={T.green}
-          icon="↑"
-          onClick={() => nav("pnl")}
-        />
-        <KpiCard
-          label="EBITDA / Week"
-          value={fmt(E.ebitdaW)}
-          sub={pct(ebitdaMargin) + " margin · " + pct(grossMargin) + " gross"}
-          color={E.ebitdaW >= 0 ? T.accent : T.red}
-          icon={E.ebitdaW >= 0 ? "↗" : "↘"}
-          onClick={() => nav("pnl")}
-        />
-        <KpiCard
-          label="Active Contracts"
-          value={E.nj}
-          sub={E.pipeN + " in pipeline · " + E.prospHot + " hot"}
-          color={T.purple}
-          icon="◈"
-          onClick={() => nav("jobs")}
-        />
-        <KpiCard
-          label="Cash Position"
-          value={fmt(E.cash)}
-          sub={E.cash >= data.S.reserve ? "Above reserve" : "Below reserve ⚠"}
-          color={E.cash >= data.S.reserve ? T.green : T.red}
-          icon="⬡"
-          onClick={() => nav("bs")}
-        />
-      </div>
-
-      {/* ── Chart ──────────────────────────────────────────────────────────── */}
-      <div>
-        <div style={{ ...ss.card, marginBottom: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>
-                {chartMode === 'forecast' ? '12-Month Projection' : '12-Month Actuals'}
-              </div>
-              <div style={{ fontSize: 13, color: T.td2, marginTop: 3 }}>
-                {chartMode === 'forecast' ? 'Revenue vs EBITDA run-rate' : 'Paid invoices vs expenses by month'}
-              </div>
+  SEC.chart = (
+    <div key="chart">
+      <div style={{ ...ss.card, marginBottom: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>
+              {chartMode === 'forecast' ? '12-Month Projection' : '12-Month Actuals'}
             </div>
-            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <div style={{ display: "flex", border: "1px solid " + T.border, borderRadius: 4, overflow: "hidden" }}>
-                {[['forecast', 'Forecast'], ['actuals', 'Actuals']].map(([mode, lbl]) => (
-                  <button key={mode} onClick={() => setChartMode(mode)} style={{
-                    padding: "5px 13px", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: chartMode === mode ? 700 : 400,
-                    background: chartMode === mode ? T.accent : T.card, color: chartMode === mode ? "#fff" : T.td2,
-                  }}>{lbl}</button>
-                ))}
-              </div>
-              {[["Revenue", "#3A7D44", "0.12"], ["EBITDA", "#2E7D32", "0.8"]].map(([l, c, o]) => (
-                <span key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: T.td2 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 1, background: c, opacity: +o, display: "inline-block" }} />{l}
-                </span>
+            <div style={{ fontSize: 13, color: T.td2, marginTop: 3 }}>
+              {chartMode === 'forecast' ? 'Revenue vs EBITDA run-rate' : 'Paid invoices vs expenses by month'}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            <div style={{ display: "flex", border: "1px solid " + T.border, borderRadius: 4, overflow: "hidden" }}>
+              {[['forecast', 'Forecast'], ['actuals', 'Actuals']].map(([mode, lbl]) => (
+                <button key={mode} onClick={() => setChartMode(mode)} style={{
+                  padding: "5px 13px", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 11, fontWeight: chartMode === mode ? 700 : 400,
+                  background: chartMode === mode ? T.accent : T.card, color: chartMode === mode ? "#fff" : T.td2,
+                }}>{lbl}</button>
               ))}
             </div>
-          </div>
-          <BarChart data={chartData} T={T} />
-          <div style={{ display: "flex", paddingTop: 16, borderTop: "1px solid " + T.border2, marginTop: 12 }}>
-            {(chartMode === 'forecast' ? [
-              ["Proj Revenue",   fmtF(E.totalWR * 52),  T.green],
-              ["Proj EBITDA",    fmtF(E.ebitdaW * 52),  E.ebitdaW >= 0 ? T.accent : T.red],
-              ["Gross Margin",   pct(grossMargin),        T.ts],
-              ["EBITDA Margin",  pct(ebitdaMargin),       T.ts],
-            ] : [
-              ["YTD Revenue",    fmtF(actualTotRev),      T.green],
-              ["YTD EBITDA",     fmtF(actualTotEbitda),   actualTotEbitda >= 0 ? T.accent : T.red],
-              ["EBITDA Margin",  pct(actualEbitdaMgn),    T.ts],
-              ["Paid Invoices",  (data.invoices || []).filter(i => i.status === 'Paid').length + " invoices", T.ts],
-            ]).map(([l, v, c]) => (
-              <div key={l} style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, color: T.td2, textTransform: "uppercase", letterSpacing: "1px" }}>{l}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: c, marginTop: 3, fontFamily: mono }}>{v}</div>
-              </div>
+            {[["Revenue", "#3A7D44", "0.12"], ["EBITDA", "#2E7D32", "0.8"]].map(([l, c, o]) => (
+              <span key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: T.td2 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 1, background: c, opacity: +o, display: "inline-block" }} />{l}
+              </span>
             ))}
           </div>
         </div>
-
-      </div>
-
-      {/* ── P&L + Workforce + Tasks ──────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
-
-        {/* Weekly P&L */}
-        <div style={{ ...ss.card, marginBottom: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>Weekly P&L</div>
-            <button style={ss.btnG} onClick={() => nav("pnl")}
-              onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >Full view →</button>
-          </div>
-          {[
-            { l: "Revenue",      v: E.totalWR,          c: T.green,  bar: 1.0,  bold: true },
-            { l: "− COGS",       v: E.cogsW,            c: T.red,    bar: E.cogsW / (E.totalWR || 1) },
-            { l: "Gross Profit", v: E.gpW + E.specRevW, c: T.accent, bar: (E.gpW + E.specRevW) / (E.totalWR || 1), bold: true },
-            { l: "− SG&A",       v: E.sgaW,             c: T.yellow, bar: E.sgaW / (E.totalWR || 1) },
-            { l: "EBITDA",       v: E.ebitdaW,          c: E.ebitdaW >= 0 ? T.green : T.red, bar: Math.abs(E.ebitdaW) / (E.totalWR || 1), bold: true },
-            { l: "NOPAT",        v: E.nopatW,           c: T.accent, bar: Math.abs(E.nopatW) / (E.totalWR || 1), bold: true },
-          ].map(({ l, v, c, bar, bold }) => (
-            <div key={l} style={{ marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                <span style={{ fontSize: 13, color: bold ? T.text : T.ts, fontWeight: bold ? 600 : 400 }}>{l}</span>
-                <span style={{ fontSize: 12, fontWeight: bold ? 600 : 500, color: c, fontFamily: mono }}>{fmtF(Math.abs(v))}</span>
-              </div>
-              <div style={{ height: bold ? 5 : 3, background: T.border2, borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: (Math.min(bar, 1) * 100) + "%", background: c, borderRadius: 3, opacity: bold ? 1 : .5, transition: "width .5s ease" }} />
-              </div>
+        <BarChart data={chartData} T={T} />
+        <div style={{ display: "flex", paddingTop: 16, borderTop: "1px solid " + T.border2, marginTop: 12 }}>
+          {(chartMode === 'forecast' ? [
+            ["Proj Revenue",   fmtF(E.totalWR * 52),  T.green],
+            ["Proj EBITDA",    fmtF(E.ebitdaW * 52),  E.ebitdaW >= 0 ? T.accent : T.red],
+            ["Gross Margin",   pct(grossMargin),        T.ts],
+            ["EBITDA Margin",  pct(ebitdaMargin),       T.ts],
+          ] : [
+            ["YTD Revenue",    fmtF(actualTotRev),      T.green],
+            ["YTD EBITDA",     fmtF(actualTotEbitda),   actualTotEbitda >= 0 ? T.accent : T.red],
+            ["EBITDA Margin",  pct(actualEbitdaMgn),    T.ts],
+            ["Paid Invoices",  (data.invoices || []).filter(i => i.status === 'Paid').length + " invoices", T.ts],
+          ]).map(([l, v, c]) => (
+            <div key={l} style={{ flex: 1 }}>
+              <div style={{ fontSize: 10, color: T.td2, textTransform: "uppercase", letterSpacing: "1px" }}>{l}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: c, marginTop: 3, fontFamily: mono }}>{v}</div>
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
 
-        {/* Workforce */}
-        <div style={{ ...ss.card, marginBottom: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>Workforce</div>
-            <button style={ss.btnG} onClick={() => nav("labor")}
-              onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >Manage →</button>
-          </div>
-          <UtilRing util={E.util} T={T} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 16 }}>
-            <StatCell label="Workers"  value={E.nw}                            color={T.accent} T={T} mono={mono} />
-            <StatCell label="Hrs/Wk"   value={E.mhW.toFixed(0) + "h"}          color={T.ts}     T={T} mono={mono} />
-            <StatCell label="Capacity" value={E.lCap + "h"}                    color={T.ts}     T={T} mono={mono} />
-            <StatCell label="Spare"    value={(E.lCap - E.mhW).toFixed(0)+"h"} color={E.lCap - E.mhW > 10 ? T.green : T.red} T={T} mono={mono} />
-          </div>
-          {E.util > .85 && (
-            <div style={{ marginTop: 14, padding: "8px 14px", background: "#FFEBEE", border: "1px solid rgba(198,40,40,0.2)", borderRadius: 4, fontSize: 12, color: T.red }}>
-              Near capacity — consider hiring
+  SEC.pnl_wf_tasks = (
+    <div key="pnl_wf_tasks" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+      {/* Weekly P&L */}
+      <div style={{ ...ss.card, marginBottom: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>Weekly P&L</div>
+          <button style={ss.btnG} onClick={() => nav("pnl")}
+            onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+          >Full view →</button>
+        </div>
+        {[
+          { l: "Revenue",      v: E.totalWR,          c: T.green,  bar: 1.0,  bold: true },
+          { l: "− COGS",       v: E.cogsW,            c: T.red,    bar: E.cogsW / (E.totalWR || 1) },
+          { l: "Gross Profit", v: E.gpW + E.specRevW, c: T.accent, bar: (E.gpW + E.specRevW) / (E.totalWR || 1), bold: true },
+          { l: "− SG&A",       v: E.sgaW,             c: T.yellow, bar: E.sgaW / (E.totalWR || 1) },
+          { l: "EBITDA",       v: E.ebitdaW,          c: E.ebitdaW >= 0 ? T.green : T.red, bar: Math.abs(E.ebitdaW) / (E.totalWR || 1), bold: true },
+          { l: "NOPAT",        v: E.nopatW,           c: T.accent, bar: Math.abs(E.nopatW) / (E.totalWR || 1), bold: true },
+        ].map(({ l, v, c, bar, bold }) => (
+          <div key={l} style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+              <span style={{ fontSize: 13, color: bold ? T.text : T.ts, fontWeight: bold ? 600 : 400 }}>{l}</span>
+              <span style={{ fontSize: 12, fontWeight: bold ? 600 : 500, color: c, fontFamily: mono }}>{fmtF(Math.abs(v))}</span>
             </div>
-          )}
-        </div>
-
-        {/* Tasks */}
-        <div style={{ ...ss.card, marginBottom: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>Open Tasks</div>
-            <button style={ss.btnG} onClick={() => nav("actions")}
-              onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >All →</button>
+            <div style={{ height: bold ? 5 : 3, background: T.border2, borderRadius: 3, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: (Math.min(bar, 1) * 100) + "%", background: c, borderRadius: 3, opacity: bold ? 1 : .5, transition: "width .5s ease" }} />
+            </div>
           </div>
-
-          {/* Summary badges */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
-            {[
-              ["Critical", openTasks.filter(a => a.priority === "Critical").length, T.red, "#FFEBEE"],
-              ["High",     openTasks.filter(a => a.priority === "High").length,     T.yellow, "#FFF9C4"],
-              ["Overdue",  overdueTasks.length,                                     T.red, "#FFEBEE"],
-            ].map(([l, n, c, bg]) =>
-              n > 0 ? (
-                <div key={l} style={{ padding: "3px 10px", background: bg, border: "1px solid " + c + "30", borderRadius: 12, fontSize: 11, fontWeight: 600, color: c, textTransform: "uppercase", letterSpacing: "0.5px" }}>{n} {l}</div>
-              ) : null
-            )}
-            {critTasks.length === 0 && overdueTasks.length === 0 && (
-              <div style={{ padding: "3px 10px", background: "#E8F5E9", border: "1px solid rgba(46,125,50,0.2)", borderRadius: 12, fontSize: 11, fontWeight: 600, color: T.green, textTransform: "uppercase", letterSpacing: "0.5px" }}>All clear</div>
-            )}
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto", maxHeight: 220 }}>
-            {critTasks.slice(0, 7).map(a => (
-              <div key={a.id} style={{ padding: "10px 0", borderBottom: "1px solid " + T.border2, display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <div style={{ width: 2, minHeight: 32, borderRadius: 2, background: a.priority === "Critical" ? T.red : T.yellow, flexShrink: 0, marginTop: 2, alignSelf: "stretch" }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.text}</div>
-                  <div style={{ fontSize: 11, color: T.td2, marginTop: 3 }}>{a.assignee}{a.due ? " · due " + a.due : ""}</div>
-                </div>
-              </div>
-            ))}
-            {critTasks.length === 0 && (
-              <div style={{ padding: "32px 0", textAlign: "center" }}>
-                <div style={{ fontSize: 20, marginBottom: 8, color: T.border2 }}>✓</div>
-                <div style={{ fontSize: 14, color: T.td2, fontFamily: "'DM Serif Display',serif" }}>No critical tasks</div>
-                <div style={{ fontSize: 12, color: T.td2, marginTop: 4 }}>You're all caught up</div>
-              </div>
-            )}
-          </div>
-          {openTasks.length > 0 && (
-            <div style={{ marginTop: 12, fontSize: 12, color: T.td2, textAlign: "center" }}>{openTasks.length} total open</div>
-          )}
-        </div>
+        ))}
       </div>
 
-      {/* ── Activity + Equity ───────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 20 }}>
+      {/* Workforce */}
+      <div style={{ ...ss.card, marginBottom: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>Workforce</div>
+          <button style={ss.btnG} onClick={() => nav("labor")}
+            onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+          >Manage →</button>
+        </div>
+        <UtilRing util={E.util} T={T} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 16 }}>
+          <StatCell label="Workers"  value={E.nw}                            color={T.accent} T={T} mono={mono} />
+          <StatCell label="Hrs/Wk"   value={E.mhW.toFixed(0) + "h"}          color={T.ts}     T={T} mono={mono} />
+          <StatCell label="Capacity" value={E.lCap + "h"}                    color={T.ts}     T={T} mono={mono} />
+          <StatCell label="Spare"    value={(E.lCap - E.mhW).toFixed(0)+"h"} color={E.lCap - E.mhW > 10 ? T.green : T.red} T={T} mono={mono} />
+        </div>
+        {E.util > .85 && (
+          <div style={{ marginTop: 14, padding: "8px 14px", background: T.red + "18", border: "1px solid " + T.red + "33", borderRadius: 4, fontSize: 12, color: T.red }}>
+            Near capacity — consider hiring
+          </div>
+        )}
+      </div>
 
-        <div style={{ ...ss.card, marginBottom: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: T.text, marginBottom: 20 }}>Recent Activity</div>
-          {(data.activityLog || []).length === 0 && (
-            <div style={{ padding: "40px 0", textAlign: "center" }}>
-              <div style={{ fontSize: 40, color: T.border, marginBottom: 12 }}>◎</div>
-              <div style={{ fontSize: 16, color: T.ts, fontFamily: "'DM Serif Display',serif" }}>No activity yet</div>
-              <div style={{ fontSize: 13, color: T.td2, marginTop: 6 }}>Changes you and your team make will appear here</div>
-            </div>
+      {/* Tasks */}
+      <div style={{ ...ss.card, marginBottom: 0, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>Open Tasks</div>
+          <button style={ss.btnG} onClick={() => nav("actions")}
+            onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+          >All →</button>
+        </div>
+        <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+          {[
+            ["Critical", openTasks.filter(a => a.priority === "Critical").length, T.red, T.red + "18"],
+            ["High",     openTasks.filter(a => a.priority === "High").length,     T.yellow, T.yellow + "25"],
+            ["Overdue",  overdueTasks.length,                                     T.red, T.red + "18"],
+          ].map(([l, n, c, bg]) =>
+            n > 0 ? (
+              <div key={l} style={{ padding: "3px 10px", background: bg, border: "1px solid " + c + "30", borderRadius: 12, fontSize: 11, fontWeight: 600, color: c, textTransform: "uppercase", letterSpacing: "0.5px" }}>{n} {l}</div>
+            ) : null
           )}
-          {(data.activityLog || []).slice(0, 6).map((a, i) => (
-            <div key={a.id || i} style={{ display: "flex", gap: 14, padding: "10px 0", borderBottom: "1px solid " + T.border2, alignItems: "flex-start", transition: "background .15s" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 16, background: T.mintPale, border: "1px solid " + T.border, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: T.accent, flexShrink: 0 }}>
-                {(a.user || "?")[0].toUpperCase()}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, lineHeight: 1.4 }}>
-                  <span style={{ fontWeight: 600, color: T.text }}>{a.user}</span>
-                  <span style={{ color: T.ts }}> {a.action}</span>
-                  {a.detail && <span style={{ color: T.td2 }}>: {a.detail}</span>}
-                </div>
-                <div style={{ fontSize: 11, color: T.td2, marginTop: 2 }}>
-                  {new Date(a.ts).toLocaleDateString()} · {new Date(a.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </div>
+          {critTasks.length === 0 && overdueTasks.length === 0 && (
+            <div style={{ padding: "3px 10px", background: T.green + "18", border: "1px solid " + T.green + "33", borderRadius: 12, fontSize: 11, fontWeight: 600, color: T.green, textTransform: "uppercase", letterSpacing: "0.5px" }}>All clear</div>
+          )}
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", maxHeight: 220 }}>
+          {critTasks.slice(0, 7).map(a => (
+            <div key={a.id} style={{ padding: "10px 0", borderBottom: "1px solid " + T.border2, display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <div style={{ width: 2, minHeight: 32, borderRadius: 2, background: a.priority === "Critical" ? T.red : T.yellow, flexShrink: 0, marginTop: 2, alignSelf: "stretch" }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.text}</div>
+                <div style={{ fontSize: 11, color: T.td2, marginTop: 3 }}>{a.assignee}{a.due ? " · due " + a.due : ""}</div>
               </div>
             </div>
           ))}
+          {critTasks.length === 0 && (
+            <div style={{ padding: "32px 0", textAlign: "center" }}>
+              <div style={{ fontSize: 20, marginBottom: 8, color: T.border2 }}>✓</div>
+              <div style={{ fontSize: 14, color: T.td2, fontFamily: "'DM Serif Display',serif" }}>No critical tasks</div>
+              <div style={{ fontSize: 12, color: T.td2, marginTop: 4 }}>You're all caught up</div>
+            </div>
+          )}
         </div>
+        {openTasks.length > 0 && (
+          <div style={{ marginTop: 12, fontSize: 12, color: T.td2, textAlign: "center" }}>{openTasks.length} total open</div>
+        )}
+      </div>
+    </div>
+  );
 
-        <div style={{ ...ss.card, marginBottom: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>Equity Snapshot</div>
-            <button style={ss.btnG} onClick={() => nav("eq")}
-              onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-            >Full →</button>
+  SEC.activity = (
+    <div key="activity" style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 20 }}>
+      <div style={{ ...ss.card, marginBottom: 0 }}>
+        <div style={{ fontSize: 16, fontWeight: 600, color: T.text, marginBottom: 20 }}>Recent Activity</div>
+        {(data.activityLog || []).length === 0 && (
+          <div style={{ padding: "40px 0", textAlign: "center" }}>
+            <div style={{ fontSize: 40, color: T.border, marginBottom: 12 }}>◎</div>
+            <div style={{ fontSize: 16, color: T.ts, fontFamily: "'DM Serif Display',serif" }}>No activity yet</div>
+            <div style={{ fontSize: 13, color: T.td2, marginTop: 6 }}>Changes you and your team make will appear here</div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
-            <StatCell label="MOIC"        value={E.cap > 0 ? (E.nopatW * 52 / E.cap).toFixed(1) + "x" : "0x"} color={T.accent} T={T} mono={mono} />
-            <StatCell label="Payback"     value={E.nopatW > 0 ? Math.round(E.cap / (E.nopatW * 52) * 12) + " mo" : "—"}          color={T.ts}     T={T} mono={mono} />
-            <StatCell label="HWE Equity"  value={pct(data.S.hweEq)}                                             color={T.accent} T={T} mono={mono} />
-            <StatCell label="Nico Vested" value={pct(E.vestedPct)}                                              color={T.purple} T={T} mono={mono} />
+        )}
+        {(data.activityLog || []).slice(0, 6).map((a, i) => (
+          <div key={a.id || i} style={{ display: "flex", gap: 14, padding: "10px 0", borderBottom: "1px solid " + T.border2, alignItems: "flex-start", transition: "background .15s" }}>
+            <div style={{ width: 32, height: 32, borderRadius: 16, background: T.mintPale, border: "1px solid " + T.border, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: T.accent, flexShrink: 0 }}>
+              {(a.user || "?")[0].toUpperCase()}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, lineHeight: 1.4 }}>
+                <span style={{ fontWeight: 600, color: T.text }}>{a.user}</span>
+                <span style={{ color: T.ts }}> {a.action}</span>
+                {a.detail && <span style={{ color: T.td2 }}>: {a.detail}</span>}
+              </div>
+              <div style={{ fontSize: 11, color: T.td2, marginTop: 2 }}>
+                {new Date(a.ts).toLocaleDateString()} · {new Date(a.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </div>
+            </div>
           </div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 12 }}>Annual Distribution</div>
+        ))}
+      </div>
+
+      <div style={{ ...ss.card, marginBottom: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: T.text }}>Equity Snapshot</div>
+          <button style={ss.btnG} onClick={() => nav("eq")}
+            onMouseEnter={e => { e.currentTarget.style.background = T.mintPale; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+          >Full →</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
+          <StatCell label="MOIC"        value={E.cap > 0 ? (E.nopatW * 52 / E.cap).toFixed(1) + "x" : "0x"} color={T.accent} T={T} mono={mono} />
+          <StatCell label="Payback"     value={E.nopatW > 0 ? Math.round(E.cap / (E.nopatW * 52) * 12) + " mo" : "—"}          color={T.ts}     T={T} mono={mono} />
+          <StatCell label="HWE Equity"  value={pct(data.S.hweEq)}                                             color={T.accent} T={T} mono={mono} />
+          <StatCell label="Nico Vested" value={pct(E.vestedPct)}                                              color={T.purple} T={T} mono={mono} />
+        </div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 12 }}>Annual Distribution</div>
+        {[
+          ["Loan Repay", E.loanRepay,    T.yellow],
+          ["Tax Dist",   E.taxDist,      T.td2],
+          ["Pref 7%",    E.prefReturn,   T.accent],
+          ["HWE",        E.hweResidual,  T.green],
+          ["Nico",       E.nicoResidual, T.purple],
+        ].map(([l, v, c]) => {
+          const total = (E.loanRepay + E.taxDist + E.prefReturn + E.hweResidual + E.nicoResidual) || 1;
+          return (
+            <div key={l} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: T.ts, width: 68, flexShrink: 0 }}>{l}</div>
+              <div style={{ flex: 1, height: 5, background: T.border2, borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: (v / total * 100) + "%", background: c, borderRadius: 3, transition: "width .5s ease" }} />
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: c, width: 55, textAlign: "right", fontFamily: mono }}>{fmtF(v)}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+      {/* ── Page header ─────────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <div style={{ fontSize: 28, color: T.text, fontFamily: "'DM Serif Display',Georgia,serif", lineHeight: 1.1 }}>
+            {data.S.name || "HuronWest Facility Services"}
+          </div>
+          <div style={{ fontSize: 13, color: T.td2, marginTop: 4 }}>
+            {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           {[
-            ["Loan Repay", E.loanRepay,    T.yellow],
-            ["Tax Dist",   E.taxDist,      T.td2],
-            ["Pref 7%",    E.prefReturn,   T.accent],
-            ["HWE",        E.hweResidual,  T.green],
-            ["Nico",       E.nicoResidual, T.purple],
-          ].map(([l, v, c]) => {
-            const total = (E.loanRepay + E.taxDist + E.prefReturn + E.hweResidual + E.nicoResidual) || 1;
+            ["Annual Revenue", fmtF(E.totalWR * 52), T.green],
+            ["EBITDA Margin",  pct(ebitdaMargin),     E.ebitdaW >= 0 ? T.accent : T.red],
+            ["Active Team",    E.nw + " workers",     T.ts],
+          ].map(([l, v, c]) => (
+            <div key={l} style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 10, color: T.td2, textTransform: "uppercase", letterSpacing: "1.2px" }}>{l}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: c, fontFamily: mono, marginTop: 3 }}>{v}</div>
+            </div>
+          ))}
+          <button
+            onClick={() => setShowCfg(!showCfg)}
+            title="Customize dashboard"
+            style={{
+              background: showCfg ? T.accent : "transparent",
+              border: "1px solid " + (showCfg ? T.accent : T.border),
+              borderRadius: 4,
+              padding: "6px 10px",
+              cursor: "pointer",
+              color: showCfg ? "#fff" : T.td2,
+              fontSize: 14,
+              lineHeight: 1,
+              transition: "all .15s",
+            }}
+          >⚙</button>
+        </div>
+      </div>
+
+      {/* ── Dashboard layout settings ─────────────────────────────────────── */}
+      {showCfg && (
+        <div style={{ ...ss.card, marginBottom: 0, padding: "16px 20px" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: T.td2, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 12 }}>Dashboard Layout</div>
+          {layout.order.map((key, idx) => {
+            const sec = DASH_SECTIONS.find(s => s.key === key);
+            if (!sec) return null;
             return (
-              <div key={l} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <div style={{ fontSize: 11, color: T.ts, width: 68, flexShrink: 0 }}>{l}</div>
-                <div style={{ flex: 1, height: 5, background: T.border2, borderRadius: 3, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: (v / total * 100) + "%", background: c, borderRadius: 3, transition: "width .5s ease" }} />
-                </div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: c, width: 55, textAlign: "right", fontFamily: mono }}>{fmtF(v)}</div>
+              <div key={key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: idx < layout.order.length - 1 ? "1px solid " + T.border2 : "none" }}>
+                <input
+                  type="checkbox"
+                  checked={vis(key)}
+                  onChange={() => toggleSection(key)}
+                  style={{ accentColor: T.accent, cursor: "pointer" }}
+                />
+                <span style={{ flex: 1, fontSize: 13, color: vis(key) ? T.text : T.td2, fontWeight: 500 }}>{sec.label}</span>
+                <button
+                  disabled={idx === 0}
+                  onClick={() => moveSection(key, -1)}
+                  style={{ background: "none", border: "1px solid " + T.border, borderRadius: 3, padding: "2px 8px", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? T.border : T.td2, fontSize: 12, opacity: idx === 0 ? 0.4 : 1 }}
+                >↑</button>
+                <button
+                  disabled={idx === layout.order.length - 1}
+                  onClick={() => moveSection(key, 1)}
+                  style={{ background: "none", border: "1px solid " + T.border, borderRadius: 3, padding: "2px 8px", cursor: idx === layout.order.length - 1 ? "default" : "pointer", color: idx === layout.order.length - 1 ? T.border : T.td2, fontSize: 12, opacity: idx === layout.order.length - 1 ? 0.4 : 1 }}
+                >↓</button>
               </div>
             );
           })}
         </div>
-      </div>
+      )}
+
+      {/* ── Ordered dashboard sections ────────────────────────────────────── */}
+      {layout.order.map(k => vis(k) ? SEC[k] : null)}
     </div>
   );
 }

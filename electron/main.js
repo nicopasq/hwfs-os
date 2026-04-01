@@ -6,7 +6,7 @@ const path = require('path');
 const dns  = require('dns');
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const APP_URL = 'https://hwfs-os.vercel.app';
+const APP_URL = 'https://hwfs-os-one.vercel.app';
 const IS_DEV  = !app.isPackaged;
 
 // ── Suppress default menu ─────────────────────────────────────────────────────
