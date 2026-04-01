@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { useApp } from '../context';
 import { fmtF, pct, uid, td } from '../utils';
 import { F, Tog, Badge } from '../components/ui';
@@ -174,8 +174,8 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                 const isExp = expanded === j.id;
 
                 return (
-                  <>
-                    <tr key={j.id} style={{ opacity: j.pipe ? .6 : 1, cursor: "pointer" }}
+                  <Fragment key={j.id}>
+                    <tr style={{ opacity: j.pipe ? .6 : 1, cursor: "pointer" }}
                       onClick={() => setExpanded(isExp ? null : j.id)}
                       onMouseEnter={e => e.currentTarget.style.background = T.mintPale}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
@@ -423,7 +423,7 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

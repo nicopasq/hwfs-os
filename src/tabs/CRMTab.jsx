@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { useApp } from '../context';
 import { fmtF, uid, td } from '../utils';
 import { F, Badge } from '../components/ui';
@@ -152,8 +152,8 @@ export default function CRMTab({ data, upd, setData, E }) {
                 const followUpOverdue = p.followUp && p.followUp <= today && p.stage !== "Won" && p.stage !== "Lost";
                 const isExpanded = expanded === p.id;
                 return (
-                  <>
-                    <tr key={p.id} style={{ cursor: "pointer" }} onClick={() => setExpanded(isExpanded ? null : p.id)}
+                  <Fragment key={p.id}>
+                    <tr style={{ cursor: "pointer" }} onClick={() => setExpanded(isExpanded ? null : p.id)}
                       onMouseEnter={e => e.currentTarget.style.background = T.mintPale}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                       <td style={{ ...ss.td, fontWeight: 600 }}>{p.name}</td>
@@ -203,7 +203,7 @@ export default function CRMTab({ data, upd, setData, E }) {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

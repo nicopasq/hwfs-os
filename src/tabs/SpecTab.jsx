@@ -58,7 +58,7 @@ export default function SpecTab({ data, upd, E }) {
                 <td style={{ ...ss.td, fontWeight: 600 }}>{s.client}</td>
                 <td style={ss.td}><Badge c={s.type === "Emergency" ? T.red : T.accent}>{s.type}</Badge></td>
                 <td style={{ ...ss.tdR, fontWeight: 700 }}>{fmtF(s.price)}</td>
-                <td style={{ ...ss.tdR, color: T.green }}>{fmtF(s.price / s.weeks)}</td>
+                <td style={{ ...ss.tdR, color: T.green }}>{fmtF(s.weeks > 0 ? s.price / s.weeks : 0)}</td>
                 <td style={ss.td}><button style={ss.btnG} onClick={() => tog(s.id)}>✓</button></td>
                 <td style={ss.td}><button style={ss.btnD} onClick={() => rm(s.id)}>✕</button></td>
               </tr>
