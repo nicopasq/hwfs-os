@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HuronWest — Client Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
 
-<!-- Firebase SDK — enables real-time updates without page reload -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
 <style>
+  /* ── Theme variables ── */
   :root {
     --forest:     #1A3C34;
     --forest-mid: #224A40;
@@ -31,6 +33,42 @@
     --yellow:     #F57F17;
     --shadow:     0 1px 3px rgba(26,60,52,0.07);
     --shadow-md:  0 4px 16px rgba(26,60,52,0.10);
+    --shadow-lg:  0 12px 32px rgba(26,60,52,0.14);
+    --card-bg:    #FFFFFF;
+    --text:       #1A3C34;
+    --text-sub:   #3E4A47;
+    --text-dim:   #7A8B85;
+    --input-bg:   #FFFFFF;
+    --tab-bg:     #FFFFFF;
+    --tab-active-bg: #E8F5EC;
+  }
+
+  [data-theme="dark"] {
+    --forest:     #e4eeea;
+    --forest-mid: #9ab5ae;
+    --forest-lt:  #577068;
+    --sage:       #5B8C7E;
+    --mint:       #4CAF50;
+    --mint-pale:  #1f312e;
+    --leaf:       #4CAF50;
+    --leaf-hover: #43A047;
+    --cream:      #162420;
+    --page-bg:    #0f1a18;
+    --white:      #1a2926;
+    --bark:       #9ab5ae;
+    --bark-lt:    #577068;
+    --border:     #2a3e38;
+    --border-lt:  #335047;
+    --shadow:     none;
+    --shadow-md:  0 0 0 1px #2a3e38;
+    --shadow-lg:  0 0 0 1px #335047;
+    --card-bg:    #1a2926;
+    --text:       #e4eeea;
+    --text-sub:   #9ab5ae;
+    --text-dim:   #577068;
+    --input-bg:   #162420;
+    --tab-bg:     #1a2926;
+    --tab-active-bg: #1f312e;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,14 +76,15 @@
   body {
     background: var(--page-bg);
     font-family: 'Outfit', sans-serif;
-    color: var(--forest);
+    color: var(--text);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
+    transition: background .3s, color .3s;
   }
 
   /* ── Header ── */
   .header {
-    background: var(--forest);
+    background: #1A3C34;
     padding: 0 32px;
     height: 56px;
     display: flex;
@@ -55,50 +94,167 @@
     top: 0;
     z-index: 100;
   }
+  [data-theme="dark"] .header { background: #0c1614; }
   .logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: #fff; }
-  .logo span { color: var(--mint); }
-  .header-right { font-size: 12px; color: rgba(255,255,255,0.5); }
+  .logo span { color: #A8D5BA; }
+  [data-theme="dark"] .logo span { color: #4CAF50; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-live { font-size: 12px; color: rgba(255,255,255,0.5); }
   .live-dot {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-    background: var(--mint); margin-right: 6px;
+    background: #A8D5BA; margin-right: 6px;
     animation: pulse 2s ease-in-out infinite;
   }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
+  /* Dark mode toggle */
+  .theme-toggle {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; width: 36px; height: 36px; border-radius: 50%;
+    cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,0.2); }
+
   /* ── Layout ── */
   .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
 
-  /* ── Property hero ── */
-  .hero {
-    background: var(--white); border: 1px solid var(--border-lt);
-    border-radius: 4px; overflow: hidden; margin-bottom: 20px;
-    box-shadow: var(--shadow);
+  /* ── Welcome section ── */
+  .welcome {
+    background: linear-gradient(135deg, #1A3C34 0%, #2D5E51 60%, #3A7D44 100%);
+    border-radius: 12px; padding: 36px 40px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+    box-shadow: var(--shadow-lg);
   }
+  [data-theme="dark"] .welcome {
+    background: linear-gradient(135deg, #0c1614 0%, #162420 60%, #1a2926 100%);
+    border: 1px solid #2a3e38;
+  }
+  .welcome::before {
+    content: ''; position: absolute; top: -60px; right: -40px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(168,213,186,0.08);
+  }
+  .welcome::after {
+    content: ''; position: absolute; bottom: -80px; right: 60px;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: rgba(58,125,68,0.1);
+  }
+  .welcome-greeting { font-size: 13px; color: #A8D5BA; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 8px; }
+  .welcome-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: #fff; margin-bottom: 6px; }
+  .welcome-sub { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+
+  /* Countdown row */
+  .countdown-row {
+    display: flex; gap: 16px; margin-top: 20px; flex-wrap: wrap;
+  }
+  .countdown-item {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 12px 18px; text-align: center;
+    min-width: 80px;
+  }
+  .countdown-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 24px;
+    font-weight: 700; color: #fff; line-height: 1;
+  }
+  .countdown-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  /* ── Quick actions bar ── */
+  .quick-actions {
+    display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .qa-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card-bg); border: 1px solid var(--border-lt);
+    border-radius: 8px; padding: 10px 18px; font-size: 13px;
+    font-weight: 500; color: var(--text); cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: all .2s; box-shadow: var(--shadow);
+  }
+  .qa-btn:hover {
+    border-color: var(--leaf); color: var(--leaf);
+    box-shadow: var(--shadow-md); transform: translateY(-1px);
+  }
+  .qa-icon { font-size: 16px; }
+  .qa-badge {
+    background: #C62828; color: #fff; font-size: 10px; font-weight: 700;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: none; align-items: center; justify-content: center;
+    margin-left: -2px;
+  }
+  .qa-badge.show { display: flex; }
+
+  /* ── Tab navigation ── */
+  .tab-bar {
+    display: flex; gap: 0; margin-bottom: 24px;
+    border-bottom: 2px solid var(--border);
+    background: var(--tab-bg); border-radius: 8px 8px 0 0;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex: 1; padding: 14px 12px; text-align: center;
+    font-size: 12px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1px;
+    cursor: pointer; border: none; background: none;
+    font-family: 'Outfit', sans-serif;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+    transition: all .2s; white-space: nowrap;
+    position: relative;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--tab-active-bg); }
+  .tab-btn.active {
+    color: var(--leaf); border-bottom-color: var(--leaf);
+    background: var(--tab-active-bg);
+  }
+  .tab-icon { font-size: 16px; display: block; margin: 0 auto 4px; }
+  .tab-badge {
+    position: absolute; top: 8px; right: calc(50% - 28px);
+    background: #C62828; color: #fff; font-size: 9px; font-weight: 700;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: none; align-items: center; justify-content: center;
+  }
+  .tab-badge.show { display: flex; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Hero card ── */
+  .hero {
+    background: var(--card-bg); border: 1px solid var(--border-lt);
+    border-radius: 10px; overflow: hidden; margin-bottom: 20px;
+    box-shadow: var(--shadow); transition: box-shadow .3s, transform .2s;
+  }
+  .hero:hover { box-shadow: var(--shadow-md); }
   .hero-header {
-    background: var(--forest); padding: 28px 32px;
+    background: linear-gradient(135deg, #1A3C34, #2D5E51);
+    padding: 28px 32px;
     display: flex; align-items: center; justify-content: space-between;
   }
+  [data-theme="dark"] .hero-header {
+    background: linear-gradient(135deg, #0c1614, #162420);
+  }
   .hero-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #fff; margin-bottom: 4px; }
-  .hero-sub   { font-size: 13px; color: var(--mint); letter-spacing: 0.5px; }
+  .hero-sub   { font-size: 13px; color: #A8D5BA; letter-spacing: 0.5px; }
   .hero-badge {
     background: rgba(168,213,186,0.15); border: 1px solid rgba(168,213,186,0.3);
-    color: var(--mint); font-size: 11px; font-weight: 600;
+    color: #A8D5BA; font-size: 11px; font-weight: 600;
     padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px;
   }
   .hero-body { padding: 24px 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  .stat-label { font-size: 10px; font-weight: 700; color: var(--bark-lt); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
-  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; color: var(--forest); }
+  .stat-label { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; color: var(--text); }
 
   /* ── Grid ── */
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 
   /* ── Cards ── */
   .card {
-    background: var(--white); border: 1px solid var(--border-lt);
-    border-radius: 4px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px;
+    background: var(--card-bg); border: 1px solid var(--border-lt);
+    border-radius: 10px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px;
+    transition: box-shadow .3s, transform .2s;
   }
+  .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
   .card-header {
-    font-size: 10px; font-weight: 700; color: var(--bark-lt);
+    font-size: 10px; font-weight: 700; color: var(--text-dim);
     text-transform: uppercase; letter-spacing: 1.5px;
     margin-bottom: 16px; padding-bottom: 10px;
     border-bottom: 1px solid var(--border-lt);
@@ -107,79 +263,127 @@
   .card-header-ct { font-size: 11px; color: var(--sage); font-weight: 500; letter-spacing: 0; }
 
   /* ── Crew card ── */
-  .crew-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--forest); margin-bottom: 4px; }
-  .crew-role { font-size: 12px; color: var(--bark-lt); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  .crew-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, #3A7D44, #2D5E51);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #fff; margin-bottom: 12px;
+  }
+  [data-theme="dark"] .crew-avatar { background: linear-gradient(135deg, #4CAF50, #335047); }
+  .crew-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); margin-bottom: 4px; }
+  .crew-role { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
   .crew-contact a {
     display: flex; align-items: center; gap: 10px; padding: 10px 0;
     border-bottom: 1px solid var(--border-lt); color: var(--leaf);
     font-size: 13px; font-weight: 500; text-decoration: none;
+    transition: color .15s;
   }
   .crew-contact a:last-child { border-bottom: none; }
   .crew-contact a:hover { color: var(--leaf-hover); }
   .contact-icon {
-    width: 30px; height: 30px; border-radius: 15px; background: var(--mint-pale);
-    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+    width: 34px; height: 34px; border-radius: 50%; background: var(--mint-pale);
+    display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+    transition: background .15s;
   }
+  .crew-contact a:hover .contact-icon { background: var(--border); }
 
   /* ── Schedule ── */
-  .next-service-date { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--leaf); margin: 8px 0 4px; }
-  .schedule-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-lt); font-size: 13px; }
+  .next-service-date { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--leaf); margin: 8px 0 4px; }
+  .schedule-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-lt); font-size: 13px; color: var(--text-sub); }
   .schedule-row:last-child { border-bottom: none; }
-  .schedule-row span:last-child { font-weight: 600; color: var(--forest); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .schedule-row span:last-child { font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 
   /* ── Notes ── */
-  .notes-box { background: var(--mint-pale); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-size: 13px; color: var(--forest); line-height: 1.6; }
+  .notes-box {
+    background: var(--mint-pale); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; font-size: 13px;
+    color: var(--text); line-height: 1.6;
+  }
+
+  /* ── Scope of Work ── */
+  .sow-table { width: 100%; border-collapse: collapse; }
+  .sow-table th {
+    text-align: left; font-size: 10px; font-weight: 700; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1.2px; padding: 10px 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  .sow-table td {
+    padding: 12px 12px; border-bottom: 1px solid var(--border-lt);
+    font-size: 13px; color: var(--text); vertical-align: top;
+  }
+  .sow-table tr:last-child td { border-bottom: none; }
+  .sow-table tr:hover td { background: var(--mint-pale); }
+  .sow-area { font-weight: 600; white-space: nowrap; }
+  .sow-area-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--mint-pale); font-size: 13px; margin-right: 8px;
+    vertical-align: middle;
+  }
+  .sow-tasks { line-height: 1.7; color: var(--text-sub); }
+  .sow-task-item { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 2px; }
+  .sow-task-dot { color: var(--leaf); margin-top: 2px; font-size: 10px; flex-shrink: 0; }
 
   /* ── Visit timeline ── */
-  .visit-item { padding: 20px 0; border-bottom: 1px solid var(--border-lt); }
-  .visit-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .timeline-item {
+    position: relative; padding: 20px 0 20px 28px;
+    border-left: 2px solid var(--border);
+    margin-left: 8px;
+  }
+  .timeline-item:last-child { border-left-color: transparent; }
+  .timeline-dot {
+    position: absolute; left: -7px; top: 22px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--leaf); border: 2px solid var(--card-bg);
+  }
+  .timeline-item:first-child .timeline-dot { width: 14px; height: 14px; left: -8px; top: 21px; box-shadow: 0 0 0 3px rgba(58,125,68,0.2); }
   .visit-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-  .visit-date { font-size: 15px; font-weight: 700; color: var(--forest); }
-  .visit-crew { font-size: 11px; color: var(--bark-lt); background: var(--border-lt); padding: 3px 10px; border-radius: 10px; }
-  .visit-general-note { font-size: 13px; color: var(--bark); line-height: 1.6; background: var(--mint-pale); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; margin-top: 10px; }
+  .visit-date { font-size: 15px; font-weight: 700; color: var(--text); }
+  .visit-crew { font-size: 11px; color: var(--text-dim); background: var(--border-lt); padding: 3px 10px; border-radius: 10px; }
+  .visit-general-note { font-size: 13px; color: var(--text-sub); line-height: 1.6; background: var(--mint-pale); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 10px; }
 
   /* Scope sections inside a visit */
   .scope-section { margin-bottom: 14px; }
   .scope-section:last-child { margin-bottom: 0; }
   .scope-section-title {
-    font-size: 10px; font-weight: 700; color: var(--bark-lt);
+    font-size: 10px; font-weight: 700; color: var(--text-dim);
     text-transform: uppercase; letter-spacing: 1.3px;
     margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
   }
   .scope-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border-lt); }
-  .scope-note { font-size: 12px; color: var(--bark); line-height: 1.5; margin-bottom: 8px; font-style: italic; }
+  .scope-note { font-size: 12px; color: var(--text-sub); line-height: 1.5; margin-bottom: 8px; font-style: italic; }
 
-  /* Scope of Work table */
-  .sow-table { width: 100%; border-collapse: collapse; }
-  .sow-table th { text-align: left; font-size: 10px; font-weight: 700; color: var(--bark-lt); text-transform: uppercase; letter-spacing: 1.2px; padding: 8px 12px; border-bottom: 2px solid var(--border); }
-  .sow-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-lt); font-size: 13px; color: var(--forest); vertical-align: top; }
-  .sow-table tr:last-child td { border-bottom: none; }
-  .sow-area { font-weight: 600; white-space: nowrap; }
-  .sow-tasks { line-height: 1.7; color: var(--bark); }
+  /* Visit photos */
   .visit-photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  .visit-photo { aspect-ratio: 1; border-radius: 4px; overflow: hidden; cursor: zoom-in; background: var(--border-lt); position: relative; }
+  .visit-photo { aspect-ratio: 1; border-radius: 6px; overflow: hidden; cursor: zoom-in; background: var(--border-lt); position: relative; }
   .visit-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s; display: block; }
   .visit-photo:hover img { transform: scale(1.06); }
   .visit-photo-overlay { position: absolute; inset: 0; background: rgba(26,60,52,0); transition: background .2s; display: flex; align-items: center; justify-content: center; }
   .visit-photo:hover .visit-photo-overlay { background: rgba(26,60,52,0.18); }
   .more-photos-tile {
-    aspect-ratio: 1; border-radius: 4px; background: var(--forest); cursor: pointer;
+    aspect-ratio: 1; border-radius: 6px; background: #1A3C34; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: var(--mint); transition: background .2s;
+    font-size: 13px; font-weight: 700; color: #A8D5BA; transition: background .2s;
   }
-  .more-photos-tile:hover { background: var(--forest-lt); }
-  .no-visits { padding: 20px 0; text-align: center; color: var(--bark-lt); font-size: 14px; }
+  [data-theme="dark"] .more-photos-tile { background: #162420; }
+  .more-photos-tile:hover { background: #2D5E51; }
 
-  /* ── Static photos ── */
+  /* ── Static photos grid ── */
   .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .photo-item { aspect-ratio: 4/3; border-radius: 4px; overflow: hidden; background: var(--border-lt); cursor: pointer; }
+  .photo-item { aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: var(--border-lt); cursor: pointer; }
   .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
   .photo-item:hover img { transform: scale(1.04); }
+
+  /* ── Empty states ── */
+  .empty-state { padding: 40px 20px; text-align: center; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin: 0 auto; }
 
   /* ── Lightbox ── */
   .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 9999; align-items: center; justify-content: center; }
   .lightbox.open { display: flex; }
-  .lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 4px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+  .lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 6px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
   .lightbox-close { position: absolute; top: 20px; right: 28px; color: #fff; font-size: 32px; cursor: pointer; opacity: 0.7; }
   .lightbox-close:hover { opacity: 1; }
   .lightbox-prev, .lightbox-next {
@@ -191,113 +395,122 @@
   .lightbox-next { right: 16px; }
   .lightbox-prev:hover, .lightbox-next:hover { opacity: 1; }
 
-  /* ── Message form ── */
+  /* ── Messages ── */
   .msg-thread { margin-bottom: 20px; max-height: 420px; overflow-y: auto; }
-  .msg-bubble { padding: 12px 16px; border-radius: 4px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
+  .msg-bubble { padding: 12px 16px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
   .msg-from-client { background: var(--mint-pale); border: 1px solid var(--border); }
-  .msg-from-hw { background: var(--forest); color: #fff; }
+  .msg-from-hw { background: #1A3C34; color: #fff; }
+  [data-theme="dark"] .msg-from-hw { background: #0c1614; border: 1px solid #2a3e38; }
   .msg-meta { font-size: 11px; opacity: 0.6; margin-bottom: 4px; }
-  .msg-reply { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.12); border-radius: 3px; }
+  .msg-reply { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.12); border-radius: 6px; }
   .msg-reply-meta { font-size: 11px; opacity: 0.7; margin-bottom: 3px; }
-  .empty-msgs { padding: 20px 0; text-align: center; color: var(--bark-lt); font-size: 13px; }
 
   textarea.msg-input {
     width: 100%; min-height: 88px; padding: 12px 14px;
-    border: 1px solid var(--border); border-radius: 4px;
+    border: 1px solid var(--border); border-radius: 8px;
     font-family: 'Outfit', sans-serif; font-size: 14px;
-    color: var(--forest); background: var(--white);
+    color: var(--text); background: var(--input-bg);
     resize: vertical; outline: none; transition: border-color .15s;
   }
-  textarea.msg-input:focus { border-color: var(--leaf); }
+  textarea.msg-input:focus { border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(58,125,68,0.1); }
   input.name-input {
     width: 100%; padding: 10px 14px; margin-bottom: 10px;
-    border: 1px solid var(--border); border-radius: 4px;
+    border: 1px solid var(--border); border-radius: 8px;
     font-family: 'Outfit', sans-serif; font-size: 14px;
-    color: var(--forest); background: var(--white); outline: none;
+    color: var(--text); background: var(--input-bg); outline: none;
     transition: border-color .15s;
   }
-  input.name-input:focus { border-color: var(--leaf); }
+  input.name-input:focus { border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(58,125,68,0.1); }
   .send-btn {
-    margin-top: 10px; padding: 11px 24px;
-    background: var(--leaf); color: #fff; border: none; border-radius: 4px;
+    margin-top: 10px; padding: 12px 28px;
+    background: var(--leaf); color: #fff; border: none; border-radius: 8px;
     font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600;
     cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-    transition: background .15s;
+    transition: all .2s;
   }
-  .send-btn:hover { background: var(--leaf-hover); }
-  .send-btn:disabled { opacity: 0.5; cursor: default; }
+  .send-btn:hover { background: var(--leaf-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(58,125,68,0.3); }
+  .send-btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
 
   /* ── Loading / error ── */
   .loading { text-align: center; padding: 80px 24px; }
-  .loading-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--forest); margin-bottom: 12px; }
-  .loading-sub { font-size: 14px; color: var(--bark-lt); }
-  .error-box { background: #FFEBEE; border: 1px solid #EF9A9A; border-radius: 4px; padding: 20px 24px; text-align: center; color: var(--red); font-size: 14px; }
+  .loading-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); margin-bottom: 12px; }
+  .loading-sub { font-size: 14px; color: var(--text-dim); }
+  .loading-spinner {
+    width: 40px; height: 40px; border: 3px solid var(--border);
+    border-top-color: var(--leaf); border-radius: 50%;
+    animation: spin .8s linear infinite; margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box { background: var(--mint-pale); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; text-align: center; color: var(--red); font-size: 14px; }
 
   /* ── Toast ── */
-  #toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; background: var(--leaf); color: #fff; border-radius: 4px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-md); opacity: 0; transition: opacity .3s; z-index: 9999; pointer-events: none; }
-  #toast.show { opacity: 1; }
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; padding: 14px 24px;
+    background: var(--leaf); color: #fff; border-radius: 8px;
+    font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg);
+    opacity: 0; transition: opacity .3s, transform .3s;
+    z-index: 9999; pointer-events: none;
+    transform: translateY(8px);
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── Footer ── */
+  .portal-footer {
+    text-align: center; padding: 24px; margin-top: 20px;
+    border-top: 1px solid var(--border-lt);
+    font-size: 12px; color: var(--text-dim);
+  }
+  .portal-footer a { color: var(--leaf); text-decoration: none; }
 
   /* ── Mobile ── */
   @media (max-width: 640px) {
-    /* Layout */
     .header { padding: 0 14px; height: 48px; }
     .logo { font-size: 15px; }
-    .header-right { font-size: 11px; }
     .container { padding: 14px 10px; }
-
-    /* Hero */
+    .welcome { padding: 24px 20px; border-radius: 8px; margin-bottom: 16px; }
+    .welcome-title { font-size: 22px; }
+    .countdown-row { gap: 8px; }
+    .countdown-item { padding: 8px 12px; min-width: 60px; }
+    .countdown-num { font-size: 18px; }
+    .quick-actions { gap: 6px; }
+    .qa-btn { padding: 8px 12px; font-size: 12px; }
+    .tab-btn { padding: 10px 8px; font-size: 10px; letter-spacing: 0.5px; }
+    .tab-icon { font-size: 14px; margin-bottom: 2px; }
     .hero-header { padding: 18px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
     .hero-title { font-size: 20px; }
-    .hero-sub { font-size: 12px; }
-    .hero-badge { align-self: flex-start; font-size: 10px; padding: 4px 10px; }
     .hero-body { grid-template-columns: 1fr 1fr; padding: 16px; gap: 14px; }
     .stat-value { font-size: 14px; }
-
-    /* Cards */
-    .card { padding: 16px 14px; margin-bottom: 14px; }
+    .card { padding: 16px 14px; margin-bottom: 14px; border-radius: 8px; }
     .grid2 { grid-template-columns: 1fr; gap: 14px; }
-
-    /* Schedule */
-    .next-service-date { font-size: 24px; }
-
-    /* Photos */
+    .next-service-date { font-size: 22px; }
     .photo-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
     .visit-photos { grid-template-columns: repeat(3, 1fr); gap: 4px; }
-
-    /* Visit timeline */
-    .visit-item { padding: 14px 0; }
+    .timeline-item { padding-left: 20px; }
     .visit-hdr { flex-direction: column; gap: 6px; }
     .visit-date { font-size: 14px; }
     .visit-crew { align-self: flex-start; }
-
-    /* Messages — prevent iOS zoom on focus (requires 16px min) */
     input.name-input { font-size: 16px; padding: 12px 14px; }
     textarea.msg-input { font-size: 16px; min-height: 80px; padding: 12px 14px; }
     .send-btn { width: 100%; padding: 14px; font-size: 14px; }
     .msg-thread { max-height: 320px; }
     .msg-bubble { padding: 10px 12px; font-size: 13px; }
-
-    /* Lightbox — bigger touch targets */
     .lightbox img { max-width: 96vw; max-height: 80vh; border-radius: 2px; }
     .lightbox-close { top: 12px; right: 14px; font-size: 36px; padding: 8px; }
     .lightbox-prev, .lightbox-next { font-size: 36px; padding: 16px; }
     .lightbox-prev { left: 4px; }
     .lightbox-next { right: 4px; }
-
-    /* Toast */
     #toast { left: 14px; right: 14px; bottom: 14px; text-align: center; }
-
-    /* Download button */
     #dl-visits-btn { padding: 8px 12px !important; font-size: 11px !important; }
   }
 
-  /* ── Small phones ── */
   @media (max-width: 380px) {
     .hero-body { grid-template-columns: 1fr; }
     .visit-photos { grid-template-columns: repeat(2, 1fr); }
     .photo-grid { grid-template-columns: 1fr; }
     .container { padding: 10px 8px; }
     .card { padding: 14px 10px; }
+    .countdown-item { min-width: 50px; padding: 6px 8px; }
+    .countdown-num { font-size: 16px; }
   }
 </style>
 </head>
@@ -305,11 +518,15 @@
 
 <div class="header">
   <div class="logo">Huron<span>West</span> Facility Services</div>
-  <div class="header-right"><span class="live-dot"></span>Live</div>
+  <div class="header-right">
+    <div class="header-live"><span class="live-dot"></span>Live</div>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
+  </div>
 </div>
 
 <div id="loading" class="container">
   <div class="loading">
+    <div class="loading-spinner"></div>
     <div class="loading-title">Loading your portal…</div>
     <div class="loading-sub">Fetching property details</div>
   </div>
@@ -324,6 +541,7 @@
 </div>
 <div id="toast"></div>
 
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 <script>
 // ── Config ─────────────────────────────────────────────────────────────────
 var cfg = null;
@@ -331,22 +549,38 @@ var db  = null;
 var jobId = null;
 var lightboxUrls = [];
 var lightboxIdx  = 0;
-// Photo sets for lightbox — populated when visits render, avoids JSON in onclick
 var _lbSets = [];
-var _visitsCache = [];  // stored for PDF download
+var _visitsCache = [];
 var _portalJobName = '';
+var _unreadMsgCount = 0;
+var _currentTab = 'overview';
+var _portalJob = null;
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+  document.querySelector('.theme-toggle').textContent = isDark ? '☀' : '☾';
+  try { localStorage.setItem('hwfs-portal-theme', isDark ? 'light' : 'dark'); } catch(e){}
+}
+(function initTheme() {
+  try {
+    var saved = localStorage.getItem('hwfs-portal-theme');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      // toggle icon updated after DOM ready
+    }
+  } catch(e){}
+})();
 
 function getJobId() {
-  // Try query string (?job=...)
   var fromQuery = new URLSearchParams(window.location.search).get('job');
   if (fromQuery) return fromQuery;
-  // Try path-based URL (/portal/:jobId) — Vercel rewrites server-side so window.location still shows the path
   var match = window.location.pathname.match(/\/portal\/([^\/\?]+)/);
   return match ? match[1] : null;
 }
 
 async function getConfig() {
-  // 1. Try fetching from server (Vercel env vars — works for any visitor)
   try {
     var res = await fetch('/api/cfg');
     if (res.ok) {
@@ -357,11 +591,9 @@ async function getConfig() {
       }
     }
   } catch(e) {}
-  // 2. Fall back to localStorage (e.g. offline or API not configured yet)
   try { return JSON.parse(localStorage.getItem('hwfs-fb-config')); } catch(e) { return null; }
 }
 
-// ── Firebase init ──────────────────────────────────────────────────────────
 function initFirebase(config) {
   try {
     if (!firebase.apps.length) firebase.initializeApp(config);
@@ -375,10 +607,50 @@ function initFirebase(config) {
 
 // ── Formatters ─────────────────────────────────────────────────────────────
 function fmt(n)      { return '$' + Number(n||0).toLocaleString('en-US', {minimumFractionDigits:0,maximumFractionDigits:0}); }
-function fmtDate(d)  { if (!d) return '—'; try { return new Date(d+'T12:00:00').toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric',year:'numeric'}); } catch{return d;} }
-function fmtShort(d) { if (!d) return '—'; try { return new Date(d).toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric'}); } catch{return d;} }
+function fmtDate(d)  { if (!d) return '—'; try { return new Date(d+'T12:00:00').toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric',year:'numeric'}); } catch(e){return d;} }
+function fmtShort(d) { if (!d) return '—'; try { return new Date(d).toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric'}); } catch(e){return d;} }
 function timeAgo(ts) { if (!ts) return ''; var d=Math.floor((Date.now()-new Date(ts))/60000); if(d<1)return'just now'; if(d<60)return d+'m ago'; if(d<1440)return Math.floor(d/60)+'h ago'; return Math.floor(d/1440)+'d ago'; }
 function esc(s)      { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+// ── Countdown helper ───────────────────────────────────────────────────────
+function getCountdown(dateStr) {
+  if (!dateStr) return null;
+  var target = new Date(dateStr + 'T12:00:00');
+  var now = new Date();
+  var diff = target - now;
+  if (diff < 0) return { days: 0, hours: 0, label: 'Today or overdue' };
+  var days = Math.floor(diff / 86400000);
+  var hours = Math.floor((diff % 86400000) / 3600000);
+  return { days: days, hours: hours, label: days === 0 ? 'Today!' : (days === 1 ? 'Tomorrow' : days + ' days away') };
+}
+
+// Area icons for scope of work
+function areaIcon(name) {
+  var n = (name||'').toLowerCase();
+  if (n.includes('lobby') || n.includes('entrance') || n.includes('reception')) return '🏢';
+  if (n.includes('restroom') || n.includes('bathroom') || n.includes('toilet')) return '🚻';
+  if (n.includes('kitchen') || n.includes('break')) return '☕';
+  if (n.includes('office')) return '🖥';
+  if (n.includes('hall') || n.includes('corridor')) return '🚪';
+  if (n.includes('stair')) return '🪜';
+  if (n.includes('park') || n.includes('garage')) return '🅿';
+  if (n.includes('window')) return '🪟';
+  if (n.includes('floor')) return '🧹';
+  if (n.includes('warehouse') || n.includes('storage')) return '📦';
+  if (n.includes('exterior') || n.includes('outside')) return '🌿';
+  return '📍';
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(tabId) {
+  _currentTab = tabId;
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.tab === tabId);
+  });
+  document.querySelectorAll('.tab-panel').forEach(function(panel) {
+    panel.classList.toggle('active', panel.id === 'panel-' + tabId);
+  });
+}
 
 // ── Lightbox ───────────────────────────────────────────────────────────────
 function openLightbox(urls, idx) {
@@ -388,7 +660,6 @@ function openLightbox(urls, idx) {
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-// Called from visit photos via safe index into _lbSets
 function openSet(setIdx, photoIdx) {
   openLightbox(_lbSets[setIdx] || [], photoIdx || 0);
 }
@@ -402,33 +673,72 @@ function closeLightbox() {
 }
 document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
 
-// ── Render static page frame ───────────────────────────────────────────────
+// ── Render main frame ──────────────────────────────────────────────────────
 function renderFrame(job) {
+  _portalJob = job;
   _portalJobName = job.propertyName || job.name || 'Property';
   var photos     = Array.isArray(job.photos) ? job.photos.filter(Boolean) : [];
   var monthlyRate = (job.wkRate || 0) * 4.33;
+  var countdown  = getCountdown(job.nextService);
   var html = '';
 
+  // ── Welcome section ──
+  html += '<div class="welcome" data-aos="fade-up">';
+  html += '<div class="welcome-greeting">Client Portal</div>';
+  html += '<div class="welcome-title">Welcome to ' + esc(_portalJobName) + '</div>';
+  html += '<div class="welcome-sub">Your facility services dashboard — track service visits, review scope of work, and communicate with your HuronWest team.</div>';
+  if (countdown && job.nextService) {
+    html += '<div class="countdown-row">';
+    html += '<div class="countdown-item"><div class="countdown-num">' + countdown.days + '</div><div class="countdown-label">Days</div></div>';
+    html += '<div class="countdown-item"><div class="countdown-num">' + countdown.hours + '</div><div class="countdown-label">Hours</div></div>';
+    html += '<div class="countdown-item" style="background:rgba(58,125,68,0.15);border-color:rgba(58,125,68,0.25);"><div class="countdown-num" style="color:#A8D5BA;">' + esc(countdown.label) + '</div><div class="countdown-label">Until Next Service</div></div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // ── Quick actions bar ──
+  html += '<div class="quick-actions" data-aos="fade-up" data-aos-delay="50">';
+  html += '<button class="qa-btn" onclick="switchTab(\'messages\')"><span class="qa-icon">✉</span>Messages<span class="qa-badge" id="qa-msg-badge"></span></button>';
+  html += '<button class="qa-btn" onclick="switchTab(\'history\')"><span class="qa-icon">📋</span>Service History</button>';
+  if (photos.length) html += '<button class="qa-btn" onclick="switchTab(\'photos\')"><span class="qa-icon">📷</span>Photos (' + photos.length + ')</button>';
+  html += '<button class="qa-btn" onclick="downloadServiceHistory()"><span class="qa-icon">⬇</span>Download Report</button>';
+  html += '</div>';
+
+  // ── Tab bar ──
+  html += '<div class="tab-bar" data-aos="fade-up" data-aos-delay="100">';
+  html += '<button class="tab-btn active" data-tab="overview" onclick="switchTab(\'overview\')"><span class="tab-icon">⬡</span>Overview</button>';
+  html += '<button class="tab-btn" data-tab="history" onclick="switchTab(\'history\')"><span class="tab-icon">☰</span>History</button>';
+  html += '<button class="tab-btn" data-tab="messages" onclick="switchTab(\'messages\')"><span class="tab-icon">✉</span>Messages<span class="tab-badge" id="tab-msg-badge"></span></button>';
+  if (photos.length) html += '<button class="tab-btn" data-tab="photos" onclick="switchTab(\'photos\')"><span class="tab-icon">📷</span>Photos</button>';
+  html += '</div>';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB: Overview
+  // ═══════════════════════════════════════════════════════════════════════════
+  html += '<div class="tab-panel active" id="panel-overview">';
+
   // Hero
-  html += '<div class="hero">';
+  html += '<div class="hero" data-aos="fade-up">';
   html += '<div class="hero-header">';
   html += '<div><div class="hero-title">' + esc(job.propertyName) + '</div><div class="hero-sub">' + esc(job.client) + ' · ' + esc(job.tier) + ' Service</div></div>';
   html += '<div class="hero-badge">Active Contract</div>';
   html += '</div>';
   html += '<div class="hero-body">';
-  html += '<div class="stat-cell"><div class="stat-label">Service Tier</div><div class="stat-value">' + esc(job.tier) + '</div></div>';
-  html += '<div class="stat-cell"><div class="stat-label">Frequency</div><div class="stat-value">' + (job.freq||1) + 'x / week</div></div>';
-  html += '<div class="stat-cell"><div class="stat-label">Monthly Rate</div><div class="stat-value">' + fmt(monthlyRate) + '</div></div>';
-  html += '<div class="stat-cell"><div class="stat-label">Start Date</div><div class="stat-value">' + (job.start||'—') + '</div></div>';
+  html += '<div><div class="stat-label">Service Tier</div><div class="stat-value">' + esc(job.tier) + '</div></div>';
+  html += '<div><div class="stat-label">Frequency</div><div class="stat-value">' + (job.freq||1) + 'x / week</div></div>';
+  html += '<div><div class="stat-label">Monthly Rate</div><div class="stat-value">' + fmt(monthlyRate) + '</div></div>';
+  html += '<div><div class="stat-label">Start Date</div><div class="stat-value">' + (job.start||'—') + '</div></div>';
   html += '</div></div>';
 
   // Grid: crew + schedule
   html += '<div class="grid2">';
 
   // Crew card
-  html += '<div class="card">';
+  html += '<div class="card" data-aos="fade-up" data-aos-delay="50">';
   html += '<div class="card-header">Your Crew Lead</div>';
   if (job.crewLead) {
+    var initials = (job.crewLead||'').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+    html += '<div class="crew-avatar">' + esc(initials) + '</div>';
     html += '<div class="crew-name">' + esc(job.crewLead) + '</div>';
     html += '<div class="crew-role">Crew Lead · HuronWest Facility Services</div>';
     html += '<div class="crew-contact">';
@@ -436,20 +746,24 @@ function renderFrame(job) {
     if (job.crewEmail) html += '<a href="mailto:' + esc(job.crewEmail) + '"><div class="contact-icon">✉</div>' + esc(job.crewEmail) + '</a>';
     html += '</div>';
   } else {
-    html += '<div style="color:var(--bark-lt);font-size:13px;">Crew information coming soon.</div>';
+    html += '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Crew Coming Soon</div><div class="empty-sub">Your crew lead information will appear here once assigned.</div></div>';
   }
   html += '</div>';
 
   // Schedule card
-  html += '<div class="card">';
+  html += '<div class="card" data-aos="fade-up" data-aos-delay="100">';
   html += '<div class="card-header">Service Schedule</div>';
   if (job.nextService) {
-    html += '<div style="font-size:11px;color:var(--bark-lt);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Next Service</div>';
+    html += '<div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Next Service</div>';
     html += '<div class="next-service-date">' + fmtDate(job.nextService) + '</div>';
+  } else {
+    html += '<div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Schedule</div>';
+    html += '<div class="next-service-date" style="font-size:18px;color:var(--text-dim);">No date set yet</div>';
   }
   html += '<div style="margin-top:16px;">';
   html += '<div class="schedule-row"><span>Visits per week</span><span>' + (job.freq||1) + 'x</span></div>';
   html += '<div class="schedule-row"><span>Sq footage serviced</span><span>' + (job.sf ? Number(job.sf).toLocaleString()+' sf' : '—') + '</span></div>';
+  if (job.serviceTime) html += '<div class="schedule-row"><span>Service time</span><span>' + esc(job.serviceTime) + '</span></div>';
   if (job.billingNotes) html += '<div class="schedule-row"><span>Billing</span><span style="font-family:Outfit,sans-serif;font-size:13px;">' + esc(job.billingNotes) + '</span></div>';
   html += '</div></div>';
 
@@ -457,47 +771,52 @@ function renderFrame(job) {
 
   // Notes
   if (job.clientNotes) {
-    html += '<div class="card"><div class="card-header">Property Notes</div>';
+    html += '<div class="card" data-aos="fade-up"><div class="card-header">Property Notes</div>';
     html += '<div class="notes-box">📋 ' + esc(job.clientNotes) + '</div></div>';
   }
 
-  // Scope of Work table
+  // Scope of Work
   var sow = Array.isArray(job.scopeOfWork) ? job.scopeOfWork.filter(function(a) { return a.area; }) : [];
   if (sow.length) {
-    html += '<div class="card"><div class="card-header">Scope of Work</div>';
-    html += '<table class="sow-table"><thead><tr><th>Area</th><th>Description</th></tr></thead><tbody>';
+    html += '<div class="card" data-aos="fade-up"><div class="card-header">Scope of Work<span class="card-header-ct">' + sow.length + ' area' + (sow.length!==1?'s':'') + '</span></div>';
+    html += '<table class="sow-table"><thead><tr><th>Area</th><th>Tasks</th></tr></thead><tbody>';
     sow.forEach(function(a) {
       var tasks = Array.isArray(a.tasks) ? a.tasks.filter(Boolean) : [];
-      html += '<tr><td class="sow-area">' + esc(a.area) + '</td>';
-      html += '<td class="sow-tasks">' + (tasks.length ? tasks.map(function(t) { return esc(t); }).join('<br>') : '—') + '</td></tr>';
+      var icon = areaIcon(a.area);
+      html += '<tr><td class="sow-area"><span class="sow-area-icon">' + icon + '</span>' + esc(a.area) + '</td>';
+      if (tasks.length) {
+        html += '<td class="sow-tasks">';
+        tasks.forEach(function(t) {
+          html += '<div class="sow-task-item"><span class="sow-task-dot">●</span><span>' + esc(t) + '</span></div>';
+        });
+        html += '</td>';
+      } else {
+        html += '<td class="sow-tasks">—</td>';
+      }
+      html += '</tr>';
     });
     html += '</tbody></table></div>';
   }
 
-  // Service history placeholder (filled by real-time listener)
-  html += '<div class="card" id="visits-card">';
+  html += '</div>'; // panel-overview
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB: Service History
+  // ═══════════════════════════════════════════════════════════════════════════
+  html += '<div class="tab-panel" id="panel-history">';
+  html += '<div class="card">';
   html += '<div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">';
   html += '<span>Service History <span class="card-header-ct" id="visits-ct"></span></span>';
-  html += '<button onclick="downloadServiceHistory()" id="dl-visits-btn" style="display:none;background:var(--leaf);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;">⬇ Download PDF</button>';
+  html += '<button onclick="downloadServiceHistory()" id="dl-visits-btn" style="display:none;background:var(--leaf);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;transition:background .15s;">⬇ Download PDF</button>';
   html += '</div>';
-  html += '<div id="visits-body"><div class="no-visits">Loading service history…</div></div>';
+  html += '<div id="visits-body"><div class="empty-state"><div class="loading-spinner"></div><div class="empty-sub">Loading service history…</div></div></div>';
   html += '</div>';
+  html += '</div>'; // panel-history
 
-  // Property photos (manually set by ERP — reference/promo photos)
-  if (photos.length > 0) {
-    html += '<div class="card"><div class="card-header">Property Photos (' + photos.length + ')</div>';
-    html += '<div class="photo-grid">';
-    var propSetIdx = _lbSets.length;
-    _lbSets.push(photos);
-    photos.forEach(function(url, i) {
-      html += '<div class="photo-item" onclick="openSet(' + propSetIdx + ',' + i + ')">';
-      html += '<img src="' + esc(url) + '" alt="Photo ' + (i+1) + '" loading="lazy" onerror="this.parentNode.style.display=\'none\'">';
-      html += '</div>';
-    });
-    html += '</div></div>';
-  }
-
-  // Messages placeholder (filled by real-time listener)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB: Messages
+  // ═══════════════════════════════════════════════════════════════════════════
+  html += '<div class="tab-panel" id="panel-messages">';
   html += '<div class="card" id="msg-card">';
   html += '<div class="card-header">Messages</div>';
   html += '<div id="msg-thread" class="msg-thread"></div>';
@@ -506,6 +825,28 @@ function renderFrame(job) {
   html += '<textarea class="msg-input" id="msg-text" placeholder="Type your message to HuronWest…"></textarea>';
   html += '<button class="send-btn" id="send-btn" onclick="doSend()">Send Message</button>';
   html += '</div></div>';
+  html += '</div>'; // panel-messages
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB: Photos
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (photos.length > 0) {
+    html += '<div class="tab-panel" id="panel-photos">';
+    html += '<div class="card"><div class="card-header">Property Photos<span class="card-header-ct">' + photos.length + ' photo' + (photos.length!==1?'s':'') + '</span></div>';
+    html += '<div class="photo-grid">';
+    var propSetIdx = _lbSets.length;
+    _lbSets.push(photos);
+    photos.forEach(function(url, i) {
+      html += '<div class="photo-item" onclick="openSet(' + propSetIdx + ',' + i + ')" data-aos="fade-up" data-aos-delay="' + (i * 50) + '">';
+      html += '<img src="' + esc(url) + '" alt="Photo ' + (i+1) + '" loading="lazy" onerror="this.parentNode.style.display=\'none\'">';
+      html += '</div>';
+    });
+    html += '</div></div>';
+    html += '</div>'; // panel-photos
+  }
+
+  // Footer
+  html += '<div class="portal-footer">Powered by <a href="/">HuronWest Facility Services</a> · Client Portal</div>';
 
   document.getElementById('app').innerHTML = html;
   document.getElementById('app').style.display = 'block';
@@ -513,10 +854,22 @@ function renderFrame(job) {
 
   // Restore saved name
   var savedName = localStorage.getItem('hwfs-portal-name');
-  if (savedName) document.getElementById('msg-name').value = savedName;
+  if (savedName) {
+    var nameEl = document.getElementById('msg-name');
+    if (nameEl) nameEl.value = savedName;
+  }
+
+  // Update theme toggle icon
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.querySelector('.theme-toggle').textContent = isDark ? '☾' : '☀';
+
+  // Init AOS
+  if (typeof AOS !== 'undefined') {
+    AOS.init({ duration: 500, once: true, offset: 40 });
+  }
 }
 
-// ── Update visits section (called by real-time listener) ──────────────────
+// ── Update visits (timeline format) ────────────────────────────────────────
 function updateVisits(snap) {
   var body = document.getElementById('visits-body');
   var ct   = document.getElementById('visits-ct');
@@ -533,28 +886,26 @@ function updateVisits(snap) {
   if (dlBtn) dlBtn.style.display = visits.length ? 'inline-block' : 'none';
 
   if (!visits.length) {
-    body.innerHTML = '<div class="no-visits">No service visits recorded yet. Check back after the next cleaning.</div>';
+    body.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No Visits Yet</div><div class="empty-sub">Service visit records will appear here after your first scheduled cleaning. Check back soon!</div></div>';
     return;
   }
 
-  // Reset lightbox sets
   _lbSets = [];
-
   var html = '';
-  visits.forEach(function(v) {
-    html += '<div class="visit-item">';
+  visits.forEach(function(v, idx) {
+    html += '<div class="timeline-item" data-aos="fade-up" data-aos-delay="' + Math.min(idx * 50, 300) + '">';
+    html += '<div class="timeline-dot"></div>';
     html += '<div class="visit-hdr">';
     html += '<div class="visit-date">' + fmtShort(v.ts) + '</div>';
     html += '<div class="visit-crew">👤 ' + esc(v.crewLead||'Crew') + '</div>';
     html += '</div>';
 
     if (v.sections && Object.keys(v.sections).length) {
-      // ── Sectioned visit (new format) ──────────────────────────────────
       Object.entries(v.sections).forEach(function(entry) {
         var secName  = entry[0];
         var secData  = entry[1];
         var secPhotos = Array.isArray(secData.photos) ? secData.photos.filter(Boolean) : [];
-        if (!secPhotos.length && !secData.note) return; // skip empty sections
+        if (!secPhotos.length && !secData.note) return;
 
         html += '<div class="scope-section">';
         html += '<div class="scope-section-title">' + esc(secName) + '</div>';
@@ -578,10 +929,9 @@ function updateVisits(snap) {
           }
           html += '</div>';
         }
-        html += '</div>'; // scope-section
+        html += '</div>';
       });
     } else {
-      // ── Legacy flat visit (no sections) ──────────────────────────────
       var vPhotos = Array.isArray(v.photos) ? v.photos.filter(Boolean) : [];
       if (v.note) html += '<div class="scope-note">' + esc(v.note) + '</div>';
       if (vPhotos.length) {
@@ -604,12 +954,13 @@ function updateVisits(snap) {
       }
     }
 
-    // General notes for sectioned visits
     if (v.note && v.sections) html += '<div class="visit-general-note">📝 ' + esc(v.note) + '</div>';
-
-    html += '</div>'; // visit-item
+    html += '</div>';
   });
   body.innerHTML = html;
+
+  // Re-init AOS for new elements
+  if (typeof AOS !== 'undefined') AOS.refresh();
 }
 
 // ── Download service history as printable PDF ─────────────────────────────
@@ -692,11 +1043,10 @@ function downloadServiceHistory() {
 
   w.document.write(html);
   w.document.close();
-  // Auto-trigger print dialog after images load
   w.onload = function() { w.print(); };
 }
 
-// ── Update message thread (called by real-time listener) ──────────────────
+// ── Update message thread ──────────────────────────────────────────────────
 function updateMessages(snap) {
   var thread = document.getElementById('msg-thread');
   if (!thread) return;
@@ -705,8 +1055,16 @@ function updateMessages(snap) {
   var msgs = data ? Object.values(data) : [];
   msgs.sort(function(a,b){ return (a.ts||'').localeCompare(b.ts||''); });
 
+  // Count unread (from HW, not yet seen by client)
+  var unread = msgs.filter(function(m) { return m.from === 'hw' && !m.readByClient; }).length;
+  _unreadMsgCount = unread;
+  var tabBadge = document.getElementById('tab-msg-badge');
+  var qaBadge = document.getElementById('qa-msg-badge');
+  if (tabBadge) { tabBadge.textContent = unread; tabBadge.classList.toggle('show', unread > 0); }
+  if (qaBadge) { qaBadge.textContent = unread; qaBadge.classList.toggle('show', unread > 0); }
+
   if (!msgs.length) {
-    thread.innerHTML = '<div class="empty-msgs">No messages yet. Send one below!</div>';
+    thread.innerHTML = '<div class="empty-state"><div class="empty-icon">✉</div><div class="empty-title">No Messages Yet</div><div class="empty-sub">Send a message below and we\'ll respond as soon as possible.</div></div>';
     return;
   }
 
@@ -721,12 +1079,11 @@ function updateMessages(snap) {
       html += '<div class="msg-reply-meta">HuronWest replied · ' + timeAgo(m.reply.ts) + '</div>';
       html += '<div>' + esc(m.reply.text) + '</div></div>';
     } else if (m.read) {
-      html += '<div style="font-size:11px;color:var(--bark-lt);margin-top:6px;text-align:right">✓ Seen by HuronWest</div>';
+      html += '<div style="font-size:11px;opacity:0.5;margin-top:6px;text-align:right">✓ Seen by HuronWest</div>';
     }
     html += '</div>';
   });
   thread.innerHTML = html;
-  // Auto-scroll to latest
   thread.scrollTop = thread.scrollHeight;
 }
 
@@ -759,7 +1116,7 @@ function doSend() {
 function showToast(msg, error) {
   var t = document.getElementById('toast');
   t.textContent = msg;
-  t.style.background = error ? '#C62828' : '#3A7D44';
+  t.style.background = error ? '#C62828' : 'var(--leaf)';
   t.classList.add('show');
   clearTimeout(t._t);
   t._t = setTimeout(function(){ t.classList.remove('show'); }, 3500);
@@ -786,22 +1143,19 @@ function showToast(msg, error) {
     return;
   }
 
-  // Load portal data with real-time listener (auto-updates when contract is edited)
   var initialLoad = true;
   db.ref('hwfs-os/portal/' + jobId).on('value', function(snap) {
     var job = snap.val();
     if (!job) {
-      document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">Portal not found. This link may be expired or invalid.</div></div>';
+      document.getElementById('loading').innerHTML = '<div class="loading"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Portal Not Found</div><div class="empty-sub">This link may be expired or invalid. Please contact HuronWest for assistance.</div></div></div>';
       return;
     }
     if (!job.portalEnabled) {
-      document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">This portal is not currently active. Please contact HuronWest directly.</div></div>';
+      document.getElementById('loading').innerHTML = '<div class="loading"><div class="empty-state"><div class="empty-icon">⏸</div><div class="empty-title">Portal Inactive</div><div class="empty-sub">This portal is not currently active. Please contact HuronWest directly.</div></div></div>';
       return;
     }
-    // Re-render the entire frame with latest data (rate, scope, schedule, etc.)
     renderFrame(job);
 
-    // Only attach visit/message listeners on first load
     if (initialLoad) {
       initialLoad = false;
       db.ref('hwfs-os/visits/'   + jobId).on('value', updateVisits,   function(e){ console.warn('visits error', e); });
