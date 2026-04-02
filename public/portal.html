@@ -786,25 +786,28 @@ function showToast(msg, error) {
     return;
   }
 
-  // Load portal data (once)
-  var snap = await db.ref('hwfs-os/portal/' + jobId).once('value');
-  var job  = snap.val();
+  // Load portal data with real-time listener (auto-updates when contract is edited)
+  var initialLoad = true;
+  db.ref('hwfs-os/portal/' + jobId).on('value', function(snap) {
+    var job = snap.val();
+    if (!job) {
+      document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">Portal not found. This link may be expired or invalid.</div></div>';
+      return;
+    }
+    if (!job.portalEnabled) {
+      document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">This portal is not currently active. Please contact HuronWest directly.</div></div>';
+      return;
+    }
+    // Re-render the entire frame with latest data (rate, scope, schedule, etc.)
+    renderFrame(job);
 
-  if (!job) {
-    document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">Portal not found. This link may be expired or invalid.</div></div>';
-    return;
-  }
-  if (!job.portalEnabled) {
-    document.getElementById('loading').innerHTML = '<div class="loading"><div class="error-box">This portal is not currently active. Please contact HuronWest directly.</div></div>';
-    return;
-  }
-
-  // Render static frame
-  renderFrame(job);
-
-  // Attach real-time listeners — updates happen automatically
-  db.ref('hwfs-os/visits/'   + jobId).on('value', updateVisits,   function(e){ console.warn('visits error', e); });
-  db.ref('hwfs-os/messages/' + jobId).on('value', updateMessages, function(e){ console.warn('messages error', e); });
+    // Only attach visit/message listeners on first load
+    if (initialLoad) {
+      initialLoad = false;
+      db.ref('hwfs-os/visits/'   + jobId).on('value', updateVisits,   function(e){ console.warn('visits error', e); });
+      db.ref('hwfs-os/messages/' + jobId).on('value', updateMessages, function(e){ console.warn('messages error', e); });
+    }
+  }, function(e){ console.warn('portal error', e); });
 })();
 </script>
 </body>

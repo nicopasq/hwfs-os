@@ -37,6 +37,8 @@ import CompTab   from './tabs/CompTab';
 import ActTab    from './tabs/ActTab';
 import CfgTab    from './tabs/CfgTab';
 import ScheduleTab from './tabs/ScheduleTab';
+import FormsTab  from './tabs/FormsTab';
+import MapTab    from './tabs/MapTab';
 
 import {
   loadFirebaseConfig, connectFirebase, subscribeFirebase, subscribeIncoming,
@@ -533,10 +535,10 @@ export default function App() {
           {/* Nav items */}
           <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
             {/* ── Top-level: Dashboard, CRM, Schedule ── */}
-            {["dash", "crm", "schedule"].map(id => {
+            {["dash", "crm", "schedule", "forms", "map"].map(id => {
               const t = TABS.find(x => x.id === id); if (!t) return null;
               const isActive = tab === t.id;
-              const ct = id === "crm" ? (data.prospects || []).length : id === "schedule" ? data.jobs.filter(j => j.active && !j.pipe).length : 0;
+              const ct = id === "crm" ? (data.prospects || []).length : id === "schedule" ? data.jobs.filter(j => j.active && !j.pipe).length : id === "forms" ? (data.formDrafts || []).filter(f => f.status === "draft").length : id === "map" ? data.jobs.filter(j => j.active && !j.pipe).length : 0;
               return (
                 <button key={id} onClick={() => selectTab(id)}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, height: 40, background: isActive ? "#2D5E51" : "transparent", border: "none", borderLeft: isActive ? "3px solid #A8D5BA" : "3px solid transparent", color: isActive ? "#fff" : "#9ab5ae", fontFamily: font, fontSize: 14, fontWeight: isActive ? 600 : 400, cursor: "pointer", textAlign: "left", justifyContent: sideExpanded ? "flex-start" : "center", paddingLeft: sideExpanded ? (isActive ? 17 : 20) : 0, transition: "background .15s" }}
@@ -704,6 +706,8 @@ export default function App() {
             {tab === "spec"    && <SpecTab  data={data} upd={upd} E={E} />}
             {tab === "eq"      && <EqTab    data={data} upd={upd} E={E} />}
             {tab === "comp"    && <CompTab  data={data} upd={upd} />}
+            {tab === "forms"   && <FormsTab data={data} upd={upd} setData={setData} />}
+            {tab === "map"     && <MapTab   data={data} upd={upd} />}
             {tab === "actions" && <ActTab   data={data} upd={upd} setData={setData} />}
             {tab === "cfg"     && <CfgTab   data={data} updS={updS} updA={updA} setData={setData} fbStatus={fbStatus} setFbStatus={setFbStatus} mergeRemote={mergeRemote} onIncoming={docs => setIncomingDocs(docs)} onMessages={msgs => setClientMessages(msgs)} onVisits={vs => setVisits(vs)} />}
           </div>

@@ -76,7 +76,25 @@ export default function JobsTab({ data, upd, setData, E, visits = [] }) {
   };
 
   const updJ = (id, patch) => {
-    upd("jobs", data.jobs.map(j => j.id === id ? { ...j, ...patch } : j));
+    const updated = data.jobs.map(j => j.id === id ? { ...j, ...patch } : j);
+    upd("jobs", updated);
+    // Auto-republish to portal if this contract was previously published
+    const job = updated.find(j => j.id === id);
+    if (job && job.publishedAt && isConnected()) {
+      const portalData = {
+        id: job.id, propertyName: job.name, client: job.client, tier: job.tier,
+        sf: job.sf, schedule: job.schedule || "weekly", freq: job.freq, wkRate: job.wkRate,
+        start: job.start, crewLead: job.crewLead || "", crewPhone: job.crewPhone || "",
+        crewEmail: job.crewEmail || "", nextService: job.nextService || "",
+        billingNotes: job.billingNotes || "", clientNotes: job.clientNotes || "",
+        photos: (job.photos || "").split("\n").map(u => u.trim()).filter(Boolean),
+        scopeOfWork: (job.scopeOfWork || []).filter(a => a.area?.trim()),
+        scopeItems: (job.scopeOfWork || []).filter(a => a.area?.trim()).map(a => a.area.trim()),
+        portalEnabled: job.portalEnabled !== false,
+        publishedAt: job.publishedAt, serviceTime: job.serviceTime || "18:00",
+      };
+      publishPortal(job.id, portalData).catch(() => {});
+    }
   };
 
   const buildLink = (base, jobId) => base + "/" + jobId;

@@ -29,6 +29,8 @@ export const TABS = [
   { id: "comp",    l: "Compliance",    i: "◍" },
   { id: "inbox",    l: "Inbox",         i: "✉" },
   { id: "invoices", l: "Invoices",      i: "🧾" },
+  { id: "forms",   l: "Forms",          i: "📋" },
+  { id: "map",     l: "Map",            i: "📍" },
   { id: "actions", l: "Tasks",         i: "☑" },
   { id: "cfg",     l: "Settings",      i: "⊕" },
 ];
@@ -66,7 +68,7 @@ export const DSGA = {
 export const DEF = {
   expenses: [], jobs: [], workers: [], inventory: [], loans: [],
   actions: [], prospects: [], outreach: [], certs: [], specJobs: [], invoices: [],
-  calendarEvents: [],
+  calendarEvents: [], formDrafts: [], contractTemplates: [],
   dark: false, userId: "Director", activityLog: [], lastSync: null, // light default
   pending: [], inbox: [], approvalThreshold: 500, requireDualApproval: true,
   postedExpenses: [], sgaN: { ...DSGA }, A: { ...DA }, S: { ...DS },
