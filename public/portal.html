@@ -12,7 +12,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
 <style>
-  /* ── Theme variables ── */
   :root {
     --forest:     #1A3C34;
     --forest-mid: #224A40;
@@ -39,8 +38,6 @@
     --text-sub:   #3E4A47;
     --text-dim:   #7A8B85;
     --input-bg:   #FFFFFF;
-    --tab-bg:     #FFFFFF;
-    --tab-active-bg: #E8F5EC;
   }
 
   [data-theme="dark"] {
@@ -67,8 +64,6 @@
     --text-sub:   #9ab5ae;
     --text-dim:   #577068;
     --input-bg:   #162420;
-    --tab-bg:     #1a2926;
-    --tab-active-bg: #1f312e;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -98,7 +93,7 @@
   .logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: #fff; }
   .logo span { color: #A8D5BA; }
   [data-theme="dark"] .logo span { color: #4CAF50; }
-  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-right { display: flex; align-items: center; gap: 14px; }
   .header-live { font-size: 12px; color: rgba(255,255,255,0.5); }
   .live-dot {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
@@ -106,142 +101,68 @@
     animation: pulse 2s ease-in-out infinite;
   }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-  /* Dark mode toggle */
-  .theme-toggle {
+  .header-btn {
     background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
-    color: #fff; width: 36px; height: 36px; border-radius: 50%;
-    cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
-    transition: background .2s;
+    color: #fff; height: 34px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Outfit', sans-serif;
+    display: flex; align-items: center; gap: 6px; padding: 0 14px;
+    transition: background .2s; letter-spacing: 0.5px;
   }
-  .theme-toggle:hover { background: rgba(255,255,255,0.2); }
+  .header-btn:hover { background: rgba(255,255,255,0.2); }
+  .theme-toggle { width: 34px; padding: 0; justify-content: center; font-size: 15px; border-radius: 50%; }
 
   /* ── Layout ── */
-  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+  .container { max-width: 960px; margin: 0 auto; padding: 28px 24px; }
 
-  /* ── Welcome section ── */
+  /* ── Welcome banner (compact) ── */
   .welcome {
     background: linear-gradient(135deg, #1A3C34 0%, #2D5E51 60%, #3A7D44 100%);
-    border-radius: 12px; padding: 36px 40px; margin-bottom: 24px;
-    position: relative; overflow: hidden;
-    box-shadow: var(--shadow-lg);
+    border-radius: 10px; padding: 20px 28px;
+    margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;
+    gap: 20px; position: relative; overflow: hidden;
+    box-shadow: var(--shadow-md);
   }
   [data-theme="dark"] .welcome {
     background: linear-gradient(135deg, #0c1614 0%, #162420 60%, #1a2926 100%);
     border: 1px solid #2a3e38;
   }
-  .welcome::before {
-    content: ''; position: absolute; top: -60px; right: -40px;
-    width: 200px; height: 200px; border-radius: 50%;
-    background: rgba(168,213,186,0.08);
-  }
-  .welcome::after {
-    content: ''; position: absolute; bottom: -80px; right: 60px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: rgba(58,125,68,0.1);
-  }
-  .welcome-greeting { font-size: 13px; color: #A8D5BA; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 8px; }
-  .welcome-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: #fff; margin-bottom: 6px; }
-  .welcome-sub { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.5; }
-
-  /* Countdown row */
-  .countdown-row {
-    display: flex; gap: 16px; margin-top: 20px; flex-wrap: wrap;
-  }
-  .countdown-item {
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px; padding: 12px 18px; text-align: center;
-    min-width: 80px;
+  .welcome-left { flex: 1; }
+  .welcome-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: #fff; margin-bottom: 3px; }
+  .welcome-sub { font-size: 13px; color: rgba(255,255,255,0.55); }
+  .countdown-box {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 10px 18px; text-align: center; flex-shrink: 0;
   }
   .countdown-num {
-    font-family: 'JetBrains Mono', monospace; font-size: 24px;
+    font-family: 'JetBrains Mono', monospace; font-size: 22px;
     font-weight: 700; color: #fff; line-height: 1;
   }
-  .countdown-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-
-  /* ── Quick actions bar ── */
-  .quick-actions {
-    display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
-  }
-  .qa-btn {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--card-bg); border: 1px solid var(--border-lt);
-    border-radius: 8px; padding: 10px 18px; font-size: 13px;
-    font-weight: 500; color: var(--text); cursor: pointer;
-    font-family: 'Outfit', sans-serif;
-    transition: all .2s; box-shadow: var(--shadow);
-  }
-  .qa-btn:hover {
-    border-color: var(--leaf); color: var(--leaf);
-    box-shadow: var(--shadow-md); transform: translateY(-1px);
-  }
-  .qa-icon { font-size: 16px; }
-  .qa-badge {
-    background: #C62828; color: #fff; font-size: 10px; font-weight: 700;
-    width: 18px; height: 18px; border-radius: 50%;
-    display: none; align-items: center; justify-content: center;
-    margin-left: -2px;
-  }
-  .qa-badge.show { display: flex; }
-
-  /* ── Tab navigation ── */
-  .tab-bar {
-    display: flex; gap: 0; margin-bottom: 24px;
-    border-bottom: 2px solid var(--border);
-    background: var(--tab-bg); border-radius: 8px 8px 0 0;
-    overflow-x: auto;
-  }
-  .tab-btn {
-    flex: 1; padding: 14px 12px; text-align: center;
-    font-size: 12px; font-weight: 600; color: var(--text-dim);
-    text-transform: uppercase; letter-spacing: 1px;
-    cursor: pointer; border: none; background: none;
-    font-family: 'Outfit', sans-serif;
-    border-bottom: 3px solid transparent; margin-bottom: -2px;
-    transition: all .2s; white-space: nowrap;
-    position: relative;
-  }
-  .tab-btn:hover { color: var(--text); background: var(--tab-active-bg); }
-  .tab-btn.active {
-    color: var(--leaf); border-bottom-color: var(--leaf);
-    background: var(--tab-active-bg);
-  }
-  .tab-icon { font-size: 16px; display: block; margin: 0 auto 4px; }
-  .tab-badge {
-    position: absolute; top: 8px; right: calc(50% - 28px);
-    background: #C62828; color: #fff; font-size: 9px; font-weight: 700;
-    width: 16px; height: 16px; border-radius: 50%;
-    display: none; align-items: center; justify-content: center;
-  }
-  .tab-badge.show { display: flex; }
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
+  .countdown-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
 
   /* ── Hero card ── */
   .hero {
     background: var(--card-bg); border: 1px solid var(--border-lt);
     border-radius: 10px; overflow: hidden; margin-bottom: 20px;
-    box-shadow: var(--shadow); transition: box-shadow .3s, transform .2s;
+    box-shadow: var(--shadow);
   }
-  .hero:hover { box-shadow: var(--shadow-md); }
   .hero-header {
     background: linear-gradient(135deg, #1A3C34, #2D5E51);
-    padding: 28px 32px;
+    padding: 24px 28px;
     display: flex; align-items: center; justify-content: space-between;
   }
   [data-theme="dark"] .hero-header {
     background: linear-gradient(135deg, #0c1614, #162420);
   }
-  .hero-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: #fff; margin-bottom: 4px; }
+  .hero-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fff; margin-bottom: 3px; }
   .hero-sub   { font-size: 13px; color: #A8D5BA; letter-spacing: 0.5px; }
   .hero-badge {
     background: rgba(168,213,186,0.15); border: 1px solid rgba(168,213,186,0.3);
     color: #A8D5BA; font-size: 11px; font-weight: 600;
     padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px;
   }
-  .hero-body { padding: 24px 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .hero-body { padding: 20px 28px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
   .stat-label { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
-  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; color: var(--text); }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; color: var(--text); }
 
   /* ── Grid ── */
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
@@ -249,14 +170,14 @@
   /* ── Cards ── */
   .card {
     background: var(--card-bg); border: 1px solid var(--border-lt);
-    border-radius: 10px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px;
-    transition: box-shadow .3s, transform .2s;
+    border-radius: 10px; padding: 22px; box-shadow: var(--shadow); margin-bottom: 20px;
+    transition: box-shadow .2s;
   }
-  .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .card:hover { box-shadow: var(--shadow-md); }
   .card-header {
     font-size: 10px; font-weight: 700; color: var(--text-dim);
     text-transform: uppercase; letter-spacing: 1.5px;
-    margin-bottom: 16px; padding-bottom: 10px;
+    margin-bottom: 14px; padding-bottom: 10px;
     border-bottom: 1px solid var(--border-lt);
     display: flex; align-items: center; justify-content: space-between;
   }
@@ -264,16 +185,16 @@
 
   /* ── Crew card ── */
   .crew-avatar {
-    width: 48px; height: 48px; border-radius: 50%;
+    width: 44px; height: 44px; border-radius: 50%;
     background: linear-gradient(135deg, #3A7D44, #2D5E51);
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; color: #fff; margin-bottom: 12px;
+    font-size: 17px; color: #fff; margin-bottom: 10px; font-weight: 600;
   }
   [data-theme="dark"] .crew-avatar { background: linear-gradient(135deg, #4CAF50, #335047); }
-  .crew-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); margin-bottom: 4px; }
-  .crew-role { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  .crew-name { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); margin-bottom: 3px; }
+  .crew-role { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
   .crew-contact a {
-    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    display: flex; align-items: center; gap: 10px; padding: 9px 0;
     border-bottom: 1px solid var(--border-lt); color: var(--leaf);
     font-size: 13px; font-weight: 500; text-decoration: none;
     transition: color .15s;
@@ -281,15 +202,13 @@
   .crew-contact a:last-child { border-bottom: none; }
   .crew-contact a:hover { color: var(--leaf-hover); }
   .contact-icon {
-    width: 34px; height: 34px; border-radius: 50%; background: var(--mint-pale);
-    display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
-    transition: background .15s;
+    width: 32px; height: 32px; border-radius: 50%; background: var(--mint-pale);
+    display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
   }
-  .crew-contact a:hover .contact-icon { background: var(--border); }
 
   /* ── Schedule ── */
-  .next-service-date { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--leaf); margin: 8px 0 4px; }
-  .schedule-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-lt); font-size: 13px; color: var(--text-sub); }
+  .next-service-date { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--leaf); margin: 6px 0 4px; }
+  .schedule-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border-lt); font-size: 13px; color: var(--text-sub); }
   .schedule-row:last-child { border-bottom: none; }
   .schedule-row span:last-child { font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 
@@ -308,7 +227,7 @@
     border-bottom: 2px solid var(--border);
   }
   .sow-table td {
-    padding: 12px 12px; border-bottom: 1px solid var(--border-lt);
+    padding: 10px 12px; border-bottom: 1px solid var(--border-lt);
     font-size: 13px; color: var(--text); vertical-align: top;
   }
   .sow-table tr:last-child td { border-bottom: none; }
@@ -316,34 +235,48 @@
   .sow-area { font-weight: 600; white-space: nowrap; }
   .sow-area-icon {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px; border-radius: 6px;
-    background: var(--mint-pale); font-size: 13px; margin-right: 8px;
+    width: 24px; height: 24px; border-radius: 6px;
+    background: var(--mint-pale); font-size: 12px; margin-right: 8px;
     vertical-align: middle;
   }
   .sow-tasks { line-height: 1.7; color: var(--text-sub); }
   .sow-task-item { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 2px; }
   .sow-task-dot { color: var(--leaf); margin-top: 2px; font-size: 10px; flex-shrink: 0; }
 
-  /* ── Visit timeline ── */
+  /* ── Photo gallery ── */
+  .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .photo-item {
+    aspect-ratio: 4/3; border-radius: 8px; overflow: hidden;
+    background: var(--border-lt); cursor: zoom-in; position: relative;
+  }
+  .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; display: block; }
+  .photo-item:hover img { transform: scale(1.05); }
+  .photo-item-overlay {
+    position: absolute; inset: 0; background: rgba(26,60,52,0);
+    transition: background .2s; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #fff; opacity: 0; transition: all .2s;
+  }
+  .photo-item:hover .photo-item-overlay { background: rgba(26,60,52,0.25); opacity: 1; }
+
+  /* ── Service history timeline ── */
   .timeline-item {
-    position: relative; padding: 20px 0 20px 28px;
+    position: relative; padding: 18px 0 18px 28px;
     border-left: 2px solid var(--border);
     margin-left: 8px;
   }
   .timeline-item:last-child { border-left-color: transparent; }
   .timeline-dot {
-    position: absolute; left: -7px; top: 22px;
+    position: absolute; left: -7px; top: 20px;
     width: 12px; height: 12px; border-radius: 50%;
     background: var(--leaf); border: 2px solid var(--card-bg);
   }
-  .timeline-item:first-child .timeline-dot { width: 14px; height: 14px; left: -8px; top: 21px; box-shadow: 0 0 0 3px rgba(58,125,68,0.2); }
-  .visit-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-  .visit-date { font-size: 15px; font-weight: 700; color: var(--text); }
+  .timeline-item:first-child .timeline-dot { width: 14px; height: 14px; left: -8px; top: 19px; box-shadow: 0 0 0 3px rgba(58,125,68,0.2); }
+  .visit-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .visit-date { font-size: 14px; font-weight: 700; color: var(--text); }
   .visit-crew { font-size: 11px; color: var(--text-dim); background: var(--border-lt); padding: 3px 10px; border-radius: 10px; }
   .visit-general-note { font-size: 13px; color: var(--text-sub); line-height: 1.6; background: var(--mint-pale); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 10px; }
 
-  /* Scope sections inside a visit */
-  .scope-section { margin-bottom: 14px; }
+  .scope-section { margin-bottom: 12px; }
   .scope-section:last-child { margin-bottom: 0; }
   .scope-section-title {
     font-size: 10px; font-weight: 700; color: var(--text-dim);
@@ -353,12 +286,11 @@
   .scope-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border-lt); }
   .scope-note { font-size: 12px; color: var(--text-sub); line-height: 1.5; margin-bottom: 8px; font-style: italic; }
 
-  /* Visit photos */
   .visit-photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .visit-photo { aspect-ratio: 1; border-radius: 6px; overflow: hidden; cursor: zoom-in; background: var(--border-lt); position: relative; }
   .visit-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s; display: block; }
   .visit-photo:hover img { transform: scale(1.06); }
-  .visit-photo-overlay { position: absolute; inset: 0; background: rgba(26,60,52,0); transition: background .2s; display: flex; align-items: center; justify-content: center; }
+  .visit-photo-overlay { position: absolute; inset: 0; background: rgba(26,60,52,0); transition: background .2s; }
   .visit-photo:hover .visit-photo-overlay { background: rgba(26,60,52,0.18); }
   .more-photos-tile {
     aspect-ratio: 1; border-radius: 6px; background: #1A3C34; cursor: pointer;
@@ -368,36 +300,34 @@
   [data-theme="dark"] .more-photos-tile { background: #162420; }
   .more-photos-tile:hover { background: #2D5E51; }
 
-  /* ── Static photos grid ── */
-  .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .photo-item { aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: var(--border-lt); cursor: pointer; }
-  .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
-  .photo-item:hover img { transform: scale(1.04); }
-
   /* ── Empty states ── */
-  .empty-state { padding: 40px 20px; text-align: center; }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
-  .empty-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); margin-bottom: 6px; }
-  .empty-sub { font-size: 13px; color: var(--text-dim); line-height: 1.5; max-width: 320px; margin: 0 auto; }
+  .empty-state { padding: 32px 20px; text-align: center; }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.4; }
+  .empty-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); margin-bottom: 5px; }
+  .empty-sub { font-size: 13px; color: var(--text-dim); line-height: 1.5; max-width: 300px; margin: 0 auto; }
 
   /* ── Lightbox ── */
-  .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 9999; align-items: center; justify-content: center; }
+  .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; }
   .lightbox.open { display: flex; }
-  .lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 6px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
-  .lightbox-close { position: absolute; top: 20px; right: 28px; color: #fff; font-size: 32px; cursor: pointer; opacity: 0.7; }
+  .lightbox img { max-width: 92vw; max-height: 90vh; border-radius: 6px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+  .lightbox-close { position: absolute; top: 16px; right: 24px; color: #fff; font-size: 32px; cursor: pointer; opacity: 0.7; }
   .lightbox-close:hover { opacity: 1; }
   .lightbox-prev, .lightbox-next {
     position: absolute; top: 50%; transform: translateY(-50%);
-    color: #fff; font-size: 28px; cursor: pointer; opacity: 0.6;
+    color: #fff; font-size: 32px; cursor: pointer; opacity: 0.6;
     padding: 12px; user-select: none;
   }
-  .lightbox-prev { left: 16px; }
-  .lightbox-next { right: 16px; }
+  .lightbox-prev { left: 12px; }
+  .lightbox-next { right: 12px; }
   .lightbox-prev:hover, .lightbox-next:hover { opacity: 1; }
+  .lightbox-counter {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500;
+  }
 
   /* ── Messages ── */
-  .msg-thread { margin-bottom: 20px; max-height: 420px; overflow-y: auto; }
-  .msg-bubble { padding: 12px 16px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
+  .msg-thread { margin-bottom: 16px; max-height: 400px; overflow-y: auto; }
+  .msg-bubble { padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
   .msg-from-client { background: var(--mint-pale); border: 1px solid var(--border); }
   .msg-from-hw { background: #1A3C34; color: #fff; }
   [data-theme="dark"] .msg-from-hw { background: #0c1614; border: 1px solid #2a3e38; }
@@ -406,7 +336,7 @@
   .msg-reply-meta { font-size: 11px; opacity: 0.7; margin-bottom: 3px; }
 
   textarea.msg-input {
-    width: 100%; min-height: 88px; padding: 12px 14px;
+    width: 100%; min-height: 80px; padding: 12px 14px;
     border: 1px solid var(--border); border-radius: 8px;
     font-family: 'Outfit', sans-serif; font-size: 14px;
     color: var(--text); background: var(--input-bg);
@@ -422,30 +352,30 @@
   }
   input.name-input:focus { border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(58,125,68,0.1); }
   .send-btn {
-    margin-top: 10px; padding: 12px 28px;
+    margin-top: 10px; padding: 11px 24px;
     background: var(--leaf); color: #fff; border: none; border-radius: 8px;
     font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600;
     cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
     transition: all .2s;
   }
-  .send-btn:hover { background: var(--leaf-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(58,125,68,0.3); }
-  .send-btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
+  .send-btn:hover { background: var(--leaf-hover); }
+  .send-btn:disabled { opacity: 0.5; cursor: default; }
 
   /* ── Loading / error ── */
   .loading { text-align: center; padding: 80px 24px; }
   .loading-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); margin-bottom: 12px; }
   .loading-sub { font-size: 14px; color: var(--text-dim); }
   .loading-spinner {
-    width: 40px; height: 40px; border: 3px solid var(--border);
+    width: 36px; height: 36px; border: 3px solid var(--border);
     border-top-color: var(--leaf); border-radius: 50%;
-    animation: spin .8s linear infinite; margin: 0 auto 20px;
+    animation: spin .8s linear infinite; margin: 0 auto 16px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .error-box { background: var(--mint-pale); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; text-align: center; color: var(--red); font-size: 14px; }
 
   /* ── Toast ── */
   #toast {
-    position: fixed; bottom: 24px; right: 24px; padding: 14px 24px;
+    position: fixed; bottom: 24px; right: 24px; padding: 12px 22px;
     background: var(--leaf); color: #fff; border-radius: 8px;
     font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg);
     opacity: 0; transition: opacity .3s, transform .3s;
@@ -456,51 +386,42 @@
 
   /* ── Footer ── */
   .portal-footer {
-    text-align: center; padding: 24px; margin-top: 20px;
+    text-align: center; padding: 20px; margin-top: 16px;
     border-top: 1px solid var(--border-lt);
     font-size: 12px; color: var(--text-dim);
   }
-  .portal-footer a { color: var(--leaf); text-decoration: none; }
 
   /* ── Mobile ── */
   @media (max-width: 640px) {
     .header { padding: 0 14px; height: 48px; }
     .logo { font-size: 15px; }
     .container { padding: 14px 10px; }
-    .welcome { padding: 24px 20px; border-radius: 8px; margin-bottom: 16px; }
-    .welcome-title { font-size: 22px; }
-    .countdown-row { gap: 8px; }
-    .countdown-item { padding: 8px 12px; min-width: 60px; }
-    .countdown-num { font-size: 18px; }
-    .quick-actions { gap: 6px; }
-    .qa-btn { padding: 8px 12px; font-size: 12px; }
-    .tab-btn { padding: 10px 8px; font-size: 10px; letter-spacing: 0.5px; }
-    .tab-icon { font-size: 14px; margin-bottom: 2px; }
-    .hero-header { padding: 18px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
-    .hero-title { font-size: 20px; }
-    .hero-body { grid-template-columns: 1fr 1fr; padding: 16px; gap: 14px; }
-    .stat-value { font-size: 14px; }
+    .welcome { padding: 16px 18px; flex-direction: column; align-items: flex-start; gap: 12px; border-radius: 8px; }
+    .welcome-title { font-size: 17px; }
+    .countdown-box { align-self: flex-start; }
+    .hero-header { padding: 18px 16px; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .hero-title { font-size: 18px; }
+    .hero-body { grid-template-columns: 1fr 1fr; padding: 14px 16px; gap: 12px; }
+    .stat-value { font-size: 13px; }
     .card { padding: 16px 14px; margin-bottom: 14px; border-radius: 8px; }
     .grid2 { grid-template-columns: 1fr; gap: 14px; }
-    .next-service-date { font-size: 22px; }
+    .next-service-date { font-size: 20px; }
     .photo-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
     .visit-photos { grid-template-columns: repeat(3, 1fr); gap: 4px; }
     .timeline-item { padding-left: 20px; }
     .visit-hdr { flex-direction: column; gap: 6px; }
-    .visit-date { font-size: 14px; }
-    .visit-crew { align-self: flex-start; }
+    .visit-date { font-size: 13px; }
     input.name-input { font-size: 16px; padding: 12px 14px; }
-    textarea.msg-input { font-size: 16px; min-height: 80px; padding: 12px 14px; }
+    textarea.msg-input { font-size: 16px; min-height: 80px; }
     .send-btn { width: 100%; padding: 14px; font-size: 14px; }
-    .msg-thread { max-height: 320px; }
-    .msg-bubble { padding: 10px 12px; font-size: 13px; }
-    .lightbox img { max-width: 96vw; max-height: 80vh; border-radius: 2px; }
-    .lightbox-close { top: 12px; right: 14px; font-size: 36px; padding: 8px; }
-    .lightbox-prev, .lightbox-next { font-size: 36px; padding: 16px; }
+    .msg-thread { max-height: 300px; }
+    .lightbox img { max-width: 96vw; max-height: 82vh; border-radius: 2px; }
+    .lightbox-close { top: 10px; right: 12px; font-size: 36px; }
+    .lightbox-prev, .lightbox-next { font-size: 36px; padding: 14px; }
     .lightbox-prev { left: 4px; }
     .lightbox-next { right: 4px; }
     #toast { left: 14px; right: 14px; bottom: 14px; text-align: center; }
-    #dl-visits-btn { padding: 8px 12px !important; font-size: 11px !important; }
+    .header-btn span.btn-label { display: none; }
   }
 
   @media (max-width: 380px) {
@@ -508,9 +429,6 @@
     .visit-photos { grid-template-columns: repeat(2, 1fr); }
     .photo-grid { grid-template-columns: 1fr; }
     .container { padding: 10px 8px; }
-    .card { padding: 14px 10px; }
-    .countdown-item { min-width: 50px; padding: 6px 8px; }
-    .countdown-num { font-size: 16px; }
   }
 </style>
 </head>
@@ -520,7 +438,8 @@
   <div class="logo">Huron<span>West</span> Facility Services</div>
   <div class="header-right">
     <div class="header-live"><span class="live-dot"></span>Live</div>
-    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
+    <button class="header-btn" id="pdf-btn" onclick="downloadServiceHistory()" style="display:none;" title="Download service report as PDF">⬇ <span class="btn-label">Print Report</span></button>
+    <button class="header-btn theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
   </div>
 </div>
 
@@ -533,28 +452,22 @@
 </div>
 
 <div id="app" class="container" style="display:none"></div>
+
 <div id="lightbox" class="lightbox">
   <span class="lightbox-close" onclick="closeLightbox()">✕</span>
   <span class="lightbox-prev" onclick="lightboxStep(-1)">‹</span>
   <img id="lightbox-img" src="" alt="">
   <span class="lightbox-next" onclick="lightboxStep(1)">›</span>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
 </div>
 <div id="toast"></div>
 
 <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 <script>
-// ── Config ─────────────────────────────────────────────────────────────────
-var cfg = null;
-var db  = null;
-var jobId = null;
-var lightboxUrls = [];
-var lightboxIdx  = 0;
-var _lbSets = [];
-var _visitsCache = [];
-var _portalJobName = '';
-var _unreadMsgCount = 0;
-var _currentTab = 'overview';
-var _portalJob = null;
+// ── Globals ────────────────────────────────────────────────────────────────
+var cfg = null, db = null, jobId = null;
+var lightboxUrls = [], lightboxIdx = 0;
+var _lbSets = [], _visitsCache = [], _portalJobName = '';
 
 // ── Theme ──────────────────────────────────────────────────────────────────
 function toggleTheme() {
@@ -563,12 +476,10 @@ function toggleTheme() {
   document.querySelector('.theme-toggle').textContent = isDark ? '☀' : '☾';
   try { localStorage.setItem('hwfs-portal-theme', isDark ? 'light' : 'dark'); } catch(e){}
 }
-(function initTheme() {
+(function() {
   try {
-    var saved = localStorage.getItem('hwfs-portal-theme');
-    if (saved === 'dark') {
+    if (localStorage.getItem('hwfs-portal-theme') === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
-      // toggle icon updated after DOM ready
     }
   } catch(e){}
 })();
@@ -599,10 +510,7 @@ function initFirebase(config) {
     if (!firebase.apps.length) firebase.initializeApp(config);
     db = firebase.database();
     return true;
-  } catch(e) {
-    console.error('Firebase init failed:', e);
-    return false;
-  }
+  } catch(e) { console.error('Firebase init failed:', e); return false; }
 }
 
 // ── Formatters ─────────────────────────────────────────────────────────────
@@ -612,19 +520,16 @@ function fmtShort(d) { if (!d) return '—'; try { return new Date(d).toLocaleDa
 function timeAgo(ts) { if (!ts) return ''; var d=Math.floor((Date.now()-new Date(ts))/60000); if(d<1)return'just now'; if(d<60)return d+'m ago'; if(d<1440)return Math.floor(d/60)+'h ago'; return Math.floor(d/1440)+'d ago'; }
 function esc(s)      { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
 
-// ── Countdown helper ───────────────────────────────────────────────────────
 function getCountdown(dateStr) {
   if (!dateStr) return null;
   var target = new Date(dateStr + 'T12:00:00');
   var now = new Date();
   var diff = target - now;
-  if (diff < 0) return { days: 0, hours: 0, label: 'Today or overdue' };
+  if (diff < 0) return { days: 0, label: 'Today or past due' };
   var days = Math.floor(diff / 86400000);
-  var hours = Math.floor((diff % 86400000) / 3600000);
-  return { days: days, hours: hours, label: days === 0 ? 'Today!' : (days === 1 ? 'Tomorrow' : days + ' days away') };
+  return { days: days, label: days === 0 ? 'Today!' : (days === 1 ? 'Tomorrow' : 'in ' + days + ' days') };
 }
 
-// Area icons for scope of work
 function areaIcon(name) {
   var n = (name||'').toLowerCase();
   if (n.includes('lobby') || n.includes('entrance') || n.includes('reception')) return '🏢';
@@ -633,91 +538,67 @@ function areaIcon(name) {
   if (n.includes('office')) return '🖥';
   if (n.includes('hall') || n.includes('corridor')) return '🚪';
   if (n.includes('stair')) return '🪜';
-  if (n.includes('park') || n.includes('garage')) return '🅿';
   if (n.includes('window')) return '🪟';
   if (n.includes('floor')) return '🧹';
-  if (n.includes('warehouse') || n.includes('storage')) return '📦';
   if (n.includes('exterior') || n.includes('outside')) return '🌿';
   return '📍';
-}
-
-// ── Tab switching ──────────────────────────────────────────────────────────
-function switchTab(tabId) {
-  _currentTab = tabId;
-  document.querySelectorAll('.tab-btn').forEach(function(btn) {
-    btn.classList.toggle('active', btn.dataset.tab === tabId);
-  });
-  document.querySelectorAll('.tab-panel').forEach(function(panel) {
-    panel.classList.toggle('active', panel.id === 'panel-' + tabId);
-  });
 }
 
 // ── Lightbox ───────────────────────────────────────────────────────────────
 function openLightbox(urls, idx) {
   lightboxUrls = Array.isArray(urls) ? urls.filter(Boolean) : [urls];
   lightboxIdx  = idx || 0;
-  document.getElementById('lightbox-img').src = lightboxUrls[lightboxIdx];
+  showLightboxImg();
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function openSet(setIdx, photoIdx) {
   openLightbox(_lbSets[setIdx] || [], photoIdx || 0);
 }
+function showLightboxImg() {
+  document.getElementById('lightbox-img').src = lightboxUrls[lightboxIdx];
+  document.getElementById('lightbox-counter').textContent = (lightboxIdx + 1) + ' / ' + lightboxUrls.length;
+}
 function lightboxStep(dir) {
   lightboxIdx = (lightboxIdx + dir + lightboxUrls.length) % lightboxUrls.length;
-  document.getElementById('lightbox-img').src = lightboxUrls[lightboxIdx];
+  showLightboxImg();
 }
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('open');
   document.body.style.overflow = '';
 }
 document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+document.addEventListener('keydown', function(e) {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') lightboxStep(-1);
+  if (e.key === 'ArrowRight') lightboxStep(1);
+});
 
-// ── Render main frame ──────────────────────────────────────────────────────
+// ── Render ─────────────────────────────────────────────────────────────────
 function renderFrame(job) {
-  _portalJob = job;
   _portalJobName = job.propertyName || job.name || 'Property';
   var photos     = Array.isArray(job.photos) ? job.photos.filter(Boolean) : [];
   var monthlyRate = (job.wkRate || 0) * 4.33;
   var countdown  = getCountdown(job.nextService);
+  _lbSets = [];
   var html = '';
 
-  // ── Welcome section ──
+  // ── Welcome banner (compact) ──
   html += '<div class="welcome" data-aos="fade-up">';
-  html += '<div class="welcome-greeting">Client Portal</div>';
-  html += '<div class="welcome-title">Welcome to ' + esc(_portalJobName) + '</div>';
-  html += '<div class="welcome-sub">Your facility services dashboard — track service visits, review scope of work, and communicate with your HuronWest team.</div>';
+  html += '<div class="welcome-left">';
+  html += '<div class="welcome-title">Welcome, ' + esc(job.client || 'Client') + '</div>';
+  html += '<div class="welcome-sub">' + esc(_portalJobName) + ' · ' + esc(job.tier || '') + ' Service</div>';
+  html += '</div>';
   if (countdown && job.nextService) {
-    html += '<div class="countdown-row">';
-    html += '<div class="countdown-item"><div class="countdown-num">' + countdown.days + '</div><div class="countdown-label">Days</div></div>';
-    html += '<div class="countdown-item"><div class="countdown-num">' + countdown.hours + '</div><div class="countdown-label">Hours</div></div>';
-    html += '<div class="countdown-item" style="background:rgba(58,125,68,0.15);border-color:rgba(58,125,68,0.25);"><div class="countdown-num" style="color:#A8D5BA;">' + esc(countdown.label) + '</div><div class="countdown-label">Until Next Service</div></div>';
+    html += '<div class="countdown-box">';
+    html += '<div class="countdown-num">' + countdown.days + '</div>';
+    html += '<div class="countdown-label">days ' + (countdown.days === 0 ? '— today!' : 'until service') + '</div>';
     html += '</div>';
   }
   html += '</div>';
 
-  // ── Quick actions bar ──
-  html += '<div class="quick-actions" data-aos="fade-up" data-aos-delay="50">';
-  html += '<button class="qa-btn" onclick="switchTab(\'messages\')"><span class="qa-icon">✉</span>Messages<span class="qa-badge" id="qa-msg-badge"></span></button>';
-  html += '<button class="qa-btn" onclick="switchTab(\'history\')"><span class="qa-icon">📋</span>Service History</button>';
-  if (photos.length) html += '<button class="qa-btn" onclick="switchTab(\'photos\')"><span class="qa-icon">📷</span>Photos (' + photos.length + ')</button>';
-  html += '<button class="qa-btn" onclick="downloadServiceHistory()"><span class="qa-icon">⬇</span>Download Report</button>';
-  html += '</div>';
-
-  // ── Tab bar ──
-  html += '<div class="tab-bar" data-aos="fade-up" data-aos-delay="100">';
-  html += '<button class="tab-btn active" data-tab="overview" onclick="switchTab(\'overview\')"><span class="tab-icon">⬡</span>Overview</button>';
-  html += '<button class="tab-btn" data-tab="history" onclick="switchTab(\'history\')"><span class="tab-icon">☰</span>History</button>';
-  html += '<button class="tab-btn" data-tab="messages" onclick="switchTab(\'messages\')"><span class="tab-icon">✉</span>Messages<span class="tab-badge" id="tab-msg-badge"></span></button>';
-  if (photos.length) html += '<button class="tab-btn" data-tab="photos" onclick="switchTab(\'photos\')"><span class="tab-icon">📷</span>Photos</button>';
-  html += '</div>';
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // TAB: Overview
-  // ═══════════════════════════════════════════════════════════════════════════
-  html += '<div class="tab-panel active" id="panel-overview">';
-
-  // Hero
+  // ── Hero card ──
   html += '<div class="hero" data-aos="fade-up">';
   html += '<div class="hero-header">';
   html += '<div><div class="hero-title">' + esc(job.propertyName) + '</div><div class="hero-sub">' + esc(job.client) + ' · ' + esc(job.tier) + ' Service</div></div>';
@@ -730,37 +611,34 @@ function renderFrame(job) {
   html += '<div><div class="stat-label">Start Date</div><div class="stat-value">' + (job.start||'—') + '</div></div>';
   html += '</div></div>';
 
-  // Grid: crew + schedule
+  // ── Grid: crew + schedule ──
   html += '<div class="grid2">';
 
-  // Crew card
+  // Crew
   html += '<div class="card" data-aos="fade-up" data-aos-delay="50">';
   html += '<div class="card-header">Your Crew Lead</div>';
   if (job.crewLead) {
     var initials = (job.crewLead||'').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
     html += '<div class="crew-avatar">' + esc(initials) + '</div>';
     html += '<div class="crew-name">' + esc(job.crewLead) + '</div>';
-    html += '<div class="crew-role">Crew Lead · HuronWest Facility Services</div>';
+    html += '<div class="crew-role">Crew Lead · HuronWest</div>';
     html += '<div class="crew-contact">';
     if (job.crewPhone) html += '<a href="tel:' + esc(job.crewPhone) + '"><div class="contact-icon">📞</div>' + esc(job.crewPhone) + '</a>';
     if (job.crewEmail) html += '<a href="mailto:' + esc(job.crewEmail) + '"><div class="contact-icon">✉</div>' + esc(job.crewEmail) + '</a>';
     html += '</div>';
   } else {
-    html += '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Crew Coming Soon</div><div class="empty-sub">Your crew lead information will appear here once assigned.</div></div>';
+    html += '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Crew Coming Soon</div><div class="empty-sub">Your crew lead info will appear here once assigned.</div></div>';
   }
   html += '</div>';
 
-  // Schedule card
+  // Schedule
   html += '<div class="card" data-aos="fade-up" data-aos-delay="100">';
   html += '<div class="card-header">Service Schedule</div>';
   if (job.nextService) {
     html += '<div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Next Service</div>';
     html += '<div class="next-service-date">' + fmtDate(job.nextService) + '</div>';
-  } else {
-    html += '<div style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Schedule</div>';
-    html += '<div class="next-service-date" style="font-size:18px;color:var(--text-dim);">No date set yet</div>';
   }
-  html += '<div style="margin-top:16px;">';
+  html += '<div style="margin-top:14px;">';
   html += '<div class="schedule-row"><span>Visits per week</span><span>' + (job.freq||1) + 'x</span></div>';
   html += '<div class="schedule-row"><span>Sq footage serviced</span><span>' + (job.sf ? Number(job.sf).toLocaleString()+' sf' : '—') + '</span></div>';
   if (job.serviceTime) html += '<div class="schedule-row"><span>Service time</span><span>' + esc(job.serviceTime) + '</span></div>';
@@ -769,26 +647,23 @@ function renderFrame(job) {
 
   html += '</div>'; // grid2
 
-  // Notes
+  // ── Notes ──
   if (job.clientNotes) {
     html += '<div class="card" data-aos="fade-up"><div class="card-header">Property Notes</div>';
-    html += '<div class="notes-box">📋 ' + esc(job.clientNotes) + '</div></div>';
+    html += '<div class="notes-box">' + esc(job.clientNotes) + '</div></div>';
   }
 
-  // Scope of Work
+  // ── Scope of Work ──
   var sow = Array.isArray(job.scopeOfWork) ? job.scopeOfWork.filter(function(a) { return a.area; }) : [];
   if (sow.length) {
     html += '<div class="card" data-aos="fade-up"><div class="card-header">Scope of Work<span class="card-header-ct">' + sow.length + ' area' + (sow.length!==1?'s':'') + '</span></div>';
     html += '<table class="sow-table"><thead><tr><th>Area</th><th>Tasks</th></tr></thead><tbody>';
     sow.forEach(function(a) {
       var tasks = Array.isArray(a.tasks) ? a.tasks.filter(Boolean) : [];
-      var icon = areaIcon(a.area);
-      html += '<tr><td class="sow-area"><span class="sow-area-icon">' + icon + '</span>' + esc(a.area) + '</td>';
+      html += '<tr><td class="sow-area"><span class="sow-area-icon">' + areaIcon(a.area) + '</span>' + esc(a.area) + '</td>';
       if (tasks.length) {
         html += '<td class="sow-tasks">';
-        tasks.forEach(function(t) {
-          html += '<div class="sow-task-item"><span class="sow-task-dot">●</span><span>' + esc(t) + '</span></div>';
-        });
+        tasks.forEach(function(t) { html += '<div class="sow-task-item"><span class="sow-task-dot">●</span><span>' + esc(t) + '</span></div>'; });
         html += '</td>';
       } else {
         html += '<td class="sow-tasks">—</td>';
@@ -798,55 +673,38 @@ function renderFrame(job) {
     html += '</tbody></table></div>';
   }
 
-  html += '</div>'; // panel-overview
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // TAB: Service History
-  // ═══════════════════════════════════════════════════════════════════════════
-  html += '<div class="tab-panel" id="panel-history">';
-  html += '<div class="card">';
-  html += '<div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">';
-  html += '<span>Service History <span class="card-header-ct" id="visits-ct"></span></span>';
-  html += '<button onclick="downloadServiceHistory()" id="dl-visits-btn" style="display:none;background:var(--leaf);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;transition:background .15s;">⬇ Download PDF</button>';
-  html += '</div>';
-  html += '<div id="visits-body"><div class="empty-state"><div class="loading-spinner"></div><div class="empty-sub">Loading service history…</div></div></div>';
-  html += '</div>';
-  html += '</div>'; // panel-history
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // TAB: Messages
-  // ═══════════════════════════════════════════════════════════════════════════
-  html += '<div class="tab-panel" id="panel-messages">';
-  html += '<div class="card" id="msg-card">';
-  html += '<div class="card-header">Messages</div>';
-  html += '<div id="msg-thread" class="msg-thread"></div>';
-  html += '<div id="msg-form">';
-  html += '<input class="name-input" id="msg-name" type="text" placeholder="Your name" />';
-  html += '<textarea class="msg-input" id="msg-text" placeholder="Type your message to HuronWest…"></textarea>';
-  html += '<button class="send-btn" id="send-btn" onclick="doSend()">Send Message</button>';
-  html += '</div></div>';
-  html += '</div>'; // panel-messages
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // TAB: Photos
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ── Property photos (from ERP — reference/promo shots) ──
   if (photos.length > 0) {
-    html += '<div class="tab-panel" id="panel-photos">';
-    html += '<div class="card"><div class="card-header">Property Photos<span class="card-header-ct">' + photos.length + ' photo' + (photos.length!==1?'s':'') + '</span></div>';
-    html += '<div class="photo-grid">';
     var propSetIdx = _lbSets.length;
     _lbSets.push(photos);
+    html += '<div class="card" data-aos="fade-up"><div class="card-header">Property Photos<span class="card-header-ct">' + photos.length + ' photo' + (photos.length!==1?'s':'') + '</span></div>';
+    html += '<div class="photo-grid">';
     photos.forEach(function(url, i) {
-      html += '<div class="photo-item" onclick="openSet(' + propSetIdx + ',' + i + ')" data-aos="fade-up" data-aos-delay="' + (i * 50) + '">';
+      html += '<div class="photo-item" onclick="openSet(' + propSetIdx + ',' + i + ')">';
       html += '<img src="' + esc(url) + '" alt="Photo ' + (i+1) + '" loading="lazy" onerror="this.parentNode.style.display=\'none\'">';
+      html += '<div class="photo-item-overlay">🔍</div>';
       html += '</div>';
     });
     html += '</div></div>';
-    html += '</div>'; // panel-photos
   }
 
+  // ── Service history (timeline) ──
+  html += '<div class="card" id="visits-card" data-aos="fade-up">';
+  html += '<div class="card-header"><span>Service History <span class="card-header-ct" id="visits-ct"></span></span></div>';
+  html += '<div id="visits-body"><div class="empty-state"><div class="loading-spinner"></div><div class="empty-sub">Loading service history…</div></div></div>';
+  html += '</div>';
+
+  // ── Messages ──
+  html += '<div class="card" data-aos="fade-up">';
+  html += '<div class="card-header">Messages</div>';
+  html += '<div id="msg-thread" class="msg-thread"></div>';
+  html += '<input class="name-input" id="msg-name" type="text" placeholder="Your name" />';
+  html += '<textarea class="msg-input" id="msg-text" placeholder="Type your message to HuronWest…"></textarea>';
+  html += '<button class="send-btn" id="send-btn" onclick="doSend()">Send Message</button>';
+  html += '</div>';
+
   // Footer
-  html += '<div class="portal-footer">Powered by <a href="/">HuronWest Facility Services</a> · Client Portal</div>';
+  html += '<div class="portal-footer">Powered by HuronWest Facility Services · Client Portal</div>';
 
   document.getElementById('app').innerHTML = html;
   document.getElementById('app').style.display = 'block';
@@ -854,22 +712,17 @@ function renderFrame(job) {
 
   // Restore saved name
   var savedName = localStorage.getItem('hwfs-portal-name');
-  if (savedName) {
-    var nameEl = document.getElementById('msg-name');
-    if (nameEl) nameEl.value = savedName;
-  }
+  if (savedName) { var el = document.getElementById('msg-name'); if (el) el.value = savedName; }
 
-  // Update theme toggle icon
+  // Theme toggle icon
   var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.querySelector('.theme-toggle').textContent = isDark ? '☾' : '☀';
 
-  // Init AOS
-  if (typeof AOS !== 'undefined') {
-    AOS.init({ duration: 500, once: true, offset: 40 });
-  }
+  // AOS
+  if (typeof AOS !== 'undefined') AOS.init({ duration: 450, once: true, offset: 30 });
 }
 
-// ── Update visits (timeline format) ────────────────────────────────────────
+// ── Update visits ──────────────────────────────────────────────────────────
 function updateVisits(snap) {
   var body = document.getElementById('visits-body');
   var ct   = document.getElementById('visits-ct');
@@ -882,18 +735,22 @@ function updateVisits(snap) {
 
   if (ct) ct.textContent = visits.length ? visits.length + ' visit' + (visits.length!==1?'s':'') : '';
 
-  var dlBtn = document.getElementById('dl-visits-btn');
-  if (dlBtn) dlBtn.style.display = visits.length ? 'inline-block' : 'none';
+  // Show/hide print button in header
+  var pdfBtn = document.getElementById('pdf-btn');
+  if (pdfBtn) pdfBtn.style.display = visits.length ? 'flex' : 'none';
 
   if (!visits.length) {
-    body.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No Visits Yet</div><div class="empty-sub">Service visit records will appear here after your first scheduled cleaning. Check back soon!</div></div>';
+    body.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No Visits Yet</div><div class="empty-sub">Service visit records will appear here after your first scheduled cleaning.</div></div>';
     return;
   }
 
-  _lbSets = [];
+  // Rebuild lightbox sets for visit photos (keep property photos set at index 0 if present)
+  var propertySet = _lbSets.length > 0 ? _lbSets[0] : null;
+  _lbSets = propertySet ? [propertySet] : [];
+
   var html = '';
   visits.forEach(function(v, idx) {
-    html += '<div class="timeline-item" data-aos="fade-up" data-aos-delay="' + Math.min(idx * 50, 300) + '">';
+    html += '<div class="timeline-item">';
     html += '<div class="timeline-dot"></div>';
     html += '<div class="visit-hdr">';
     html += '<div class="visit-date">' + fmtShort(v.ts) + '</div>';
@@ -902,8 +759,7 @@ function updateVisits(snap) {
 
     if (v.sections && Object.keys(v.sections).length) {
       Object.entries(v.sections).forEach(function(entry) {
-        var secName  = entry[0];
-        var secData  = entry[1];
+        var secName  = entry[0], secData = entry[1];
         var secPhotos = Array.isArray(secData.photos) ? secData.photos.filter(Boolean) : [];
         if (!secPhotos.length && !secData.note) return;
 
@@ -959,94 +815,103 @@ function updateVisits(snap) {
   });
   body.innerHTML = html;
 
-  // Re-init AOS for new elements
   if (typeof AOS !== 'undefined') AOS.refresh();
 }
 
-// ── Download service history as printable PDF ─────────────────────────────
+// ── Download PDF ───────────────────────────────────────────────────────────
 function downloadServiceHistory() {
-  if (!_visitsCache.length) return;
-  var w = window.open('', '_blank');
-  if (!w) { alert('Pop-up blocked — please allow pop-ups for this site.'); return; }
+  if (!_visitsCache.length) {
+    showToast('No service visits to download yet.', true);
+    return;
+  }
 
-  var css = [
-    '*{margin:0;padding:0;box-sizing:border-box}',
-    'body{font-family:Outfit,Helvetica,Arial,sans-serif;color:#1A3C34;padding:40px 48px;max-width:900px;margin:0 auto}',
-    'h1{font-size:22px;font-weight:700;margin-bottom:4px}',
-    'h2{font-size:11px;color:#7A8B85;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:24px}',
-    '.meta{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #D5E5DC;padding-bottom:12px;margin-bottom:24px}',
-    '.meta-right{text-align:right;font-size:12px;color:#7A8B85}',
-    '.visit{border:1px solid #D5E5DC;border-radius:8px;padding:16px 20px;margin-bottom:14px;page-break-inside:avoid}',
-    '.visit-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}',
-    '.visit-date{font-size:14px;font-weight:700;color:#1A3C34}',
-    '.visit-crew{font-size:12px;color:#3E4A47}',
-    '.section{margin:8px 0 4px;padding-left:12px;border-left:3px solid #A8D5BA}',
-    '.section-title{font-size:12px;font-weight:700;color:#3A7D44;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px}',
-    '.note{font-size:13px;color:#3E4A47;margin:4px 0}',
-    '.photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}',
-    '.photos img{width:100px;height:75px;object-fit:cover;border-radius:4px;border:1px solid #D5E5DC}',
-    '.footer{margin-top:32px;padding-top:16px;border-top:1px solid #D5E5DC;font-size:11px;color:#7A8B85;text-align:center}',
-    '@media print{body{padding:20px 24px}.visit{break-inside:avoid}}',
-  ].join('\n');
+  var printWindow = window.open('', '_blank', 'width=900,height=700');
+  if (!printWindow) {
+    showToast('Pop-up blocked — please allow pop-ups for this site.', true);
+    return;
+  }
 
-  var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Service History — ' + esc(_portalJobName) + '</title>';
-  html += '<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">';
-  html += '<style>' + css + '</style></head><body>';
+  var styles = '* { margin: 0; padding: 0; box-sizing: border-box; }\n' +
+    'body { font-family: Outfit, Helvetica, Arial, sans-serif; color: #1A3C34; padding: 40px 48px; max-width: 900px; margin: 0 auto; }\n' +
+    'h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }\n' +
+    'h2 { font-size: 11px; color: #7A8B85; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 24px; }\n' +
+    '.meta { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #D5E5DC; padding-bottom: 12px; margin-bottom: 24px; }\n' +
+    '.meta-right { text-align: right; font-size: 12px; color: #7A8B85; }\n' +
+    '.visit { border: 1px solid #D5E5DC; border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; page-break-inside: avoid; }\n' +
+    '.visit-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }\n' +
+    '.visit-date { font-size: 14px; font-weight: 700; }\n' +
+    '.visit-crew { font-size: 12px; color: #3E4A47; }\n' +
+    '.section { margin: 8px 0 4px; padding-left: 12px; border-left: 3px solid #A8D5BA; }\n' +
+    '.section-title { font-size: 12px; font-weight: 700; color: #3A7D44; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }\n' +
+    '.note { font-size: 13px; color: #3E4A47; margin: 4px 0; }\n' +
+    '.photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }\n' +
+    '.photos img { width: 100px; height: 75px; object-fit: cover; border-radius: 4px; border: 1px solid #D5E5DC; }\n' +
+    '.footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #D5E5DC; font-size: 11px; color: #7A8B85; text-align: center; }\n' +
+    '@media print { body { padding: 20px 24px; } .visit { break-inside: avoid; } }\n';
 
-  html += '<div class="meta">';
-  html += '<div><h1>' + esc(_portalJobName) + '</h1><h2>Service History Report</h2></div>';
-  html += '<div class="meta-right">Generated ' + new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}) + '<br>' + _visitsCache.length + ' visit' + (_visitsCache.length!==1?'s':'') + ' on record</div>';
-  html += '</div>';
+  var doc = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<title>Service History — ' + esc(_portalJobName) + '</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">' +
+    '<style>' + styles + '</style></head><body>';
+
+  doc += '<div class="meta"><div><h1>' + esc(_portalJobName) + '</h1><h2>Service History Report</h2></div>';
+  doc += '<div class="meta-right">Generated ' + new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}) + '<br>' + _visitsCache.length + ' visit' + (_visitsCache.length!==1?'s':'') + ' on record</div></div>';
 
   _visitsCache.forEach(function(v) {
     var d = v.ts ? new Date(v.ts) : null;
     var dateStr = d ? d.toLocaleDateString('en-US', {weekday:'short',year:'numeric',month:'short',day:'numeric'}) : 'Unknown date';
     var timeStr = d ? d.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'}) : '';
 
-    html += '<div class="visit">';
-    html += '<div class="visit-head">';
-    html += '<div class="visit-date">' + esc(dateStr) + (timeStr ? ' · ' + esc(timeStr) : '') + '</div>';
-    html += '<div class="visit-crew">Crew: ' + esc(v.crewLead||'—') + '</div>';
-    html += '</div>';
+    doc += '<div class="visit"><div class="visit-head">';
+    doc += '<div class="visit-date">' + esc(dateStr) + (timeStr ? ' · ' + esc(timeStr) : '') + '</div>';
+    doc += '<div class="visit-crew">Crew: ' + esc(v.crewLead||'—') + '</div></div>';
 
     if (v.sections && Object.keys(v.sections).length) {
       Object.entries(v.sections).forEach(function(entry) {
         var secName = entry[0], secData = entry[1];
         var secPhotos = Array.isArray(secData.photos) ? secData.photos.filter(Boolean) : [];
         if (!secPhotos.length && !secData.note) return;
-        html += '<div class="section">';
-        html += '<div class="section-title">' + esc(secName) + '</div>';
-        if (secData.note) html += '<div class="note">' + esc(secData.note) + '</div>';
+        doc += '<div class="section"><div class="section-title">' + esc(secName) + '</div>';
+        if (secData.note) doc += '<div class="note">' + esc(secData.note) + '</div>';
         if (secPhotos.length) {
-          html += '<div class="photos">';
-          secPhotos.forEach(function(url) { html += '<img src="' + esc(url) + '" onerror="this.style.display=\'none\'">'; });
-          html += '</div>';
+          doc += '<div class="photos">';
+          secPhotos.forEach(function(url) { doc += '<img src="' + esc(url) + '" onerror="this.style.display=\'none\'">'; });
+          doc += '</div>';
         }
-        html += '</div>';
+        doc += '</div>';
       });
     } else {
-      if (v.note) html += '<div class="note">' + esc(v.note) + '</div>';
+      if (v.note) doc += '<div class="note">' + esc(v.note) + '</div>';
       var flat = Array.isArray(v.photos) ? v.photos.filter(Boolean) : [];
       if (flat.length) {
-        html += '<div class="photos">';
-        flat.forEach(function(url) { html += '<img src="' + esc(url) + '" onerror="this.style.display=\'none\'">'; });
-        html += '</div>';
+        doc += '<div class="photos">';
+        flat.forEach(function(url) { doc += '<img src="' + esc(url) + '" onerror="this.style.display=\'none\'">'; });
+        doc += '</div>';
       }
     }
 
-    if (v.note && v.sections) html += '<div class="note" style="margin-top:8px;font-style:italic;">General: ' + esc(v.note) + '</div>';
-    html += '</div>';
+    if (v.note && v.sections) doc += '<div class="note" style="margin-top:8px;font-style:italic;">General: ' + esc(v.note) + '</div>';
+    doc += '</div>';
   });
 
-  html += '<div class="footer">HuronWest Facility Services LLC · Service History Report · ' + esc(_portalJobName) + '</div>';
-  html += '</body></html>';
+  doc += '<div class="footer">HuronWest Facility Services LLC · Service History Report · ' + esc(_portalJobName) + '</div>';
+  doc += '</body></html>';
 
-  w.document.write(html);
-  w.document.close();
-  w.onload = function() { w.print(); };
+  printWindow.document.open();
+  printWindow.document.write(doc);
+  printWindow.document.close();
+
+  // Wait for fonts/images to load then trigger print
+  printWindow.onload = function() {
+    setTimeout(function() { printWindow.print(); }, 400);
+  };
+  // Fallback if onload doesn't fire (some browsers)
+  setTimeout(function() {
+    try { printWindow.print(); } catch(e) {}
+  }, 2000);
 }
 
-// ── Update message thread ──────────────────────────────────────────────────
+// ── Update messages ────────────────────────────────────────────────────────
 function updateMessages(snap) {
   var thread = document.getElementById('msg-thread');
   if (!thread) return;
@@ -1054,14 +919,6 @@ function updateMessages(snap) {
   var data = snap.val();
   var msgs = data ? Object.values(data) : [];
   msgs.sort(function(a,b){ return (a.ts||'').localeCompare(b.ts||''); });
-
-  // Count unread (from HW, not yet seen by client)
-  var unread = msgs.filter(function(m) { return m.from === 'hw' && !m.readByClient; }).length;
-  _unreadMsgCount = unread;
-  var tabBadge = document.getElementById('tab-msg-badge');
-  var qaBadge = document.getElementById('qa-msg-badge');
-  if (tabBadge) { tabBadge.textContent = unread; tabBadge.classList.toggle('show', unread > 0); }
-  if (qaBadge) { qaBadge.textContent = unread; qaBadge.classList.toggle('show', unread > 0); }
 
   if (!msgs.length) {
     thread.innerHTML = '<div class="empty-state"><div class="empty-icon">✉</div><div class="empty-title">No Messages Yet</div><div class="empty-sub">Send a message below and we\'ll respond as soon as possible.</div></div>';
@@ -1075,8 +932,7 @@ function updateMessages(snap) {
     html += '<div class="msg-meta">' + esc(fromHW ? 'HuronWest' : (m.name||'You')) + ' · ' + timeAgo(m.ts) + '</div>';
     html += '<div>' + esc(m.text) + '</div>';
     if (m.reply) {
-      html += '<div class="msg-reply">';
-      html += '<div class="msg-reply-meta">HuronWest replied · ' + timeAgo(m.reply.ts) + '</div>';
+      html += '<div class="msg-reply"><div class="msg-reply-meta">HuronWest replied · ' + timeAgo(m.reply.ts) + '</div>';
       html += '<div>' + esc(m.reply.text) + '</div></div>';
     } else if (m.read) {
       html += '<div style="font-size:11px;opacity:0.5;margin-top:6px;text-align:right">✓ Seen by HuronWest</div>';
@@ -1104,11 +960,8 @@ function doSend() {
   var msg = { id:id, jobId:jobId, from:'client', name:name, text:text, ts:new Date().toISOString(), read:false };
 
   db.ref('hwfs-os/messages/' + jobId + '/' + id).set(msg)
-    .then(function() {
-      textEl.value = '';
-      showToast('Message sent! We\'ll respond shortly.');
-    })
-    .catch(function(e) { showToast('Send failed — try again.', true); })
+    .then(function() { textEl.value = ''; showToast('Message sent!'); })
+    .catch(function() { showToast('Send failed — try again.', true); })
     .finally(function() { btn.disabled = false; btn.textContent = 'Send Message'; });
 }
 
@@ -1147,7 +1000,7 @@ function showToast(msg, error) {
   db.ref('hwfs-os/portal/' + jobId).on('value', function(snap) {
     var job = snap.val();
     if (!job) {
-      document.getElementById('loading').innerHTML = '<div class="loading"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Portal Not Found</div><div class="empty-sub">This link may be expired or invalid. Please contact HuronWest for assistance.</div></div></div>';
+      document.getElementById('loading').innerHTML = '<div class="loading"><div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Portal Not Found</div><div class="empty-sub">This link may be expired or invalid. Please contact HuronWest.</div></div></div>';
       return;
     }
     if (!job.portalEnabled) {
